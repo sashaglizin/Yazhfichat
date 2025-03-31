@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Изолированные чат-комнаты</title>
+    <title>Анонимные комнаты</title>
     <style>
         :root {
             --bg: #F5F1E8;
@@ -20,6 +20,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            line-height: 1.5;
         }
         .container {
             max-width: 1000px;
@@ -28,22 +29,26 @@
         .screen {
             text-align: center;
         }
-        input, button {
-            padding: 12px;
-            margin: 5px;
+        input, button, textarea {
+            padding: 10px 12px;
+            margin: 5px 0;
             border-radius: 6px;
             font-size: 16px;
-        }
-        input {
             border: 1px solid var(--border);
-            width: 250px;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
             background: var(--primary);
             color: white;
             border: none;
             cursor: pointer;
-            min-width: 150px;
+            min-width: 120px;
+            width: auto;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
         }
         #chatScreen {
             display: none;
@@ -62,6 +67,7 @@
             padding: 8px;
             background: var(--bg);
             border-radius: 4px;
+            word-break: break-word;
         }
         .message .author {
             font-weight: bold;
@@ -77,6 +83,7 @@
             padding: 5px 10px;
             border-radius: 20px;
             display: inline-block;
+            margin-bottom: 10px;
         }
         .you {
             background: #e8e0d0;
@@ -84,8 +91,8 @@
         .rooms-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            gap: 15px;
+            margin-top: 20px;
         }
         .room-card {
             background: var(--surface);
@@ -112,12 +119,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: 10px;
         }
         .back-btn {
             background: transparent;
             color: var(--primary);
             border: 1px solid var(--primary);
-            margin-top: 20px;
+            margin-top: 15px;
+        }
+        .create-thread-form {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            max-width: 500px;
+        }
+        .threads-list {
+            margin-top: 15px;
+        }
+        .nav-buttons {
+            margin: 15px 0;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .section-title {
+            margin: 15px 0 10px;
+            text-align: center;
+        }
+        .input-group {
+            margin: 10px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .message-input-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .thread-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .thread-actions {
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -126,7 +172,9 @@
         <!-- Экран ввода имени -->
         <div id="nameScreen" class="screen">
             <h2>Введите ваше имя</h2>
-            <input type="text" id="userName" placeholder="Как вас называть?">
+            <div class="input-group">
+                <input type="text" id="userName" placeholder="Как вас называть?">
+            </div>
             <button onclick="setUserName()">Продолжить</button>
             <p id="nameError" class="error"></p>
         </div>
@@ -134,12 +182,44 @@
         <!-- Экран выбора комнаты -->
         <div id="connectScreen" class="screen" style="display:none">
             <h2>Выберите комнату</h2>
-            <input type="text" id="roomIdInput" placeholder="Или введите ID комнаты">
-            <button onclick="connectToCustomRoom()">Подключиться</button>
-            <button onclick="createNewRoom()" class="back-btn">Создать свою</button>
-            
-            <div class="rooms-grid" id="publicRooms">
-                <!-- Общие комнаты будут здесь -->
+            <div class="nav-buttons">
+                <button onclick="showPublicRooms()">Публичные комнаты</button>
+                <button onclick="showThreads()">Треды</button>
+            </div>
+
+            <!-- Секция публичных комнат -->
+            <div id="publicSection">
+                <div class="input-group">
+                    <input type="text" id="roomIdInput" placeholder="Или введите ID комнаты">
+                </div>
+                <div>
+                    <button onclick="connectToCustomRoom()">Подключиться</button>
+                    <button onclick="createNewRoom()" class="back-btn">Создать свою</button>
+                </div>
+                <div class="rooms-grid" id="publicRooms"></div>
+            </div>
+
+            <!-- Секция тредов -->
+            <div id="threadsSection" style="display:none">
+                <!-- Форма создания треда -->
+                <div id="createThreadForm" class="create-thread-form" style="display:none">
+                    <h3>Создание нового треда</h3>
+                    <input type="text" id="threadTitle" placeholder="Название треда">
+                    <textarea id="threadDescription" placeholder="Описание треда" rows="3"></textarea>
+                    <div>
+                        <button onclick="createNewThread()">Создать тред</button>
+                        <button onclick="hideCreateThreadForm()" class="back-btn">Отмена</button>
+                    </div>
+                </div>
+
+                <!-- Список тредов -->
+                <div class="threads-list">
+                    <div class="thread-actions">
+                        <button onclick="showCreateThreadForm()">Создать новый тред</button>
+                    </div>
+                    <h3 class="section-title">Доступные треды</h3>
+                    <div class="rooms-grid" id="threadsGrid"></div>
+                </div>
             </div>
         </div>
 
@@ -148,17 +228,19 @@
             <h3>Комната: <span id="currentRoomId"></span></h3>
             <div class="online-counter">Онлайн: <span id="onlineCount">1</span></div>
             <div id="messages"></div>
-            <textarea id="messageInput" placeholder="Ваше сообщение..." rows="3"></textarea>
-            <button onclick="sendMessage()">Отправить</button>
-            <button onclick="backToRooms()" class="back-btn">← Назад к комнатам</button>
+            <div class="message-input-container">
+                <textarea id="messageInput" placeholder="Ваше сообщение..." rows="3"></textarea>
+                <div>
+                    <button onclick="sendMessage()">Отправить</button>
+                    <button onclick="backToRooms()" class="back-btn">← Назад к комнатам</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase + наш код -->
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
     <script>
-        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAptJ1ODkI8cdQWSHE50Pab7sbh0azmMv4",
             authDomain: "chan-3ad7d.firebaseapp.com",
@@ -169,74 +251,33 @@
             appId: "1:789733189882:web:d81d9af1d4e1b89d66c143"
         };
 
-        // Инициализация Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Общие комнаты (каждая имеет УНИКАЛЬНЫЙ ID)
         const PUBLIC_ROOMS = [
-            {
-                id: "main_chat_room",
-                title: "Общение и знакомства",
-                desc: "Общайтесь на любые темы"
-            },
-            {
-                id: "anime_room",
-                title: "Аниме",
-                desc: "Обсуждение аниме и манги"
-            },
-            {
-                id: "games_room",
-                title: "Игры",
-                desc: "Видеоигры и настолки"
-            },
-            {
-                id: "business_room",
-                title: "Бизнес",
-                desc: "Стартапы и предпринимательство"
-            },
-            {
-                id: "sport_room",
-                title: "Спорт",
-                desc: "Футбол, хоккей и другие виды"
-            },
-            {
-                id: "fetish_room",
-                title: "Фетиши",
-                desc: "Обсуждение необычных увлечений"
-            },
-            {
-                id: "adult_room",
-                title: "18+ Интим",
-                desc: "Только для взрослых"
-            },
-            {
-                id: "creative_room",
-                title: "Творчество",
-                desc: "Рисование, музыка, писательство"
-            },
-            {
-                id: "school2_room",
-                title: "Лицей №2",
-                desc: "Для учеников и преподавателей"
-            },
-            {
-                id: "education_room",
-                title: "Образование",
-                desc: "Учёба и саморазвитие"
-            }
+            {id: "main_chat_room", title: "Общение и знакомства", desc: "Общайтесь на любые темы"},
+            {id: "anime_room", title: "Аниме", desc: "Обсуждение аниме и манги"},
+            {id: "games_room", title: "Игры", desc: "Видеоигры и настолки"},
+            {id: "business_room", title: "Бизнес", desc: "Стартапы и предпринимательство"},
+            {id: "sport_room", title: "Спорт", desc: "Футбол, хоккей и другие виды"},
+            {id: "fetish_room", title: "Фетиши", desc: "Обсуждение необычных увлечений"},
+            {id: "adult_room", title: "18+ Интим", desc: "Только для взрослых"},
+            {id: "creative_room", title: "Творчество", desc: "Рисование, музыка, писательство"},
+            {id: "school2_room", title: "Лицей №2", desc: "Для учеников и преподавателей"},
+            {id: "education_room", title: "Образование", desc: "Учёба и саморазвитие"}
         ];
 
-        // Глобальные переменные
         let currentUser = {
             name: "",
             id: Math.random().toString(36).substr(2, 8)
         };
         let currentRoomId = "";
         let userRef;
-        let messagesRef; // Ссылка на сообщения текущей комнаты
+        let messagesRef;
+        let threadsRef = db.ref('threads');
+        let currentThreadId = "";
+        let currentThreads = [];
 
-        // Заполняем список общих комнат
         function renderPublicRooms() {
             const container = document.getElementById('publicRooms');
             container.innerHTML = '';
@@ -258,7 +299,6 @@
                     startChat();
                 });
                 
-                // Загружаем количество онлайн для каждой комнаты
                 db.ref('presence/' + room.id + '/users').on('value', (snap) => {
                     const count = snap.val() ? Object.keys(snap.val()).length : 0;
                     document.getElementById(`room-${room.id}-count`).textContent = `${count} онлайн`;
@@ -268,7 +308,6 @@
             });
         }
 
-        // Установка имени пользователя
         function setUserName() {
             const name = document.getElementById('userName').value.trim();
             if (!name) {
@@ -282,32 +321,28 @@
             renderPublicRooms();
         }
 
-        // Подключение к произвольной комнате
         function connectToCustomRoom() {
             currentRoomId = document.getElementById('roomIdInput').value.trim();
-            if (!currentRoomId) return;
-            
+            if (!currentRoomId) {
+                alert("Введите ID комнаты!");
+                return;
+            }
             startChat();
         }
 
-        // Создание новой комнаты
         function createNewRoom() {
             currentRoomId = generateRoomId();
             document.getElementById('roomIdInput').value = currentRoomId;
             startChat();
         }
 
-        // Генерация ID комнаты
         function generateRoomId() {
             return Math.random().toString(36).substr(2, 6).toUpperCase();
         }
 
-        // Система присутствия
         function setupPresence() {
-            // Удаляем старую запись если была
             if (userRef) userRef.remove();
             
-            // Создаем новую запись
             userRef = db.ref('presence/' + currentRoomId + '/users/' + currentUser.id);
             
             userRef.set({
@@ -318,32 +353,42 @@
 
             userRef.onDisconnect().remove();
 
-            // Обновляем счетчик онлайн
             db.ref('presence/' + currentRoomId + '/users').on('value', (snapshot) => {
                 const users = snapshot.val() || {};
                 document.getElementById('onlineCount').textContent = Object.keys(users).length;
             });
         }
 
-        // Запуск чата
         function startChat() {
             document.getElementById('connectScreen').style.display = 'none';
             document.getElementById('chatScreen').style.display = 'block';
             
-            // Находим название комнаты
             const roomInfo = PUBLIC_ROOMS.find(r => r.id === currentRoomId);
-            const roomTitle = roomInfo ? roomInfo.title : currentRoomId;
-            document.getElementById('currentRoomId').textContent = roomTitle;
+            let roomTitle = roomInfo ? roomInfo.title : currentRoomId;
 
-            // Очищаем предыдущие сообщения
+            if(currentRoomId.startsWith('thread-')) {
+                const parts = currentRoomId.split('-');
+                const threadId = parts[1];
+                const roomId = parts[2];
+                
+                // Получаем информацию о комнате из треда
+                db.ref(`threads/${threadId}/rooms/${roomId}`).once('value').then(snap => {
+                    const room = snap.val();
+                    if (room) {
+                        roomTitle = `${room.title} (${room.description})`;
+                    }
+                    document.getElementById('currentRoomId').textContent = roomTitle;
+                });
+            } else {
+                document.getElementById('currentRoomId').textContent = roomTitle;
+            }
+
             document.getElementById('messages').innerHTML = '';
             
-            // Отключаем старый слушатель если был
             if (messagesRef) messagesRef.off();
             
             setupPresence();
 
-            // Подключаемся к сообщениям КОНКРЕТНОЙ комнаты
             messagesRef = db.ref('rooms/' + currentRoomId + '/messages');
             
             messagesRef.on('child_added', function(snapshot) {
@@ -352,10 +397,12 @@
             });
         }
 
-        // Отправка сообщения
         function sendMessage() {
             const message = document.getElementById('messageInput').value.trim();
-            if (!message) return;
+            if (!message) {
+                alert("Введите сообщение!");
+                return;
+            }
 
             messagesRef.push({
                 text: message,
@@ -367,7 +414,6 @@
             document.getElementById('messageInput').value = '';
         }
 
-        // Добавление сообщения в чат
         function addMessageToChat(msg) {
             const messagesDiv = document.getElementById('messages');
             const msgElement = document.createElement('div');
@@ -384,7 +430,6 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // Возврат к списку комнат
         function backToRooms() {
             if (userRef) userRef.remove();
             if (messagesRef) messagesRef.off();
@@ -392,6 +437,155 @@
             document.getElementById('chatScreen').style.display = 'none';
             document.getElementById('connectScreen').style.display = 'block';
             document.getElementById('messageInput').value = '';
+            showPublicRooms();
+        }
+
+        // Функции для работы с тредами
+        function showThreads() {
+            document.getElementById('publicSection').style.display = 'none';
+            document.getElementById('threadsSection').style.display = 'block';
+            document.getElementById('createThreadForm').style.display = 'none';
+            loadThreads();
+        }
+
+        function showPublicRooms() {
+            document.getElementById('threadsSection').style.display = 'none';
+            document.getElementById('publicSection').style.display = 'block';
+        }
+
+        function showCreateThreadForm() {
+            document.getElementById('createThreadForm').style.display = 'block';
+            document.getElementById('threadTitle').value = '';
+            document.getElementById('threadDescription').value = '';
+        }
+
+        function hideCreateThreadForm() {
+            document.getElementById('createThreadForm').style.display = 'none';
+        }
+
+        function createNewThread() {
+            const title = document.getElementById('threadTitle').value.trim();
+            const description = document.getElementById('threadDescription').value.trim();
+            
+            if(!title) {
+                alert("Введите название треда!");
+                return;
+            }
+            
+            if(!description) {
+                alert("Введите описание треда!");
+                return;
+            }
+
+            const newThreadRef = threadsRef.push();
+            newThreadRef.set({
+                title: title,
+                description: description,
+                created: Date.now(),
+                author: currentUser.name,
+                rooms: {}
+            }).then(() => {
+                hideCreateThreadForm();
+                loadThreads();
+            }).catch(error => {
+                console.error("Ошибка при создании треда:", error);
+                alert("Произошла ошибка при создании треда");
+            });
+        }
+
+        function loadThreads() {
+            threadsRef.on('value', (snapshot) => {
+                const threads = snapshot.val() || {};
+                currentThreads = [];
+                const container = document.getElementById('threadsGrid');
+                container.innerHTML = '';
+                
+                Object.keys(threads).forEach(threadId => {
+                    const thread = threads[threadId];
+                    currentThreads.push({...thread, id: threadId});
+                    
+                    const roomCount = thread.rooms ? Object.keys(thread.rooms).length : 0;
+                    
+                    const threadElement = document.createElement('div');
+                    threadElement.className = 'room-card';
+                    threadElement.innerHTML = `
+                        <div class="room-title">${thread.title}</div>
+                        <div class="room-desc">${thread.description}</div>
+                        <div class="room-footer">
+                            <div>Комнат: ${roomCount}</div>
+                            <button onclick="openThread('${threadId}')">Открыть</button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(threadElement);
+                });
+            });
+        }
+
+        function openThread(threadId) {
+            currentThreadId = threadId;
+            const thread = currentThreads.find(t => t.id === threadId);
+            
+            document.getElementById('threadsGrid').innerHTML = `
+                <div class="thread-header">
+                    <h3>${thread.title}</h3>
+                    <p>${thread.description}</p>
+                    <button onclick="showCreateRoomInThreadForm()">Создать комнату</button>
+                </div>
+                <div class="rooms-grid" id="threadRooms"></div>
+                <button onclick="backToThreadsList()" class="back-btn">← Назад к тредам</button>
+            `;
+
+            // Загружаем комнаты для этого треда
+            db.ref(`threads/${threadId}/rooms`).on('value', (snapshot) => {
+                const rooms = snapshot.val() || {};
+                const container = document.getElementById('threadRooms');
+                container.innerHTML = '';
+                
+                Object.keys(rooms).forEach(roomId => {
+                    const room = rooms[roomId];
+                    const roomElement = document.createElement('div');
+                    roomElement.className = 'room-card';
+                    roomElement.innerHTML = `
+                        <div class="room-title">${room.title}</div>
+                        <div class="room-desc">${room.description}</div>
+                        <div class="room-footer">
+                            <button onclick="connectToThreadRoom('${threadId}', '${roomId}')">Войти</button>
+                        </div>
+                    `;
+                    container.appendChild(roomElement);
+                });
+            });
+        }
+
+        function backToThreadsList() {
+            loadThreads();
+        }
+
+        function showCreateRoomInThreadForm() {
+            const title = prompt('Введите название комнаты:');
+            if (!title) return;
+            
+            const description = prompt('Введите описание комнаты:');
+            if (!description) return;
+            
+            const newRoomRef = db.ref(`threads/${currentThreadId}/rooms`).push();
+            newRoomRef.set({
+                title: title,
+                description: description,
+                created: Date.now(),
+                author: currentUser.name
+            }).then(() => {
+                console.log("Комната успешно создана");
+            }).catch(error => {
+                console.error("Ошибка при создании комнаты:", error);
+                alert("Произошла ошибка при создании комнаты");
+            });
+        }
+
+        function connectToThreadRoom(threadId, roomId) {
+            currentRoomId = `thread-${threadId}-${roomId}`;
+            startChat();
         }
 
         // Автоподключение если в URL есть room ID
@@ -402,6 +596,14 @@
             document.getElementById('roomIdInput').value = urlParams.get('room');
             renderPublicRooms();
         }
+
+        // Обработка нажатия Enter в поле сообщения
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
