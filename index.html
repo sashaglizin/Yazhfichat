@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Фичат">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI0ZGNjYwMCIgcng9IjIwIi8+PHRleHQgeD0iNTAiIHk9IjgwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSI+RsO8PC90ZXh0Pjwvc3ZnPg==">
     <title>Фичат - Анонимный чат</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -280,6 +285,53 @@
             border-radius: 4px;
             margin: 5px 0;
         }
+        
+        /* Новые стили для улучшенных инструкций iOS */
+        .ios-notification-steps {
+            background: #FFF3CD;
+            border: 1px solid #FFEAA7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .ios-notification-steps h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ios-notification-list {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .ios-notification-list li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .pwa-promo {
+            background: linear-gradient(135deg, #FF6600, #FF8833);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .pwa-promo h3 {
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
 
         /* Мобильная адаптация */
         @media (max-width: 768px) {
@@ -380,6 +432,11 @@
             </div>
             
             <div id="roomSection" class="hidden">
+                <div id="pwaPromo" class="pwa-promo hidden" onclick="showPWAInstallPrompt()">
+                    <h3>📱 Установите приложение</h3>
+                    <div>Для лучшей работы и получения уведомлений на iPhone</div>
+                </div>
+
                 <div class="input-group">
                     <button onclick="requestNotificationPermission()" class="btn-notification">
                         🔔 Разрешить уведомления
@@ -390,14 +447,24 @@
                     <div id="notificationStatus" class="notification-status"></div>
                 </div>
 
+                <div id="iosNotificationInstructions" class="ios-notification-steps hidden">
+                    <h4>🔔 Уведомления на iPhone</h4>
+                    <ol class="ios-notification-list">
+                        <li>Откройте приложение через иконку на главном экране (не через Safari)</li>
+                        <li>Нажмите "Разрешить уведомления" выше</li>
+                        <li>В появившемся запросе нажмите "Разрешить"</li>
+                        <li>Перейдите в Настройки → Уведомления → Фичат</li>
+                        <li>Включите "Разрешить уведомления" и выберите нужные опции</li>
+                    </ol>
+                </div>
+
                 <div id="iosInstructions" class="ios-instructions hidden">
-                    <h4>📱 Инструкция для iPhone:</h4>
+                    <h4>📱 Инструкция для установки:</h4>
                     <ol class="ios-steps">
                         <li>Нажмите "Поделиться" (квадрат со стрелкой вверх)</li>
                         <li>Выберите "На экран «Домой»"</li>
                         <li>Добавьте приложение на главный экран</li>
-                        <li>Откройте приложение с главного экрана</li>
-                        <li>Нажмите "Разрешить уведомления" выше</li>
+                        <li>Откройте приложение с главного экрана для получения уведомлений</li>
                     </ol>
                 </div>
 
@@ -465,18 +532,60 @@
         // Инициализация Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        let messaging = null;
+        
+        // Пытаемся инициализировать messaging, но это может не работать в некоторых браузерах
+        try {
+            messaging = firebase.messaging();
+        } catch (e) {
+            console.warn('Firebase Messaging не поддерживается в этом браузере', e);
+        }
 
         let currentUser = 'Аноним';
         let currentRoom = '';
         let currentRoomName = '';
         let unsubscribeMessages = null;
         let notificationCheckInterval = null;
+        let isIOS = false;
+        let isStandalone = false;
 
         // ================== УВЕДОМЛЕНИЯ ================== //
+
+        function checkIOSAndPWA() {
+            // Проверяем, является ли устройство iOS
+            isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            // Проверяем, запущено ли приложение в standalone режиме (как PWA)
+            isStandalone = window.navigator.standalone || 
+                          (window.matchMedia('(display-mode: standalone)').matches);
+            
+            // Показываем соответствующие инструкции
+            if (isIOS) {
+                document.getElementById('iosInstructions').classList.remove('hidden');
+                document.getElementById('iosNotificationInstructions').classList.remove('hidden');
+                
+                if (!isStandalone) {
+                    document.getElementById('pwaPromo').classList.remove('hidden');
+                }
+            }
+            
+            return isIOS;
+        }
+
+        function showPWAInstallPrompt() {
+            alert('Для установки приложения на iPhone:\n\n1. Нажмите кнопку "Поделиться" (квадрат со стрелкой вверх)\n2. Прокрутите вниз и выберите "На экран \"Домой\""\n3. Нажмите "Добавить" в правом верхнем углу');
+        }
 
         function updateNotificationStatus() {
             const statusElement = document.getElementById('notificationStatus');
             if (!statusElement) return;
+            
+            // Для iOS уведомления работают только в standalone режиме
+            if (isIOS && !isStandalone) {
+                statusElement.innerHTML = '📱 Установите приложение для уведомлений';
+                statusElement.style.color = 'blue';
+                return;
+            }
             
             switch(Notification.permission) {
                 case 'granted':
@@ -495,18 +604,40 @@
 
         async function requestNotificationPermission() {
             try {
+                // Для iOS уведомления работают только в standalone режиме
+                if (isIOS && !isStandalone) {
+                    showPWAInstallPrompt();
+                    return false;
+                }
+                
                 if (!('Notification' in window)) {
                     alert('Ваш браузер не поддерживает уведомления');
                     return false;
                 }
                 
                 if (Notification.permission === 'denied') {
-                    alert('Уведомления запрещены. Разрешите их в настройках браузера.');
+                    if (isIOS) {
+                        alert('Уведомления запрещены. Разрешите их в Настройки → Уведомления → Фичат.');
+                    } else {
+                        alert('Уведомления запрещены. Разрешите их в настройках браузера.');
+                    }
                     return false;
                 }
                 
                 if (Notification.permission === 'granted') {
                     alert('Уведомления уже разрешены!');
+                    
+                    // Попытка подписаться на уведомления через FCM
+                    if (messaging) {
+                        try {
+                            const token = await messaging.getToken();
+                            console.log('FCM Token:', token);
+                            // Здесь можно сохранить token на сервере для отправки уведомлений
+                        } catch (error) {
+                            console.warn('Не удалось получить FCM токен', error);
+                        }
+                    }
+                    
                     return true;
                 }
                 
@@ -514,6 +645,18 @@
                 
                 if (permission === 'granted') {
                     alert('Отлично! Теперь вы будете получать уведомления.');
+                    
+                    // Попытка подписаться на уведомления через FCM
+                    if (messaging) {
+                        try {
+                            const token = await messaging.getToken();
+                            console.log('FCM Token:', token);
+                            // Здесь можно сохранить token на сервере для отправки уведомлений
+                        } catch (error) {
+                            console.warn('Не удалось получить FCM токен', error);
+                        }
+                    }
+                    
                     startNotificationChecker();
                     return true;
                 } else {
@@ -617,7 +760,7 @@
             
             loadSavedRooms();
             updateNotificationStatus();
-            checkIfIOS();
+            checkIOSAndPWA();
             
             setTimeout(() => {
                 requestNotificationPermission();
@@ -864,14 +1007,6 @@
             return div.innerHTML;
         }
 
-        function checkIfIOS() {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            if (isIOS) {
-                document.getElementById('iosInstructions').classList.remove('hidden');
-            }
-            return isIOS;
-        }
-
         function startNotificationChecker() {
             // Проверяем каждые 30 секунд
             setInterval(checkForNotifications, 30000);
@@ -959,7 +1094,7 @@
         // Запуск при загрузке
         window.addEventListener('load', function() {
             document.getElementById('usernameInput').focus();
-            checkIfIOS();
+            checkIOSAndPWA();
             updateNotificationStatus();
             
             // Проверяем авторизацию
@@ -967,6 +1102,13 @@
             if (savedUsername) {
                 document.getElementById('usernameInput').value = savedUsername;
                 setUsername();
+            }
+            
+            // Показываем промо установки PWA для iOS пользователей
+            if (isIOS && !isStandalone) {
+                setTimeout(() => {
+                    document.getElementById('pwaPromo').classList.remove('hidden');
+                }, 2000);
             }
         });
 
