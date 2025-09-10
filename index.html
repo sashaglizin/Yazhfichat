@@ -3,607 +3,770 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анонимные комнаты</title>
+    <title>Фичат - Анонимный чат</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
     <style>
-        :root {
-            --bg: #F5F1E8;
-            --surface: #FFFCF5;
-            --primary: #B8A690;
-            --text: #4A453D;
-            --border: #D3CEC4;
-            --error: #C4A5A5;
-            --online: #A5B8A5;
-        }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            line-height: 1.5;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .screen {
-            text-align: center;
-        }
-        input, button, textarea {
-            padding: 10px 12px;
-            margin: 5px 0;
-            border-radius: 6px;
-            font-size: 16px;
-            border: 1px solid var(--border);
-            width: 100%;
+            padding: 0;
             box-sizing: border-box;
+            font-family: 'MS Sans Serif', Arial, sans-serif;
         }
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            min-width: 120px;
-            width: auto;
-            margin: 5px;
+
+        body {
+            background-color: #FFFFEE;
+            color: #000;
+            line-height: 1.4;
+            font-size: 14px;
+            padding: 0;
+            margin: 0;
         }
-        button:hover {
-            opacity: 0.9;
-        }
-        #chatScreen {
-            display: none;
-        }
-        #messages {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
             padding: 10px;
-            margin: 10px 0;
-            background: var(--surface);
         }
-        .message {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: var(--bg);
+
+        .header {
+            background-color: #FF6600;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #000;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .setup-screen, .chat-screen {
+            background-color: #F6E6CC;
+            border: 1px solid #000;
+            padding: 15px;
+            margin-bottom: 15px;
             border-radius: 4px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        input[type="text"] {
+            background-color: #FFFFEE;
+            border: 1px solid #000;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #FF6600;
+            border: 1px solid #000;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #000;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #FF8833;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .chat-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            background-color: #FFFFEE;
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #CCC;
+        }
+
+        .message-header {
+            color: #117743;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .message-time {
+            color: #707070;
+            font-size: 12px;
+        }
+
+        .message-content {
+            color: #000;
             word-break: break-word;
         }
-        .message .author {
-            font-weight: bold;
-            color: #5a4a3a;
+
+        .message-content img {
+            max-width: 100%;
+            margin-top: 5px;
+            border: 1px solid #CCC;
+            border-radius: 4px;
         }
-        .error {
-            color: var(--error);
+
+        .message-form {
+            display: flex;
+            gap: 8px;
             margin-top: 10px;
+            flex-direction: column;
         }
-        .online-counter {
-            background: var(--online);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            display: inline-block;
+
+        .message-input {
+            flex: 1;
+            background-color: #FFFFEE;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+
+        .room-info {
+            background-color: #FF6600;
+            padding: 10px;
             margin-bottom: 10px;
-        }
-        .you {
-            background: #e8e0d0;
-        }
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .room-card {
-            background: var(--surface);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .room-card:hover {
-            transform: translateY(-3px);
-        }
-        .room-title {
+            border: 1px solid #000;
             font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        .room-desc {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .room-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-radius: 4px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .room-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 10px;
         }
-        .back-btn {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
+
+        .saved-rooms {
             margin-top: 15px;
+            border-top: 1px solid #CCC;
+            padding-top: 15px;
         }
-        .create-thread-form {
-            background: var(--surface);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px auto;
-            max-width: 500px;
-        }
-        .threads-list {
-            margin-top: 15px;
-        }
-        .nav-buttons {
-            margin: 15px 0;
+
+        .saved-room {
             display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #FFFFEE;
+            border: 1px solid #CCC;
+            border-radius: 4px;
         }
-        .section-title {
-            margin: 15px 0 10px;
-            text-align: center;
+
+        .notification-badge {
+            background-color: #FF0000;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
         }
-        .input-group {
+
+        .mobile-warning {
+            background-color: #FFEE66;
+            padding: 8px;
             margin: 10px 0;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .message-input-container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .thread-header {
+            border: 1px solid #CCCC00;
             text-align: center;
-            margin-bottom: 20px;
+            border-radius: 4px;
         }
-        .thread-actions {
-            margin-bottom: 20px;
+
+        .upload-btn {
+            background-color: #117743;
+            color: white;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .header {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .setup-screen, .chat-screen {
+                padding: 12px;
+            }
+            
+            .chat-container {
+                max-height: 55vh;
+            }
+            
+            .message-form {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+            
+            .room-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .room-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            input[type="text"], button {
+                padding: 12px;
+            }
+            
+            .chat-container {
+                max-height: 50vh;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Экран ввода имени -->
-        <div id="nameScreen" class="screen">
-            <h2>Введите ваше имя</h2>
+        <div class="header">
+            <h1>Фичат - Анонимный чат</h1>
+        </div>
+
+        <div id="setupScreen" class="setup-screen">
             <div class="input-group">
-                <input type="text" id="userName" placeholder="Как вас называть?">
+                <label for="usernameInput">Ваше имя:</label>
+                <input type="text" id="usernameInput" placeholder="Аноним" maxlength="30">
             </div>
-            <button onclick="setUserName()">Продолжить</button>
-            <p id="nameError" class="error"></p>
-        </div>
-
-        <!-- Экран выбора комнаты -->
-        <div id="connectScreen" class="screen" style="display:none">
-            <h2>Выберите комнату</h2>
-            <div class="nav-buttons">
-                <button onclick="showPublicRooms()">Публичные комнаты</button>
-                <button onclick="showThreads()">Треды</button>
+            <div class="input-group">
+                <button onclick="setUsername()">Сохранить имя</button>
             </div>
-
-            <!-- Секция публичных комнат -->
-            <div id="publicSection">
+            
+            <div id="roomSection" class="hidden">
                 <div class="input-group">
-                    <input type="text" id="roomIdInput" placeholder="Или введите ID комнаты">
+                    <label for="roomNameInput">Название комнаты (будет ID):</label>
+                    <input type="text" id="roomNameInput" placeholder="Введите название комнаты" maxlength="50">
+                    <button onclick="createRoom()">Создать комнату</button>
                 </div>
-                <div>
-                    <button onclick="connectToCustomRoom()">Подключиться</button>
-                    <button onclick="createNewRoom()" class="back-btn">Создать свою</button>
-                </div>
-                <div class="rooms-grid" id="publicRooms"></div>
-            </div>
-
-            <!-- Секция тредов -->
-            <div id="threadsSection" style="display:none">
-                <!-- Форма создания треда -->
-                <div id="createThreadForm" class="create-thread-form" style="display:none">
-                    <h3>Создание нового треда</h3>
-                    <input type="text" id="threadTitle" placeholder="Название треда">
-                    <textarea id="threadDescription" placeholder="Описание треда" rows="3"></textarea>
-                    <div>
-                        <button onclick="createNewThread()">Создать тред</button>
-                        <button onclick="hideCreateThreadForm()" class="back-btn">Отмена</button>
-                    </div>
+                <div class="input-group">
+                    <label for="joinRoomInput">Название комнаты для подключения:</label>
+                    <input type="text" id="joinRoomInput" placeholder="Введите название комнаты" maxlength="50">
+                    <button onclick="joinRoom()">Подключиться</button>
                 </div>
 
-                <!-- Список тредов -->
-                <div class="threads-list">
-                    <div class="thread-actions">
-                        <button onclick="showCreateThreadForm()">Создать новый тред</button>
-                    </div>
-                    <h3 class="section-title">Доступные треды</h3>
-                    <div class="rooms-grid" id="threadsGrid"></div>
+                <div id="savedRooms" class="saved-rooms hidden">
+                    <h3>Сохраненные комнаты:</h3>
+                    <div id="savedRoomsList"></div>
+                </div>
+                
+                <div class="mobile-warning">
+                    На мобильном устройстве лучше использовать короткие названия комнат
                 </div>
             </div>
         </div>
 
-        <!-- Экран чата -->
-        <div id="chatScreen" class="screen">
-            <h3>Комната: <span id="currentRoomId"></span></h3>
-            <div class="online-counter">Онлайн: <span id="onlineCount">1</span></div>
-            <div id="messages"></div>
-            <div class="message-input-container">
-                <textarea id="messageInput" placeholder="Ваше сообщение..." rows="3"></textarea>
+        <div id="chatScreen" class="chat-screen hidden">
+            <div class="room-info">
+                <span>Комната: <span id="currentRoomName"></span></span>
                 <div>
+                    <button onclick="saveCurrentRoom()" class="btn-small">Сохранить комнату</button>
+                    <button onclick="leaveRoom()" class="btn-small">Покинуть комнату</button>
+                </div>
+            </div>
+            
+            <div id="chatContainer" class="chat-container"></div>
+            
+            <div class="message-form">
+                <input type="text" id="messageInput" class="message-input" placeholder="Сообщение..." maxlength="500">
+                <div style="display: flex; gap: 8px;">
                     <button onclick="sendMessage()">Отправить</button>
-                    <button onclick="backToRooms()" class="back-btn">← Назад к комнатам</button>
+                    <button onclick="document.getElementById('fileInput').click()" class="upload-btn">Фото</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadImage()">
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
     <script>
+        // Конфигурация Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyAptJ1ODkI8cdQWSHE50Pab7sbh0azmMv4",
-            authDomain: "chan-3ad7d.firebaseapp.com",
-            databaseURL: "https://chanik-default-rtdb.firebaseio.com",
-            projectId: "chan-3ad7d",
-            storageBucket: "chan-3ad7d.firebasestorage.app",
-            messagingSenderId: "789733189882",
-            appId: "1:789733189882:web:d81d9af1d4e1b89d66c143"
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:3990b2514c15cd80f75431",
+            measurementId: "G-X52Z0RGNC4"
         };
 
+        // Ключ imgBB API
+        const IMGBB_API_KEY = '532c1a46efe25420841b8296f7eeed3f';
+
+        // Инициализация Firebase
         const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
 
-        const PUBLIC_ROOMS = [
-            {id: "main_chat_room", title: "Общение и знакомства", desc: "Общайтесь на любые темы"},
-            {id: "anime_room", title: "Аниме", desc: "Обсуждение аниме и манги"},
-            {id: "games_room", title: "Игры", desc: "Видеоигры и настолки"},
-            {id: "business_room", title: "Бизнес", desc: "Стартапы и предпринимательство"},
-            {id: "sport_room", title: "Спорт", desc: "Футбол, хоккей и другие виды"},
-            {id: "fetish_room", title: "Фетиши", desc: "Обсуждение необычных увлечений"},
-            {id: "adult_room", title: "18+ Интим", desc: "Только для взрослых"},
-            {id: "creative_room", title: "Творчество", desc: "Рисование, музыка, писательство"},
-            {id: "school2_room", title: "Лицей №2", desc: "Для учеников и преподавателей"},
-            {id: "education_room", title: "Образование", desc: "Учёба и саморазвитие"}
-        ];
+        let currentUser = 'Аноним';
+        let currentRoom = '';
+        let currentRoomName = '';
+        let unsubscribeMessages = null;
+        let unsubscribeNotifications = null;
+        let lastMessageTimestamps = {};
+        let notificationCheckInterval = null;
 
-        let currentUser = {
-            name: "",
-            id: Math.random().toString(36).substr(2, 8)
-        };
-        let currentRoomId = "";
-        let userRef;
-        let messagesRef;
-        let threadsRef = db.ref('threads');
-        let currentThreadId = "";
-        let currentThreads = [];
-
-        function renderPublicRooms() {
-            const container = document.getElementById('publicRooms');
-            container.innerHTML = '';
+        // Загрузка сохраненных комнат при запуске
+        function loadSavedRooms() {
+            const savedRooms = JSON.parse(localStorage.getItem('savedRooms') || '{}');
+            const savedRoomsList = document.getElementById('savedRoomsList');
+            const savedRoomsContainer = document.getElementById('savedRooms');
             
-            PUBLIC_ROOMS.forEach(room => {
+            savedRoomsList.innerHTML = '';
+            
+            if (Object.keys(savedRooms).length === 0) {
+                savedRoomsContainer.classList.add('hidden');
+                return;
+            }
+            
+            savedRoomsContainer.classList.remove('hidden');
+            
+            for (const [roomId, roomData] of Object.entries(savedRooms)) {
                 const roomElement = document.createElement('div');
-                roomElement.className = 'room-card';
+                roomElement.className = 'saved-room';
                 roomElement.innerHTML = `
-                    <div class="room-title">${room.title}</div>
-                    <div class="room-desc">${room.desc}</div>
-                    <div class="room-footer">
-                        <div class="online-counter" id="room-${room.id}-count">0 онлайн</div>
-                        <button style="padding: 5px 10px;">Войти</button>
+                    <span>${roomData.name}</span>
+                    <div>
+                        <span class="notification-badge" id="badge-${roomId}" style="display: ${roomData.unread > 0 ? 'inline' : 'none'};">${roomData.unread}</span>
+                        <button onclick="joinRoomById('${roomId}', '${roomData.name}')" class="btn-small">Перейти</button>
+                        <button onclick="removeSavedRoom('${roomId}')" class="btn-small">Удалить</button>
                     </div>
                 `;
-                
-                roomElement.querySelector('button').addEventListener('click', () => {
-                    currentRoomId = room.id;
-                    startChat();
-                });
-                
-                db.ref('presence/' + room.id + '/users').on('value', (snap) => {
-                    const count = snap.val() ? Object.keys(snap.val()).length : 0;
-                    document.getElementById(`room-${room.id}-count`).textContent = `${count} онлайн`;
-                });
-                
-                container.appendChild(roomElement);
-            });
+                savedRoomsList.appendChild(roomElement);
+            }
         }
 
-        function setUserName() {
-            const name = document.getElementById('userName').value.trim();
-            if (!name) {
-                document.getElementById('nameError').textContent = "Введите имя!";
+        // Сохранение комнаты
+        function saveCurrentRoom() {
+            if (!currentRoom) return;
+            
+            const savedRooms = JSON.parse(localStorage.getItem('savedRooms') || '{}');
+            savedRooms[currentRoom] = {
+                name: currentRoomName,
+                unread: 0,
+                lastVisited: Date.now()
+            };
+            
+            localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
+            alert('Комната сохранена!');
+            loadSavedRooms();
+        }
+
+        // Удаление сохраненной комнаты
+        function removeSavedRoom(roomId) {
+            const savedRooms = JSON.parse(localStorage.getItem('savedRooms') || '{}');
+            delete savedRooms[roomId];
+            localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
+            loadSavedRooms();
+        }
+
+        // Проверка уведомлений
+        function checkForNotifications() {
+            const savedRooms = JSON.parse(localStorage.getItem('savedRooms') || '{}');
+            
+            for (const [roomId, roomData] of Object.entries(savedRooms)) {
+                if (roomId === currentRoom) continue; // Пропускаем текущую комнату
+                
+                db.collection('rooms').doc(roomId).collection('messages')
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get()
+                    .then(snapshot => {
+                        if (!snapshot.empty) {
+                            const lastMessage = snapshot.docs[0].data();
+                            const messageTime = lastMessage.timestamp.toDate().getTime();
+                            
+                            if (messageTime > (roomData.lastVisited || 0)) {
+                                // Новое сообщение!
+                                const unreadCount = roomData.unread + 1;
+                                savedRooms[roomId].unread = unreadCount;
+                                localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
+                                
+                                // Показать уведомление
+                                if (Notification.permission === 'granted' && document.hidden) {
+                                    new Notification(`Новое сообщение в ${roomData.name}`, {
+                                        body: `${lastMessage.user}: ${lastMessage.text.substring(0, 50)}...`,
+                                        icon: 'https://firebasestorage.googleapis.com/v0/b/hlypalka.firebasestorage.app/favicon.ico'
+                                    });
+                                }
+                                
+                                // Обновить бейдж
+                                const badge = document.getElementById(`badge-${roomId}`);
+                                if (badge) {
+                                    badge.textContent = unreadCount;
+                                    badge.style.display = 'inline';
+                                }
+                            }
+                        }
+                    });
+            }
+            
+            loadSavedRooms();
+        }
+
+        // Запрос разрешения на уведомления
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        function setUsername() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (username) {
+                currentUser = username;
+            } else {
+                currentUser = 'Аноним';
+            }
+            
+            document.getElementById('roomSection').classList.remove('hidden');
+            document.getElementById('usernameInput').value = currentUser;
+            
+            // Загрузка сохраненных комнат
+            loadSavedRooms();
+            
+            // Запрос разрешения на уведомления
+            requestNotificationPermission();
+            
+            // Запуск проверки уведомлений
+            if (!notificationCheckInterval) {
+                notificationCheckInterval = setInterval(checkForNotifications, 30000); // Проверка каждые 30 секунд
+            }
+        }
+
+        function createRoom() {
+            const roomName = document.getElementById('roomNameInput').value.trim();
+            if (!roomName) {
+                alert('Введите название комнаты!');
                 return;
             }
             
-            currentUser.name = name;
-            document.getElementById('nameScreen').style.display = 'none';
-            document.getElementById('connectScreen').style.display = 'block';
-            renderPublicRooms();
+            // Используем название комнаты как ID
+            const roomId = roomName.toLowerCase().replace(/[^a-z0-9а-яё]/g, '-');
+            
+            db.collection('rooms').doc(roomId).set({
+                name: roomName,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: currentUser
+            }).then(() => {
+                joinRoomById(roomId, roomName);
+            }).catch(error => {
+                console.error('Ошибка создания комнаты:', error);
+                alert('Ошибка создания комнаты: ' + error.message);
+            });
         }
 
-        function connectToCustomRoom() {
-            currentRoomId = document.getElementById('roomIdInput').value.trim();
-            if (!currentRoomId) {
-                alert("Введите ID комнаты!");
+        function joinRoom() {
+            const roomName = document.getElementById('joinRoomInput').value.trim();
+            if (!roomName) {
+                alert('Введите название комнаты!');
                 return;
             }
-            startChat();
-        }
-
-        function createNewRoom() {
-            currentRoomId = generateRoomId();
-            document.getElementById('roomIdInput').value = currentRoomId;
-            startChat();
-        }
-
-        function generateRoomId() {
-            return Math.random().toString(36).substr(2, 6).toUpperCase();
-        }
-
-        function setupPresence() {
-            if (userRef) userRef.remove();
             
-            userRef = db.ref('presence/' + currentRoomId + '/users/' + currentUser.id);
+            // Преобразуем название в ID
+            const roomId = roomName.toLowerCase().replace(/[^a-z0-9а-яё]/g, '-');
             
-            userRef.set({
-                name: currentUser.name,
-                online: true,
-                lastActive: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            userRef.onDisconnect().remove();
-
-            db.ref('presence/' + currentRoomId + '/users').on('value', (snapshot) => {
-                const users = snapshot.val() || {};
-                document.getElementById('onlineCount').textContent = Object.keys(users).length;
+            db.collection('rooms').doc(roomId).get().then(doc => {
+                if (doc.exists) {
+                    joinRoomById(roomId, doc.data().name);
+                } else {
+                    alert('Комната "' + roomName + '" не найдена!');
+                }
+            }).catch(error => {
+                console.error('Ошибка подключения:', error);
+                alert('Ошибка подключения к комнате');
             });
         }
 
-        function startChat() {
-            document.getElementById('connectScreen').style.display = 'none';
-            document.getElementById('chatScreen').style.display = 'block';
+        function joinRoomById(roomId, roomName) {
+            // Отписываемся от предыдущих сообщений
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+            }
             
-            const roomInfo = PUBLIC_ROOMS.find(r => r.id === currentRoomId);
-            let roomTitle = roomInfo ? roomInfo.title : currentRoomId;
+            currentRoom = roomId;
+            currentRoomName = roomName;
+            
+            // Обновляем время последнего посещения
+            const savedRooms = JSON.parse(localStorage.getItem('savedRooms') || '{}');
+            if (savedRooms[roomId]) {
+                savedRooms[roomId].lastVisited = Date.now();
+                savedRooms[roomId].unread = 0;
+                localStorage.setItem('savedRooms', JSON.stringify(savedRooms));
+            }
+            
+            document.getElementById('currentRoomName').textContent = roomName;
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('chatScreen').classList.remove('hidden');
+            
+            loadMessages();
+            setupMessageListener();
+            loadSavedRooms();
+            
+            setTimeout(scrollToBottom, 300);
+        }
 
-            if(currentRoomId.startsWith('thread-')) {
-                const parts = currentRoomId.split('-');
-                const threadId = parts[1];
-                const roomId = parts[2];
+        function leaveRoom() {
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+                unsubscribeMessages = null;
+            }
+            
+            currentRoom = '';
+            currentRoomName = '';
+            
+            document.getElementById('setupScreen').classList.remove('hidden');
+            document.getElementById('chatScreen').classList.add('hidden');
+            document.getElementById('chatContainer').innerHTML = '';
+            document.getElementById('joinRoomInput').value = '';
+            
+            loadSavedRooms();
+        }
+
+        // Загрузка изображения на imgBB
+        async function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Пожалуйста, выберите изображение!');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Размер файла не должен превышать 5MB!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
                 
-                // Получаем информацию о комнате из треда
-                db.ref(`threads/${threadId}/rooms/${roomId}`).once('value').then(snap => {
-                    const room = snap.val();
-                    if (room) {
-                        roomTitle = `${room.title} (${room.description})`;
+                const data = await response.json();
+                
+                if (data.success) {
+                    sendMessage(data.data.url, true);
+                } else {
+                    alert('Ошибка загрузки изображения: ' + data.error.message);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                alert('Ошибка загрузки изображения');
+            }
+            
+            fileInput.value = '';
+        }
+
+        function sendMessage(imageUrl = null, isImage = false) {
+            let messageText = document.getElementById('messageInput').value.trim();
+            
+            if (!messageText && !imageUrl) return;
+            if (!currentRoom) return;
+
+            const messageData = {
+                user: currentUser,
+                text: isImage ? `![image](${imageUrl})` : messageText,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (imageUrl) {
+                messageData.imageUrl = imageUrl;
+            }
+
+            db.collection('rooms').doc(currentRoom).collection('messages').add(messageData)
+                .then(() => {
+                    if (!isImage) {
+                        document.getElementById('messageInput').value = '';
                     }
-                    document.getElementById('currentRoomId').textContent = roomTitle;
+                })
+                .catch(error => {
+                    console.error('Ошибка отправки:', error);
+                    alert('Ошибка отправки сообщения');
                 });
-            } else {
-                document.getElementById('currentRoomId').textContent = roomTitle;
-            }
+        }
 
-            document.getElementById('messages').innerHTML = '';
+        function loadMessages() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '<div class="message">Загрузка сообщений...</div>';
             
-            if (messagesRef) messagesRef.off();
-            
-            setupPresence();
-
-            messagesRef = db.ref('rooms/' + currentRoomId + '/messages');
-            
-            messagesRef.on('child_added', function(snapshot) {
-                const msg = snapshot.val();
-                addMessageToChat(msg);
-            });
-        }
-
-        function sendMessage() {
-            const message = document.getElementById('messageInput').value.trim();
-            if (!message) {
-                alert("Введите сообщение!");
-                return;
-            }
-
-            messagesRef.push({
-                text: message,
-                timestamp: Date.now(),
-                user: currentUser.name,
-                userId: currentUser.id
-            });
-
-            document.getElementById('messageInput').value = '';
-        }
-
-        function addMessageToChat(msg) {
-            const messagesDiv = document.getElementById('messages');
-            const msgElement = document.createElement('div');
-            msgElement.className = 'message';
-            
-            if (msg.userId === currentUser.id) {
-                msgElement.innerHTML = `<span class="author">Вы:</span> ${msg.text}`;
-                msgElement.classList.add('you');
-            } else {
-                msgElement.innerHTML = `<span class="author">${msg.user}:</span> ${msg.text}`;
-            }
-            
-            messagesDiv.appendChild(msgElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function backToRooms() {
-            if (userRef) userRef.remove();
-            if (messagesRef) messagesRef.off();
-            
-            document.getElementById('chatScreen').style.display = 'none';
-            document.getElementById('connectScreen').style.display = 'block';
-            document.getElementById('messageInput').value = '';
-            showPublicRooms();
-        }
-
-        // Функции для работы с тредами
-        function showThreads() {
-            document.getElementById('publicSection').style.display = 'none';
-            document.getElementById('threadsSection').style.display = 'block';
-            document.getElementById('createThreadForm').style.display = 'none';
-            loadThreads();
-        }
-
-        function showPublicRooms() {
-            document.getElementById('threadsSection').style.display = 'none';
-            document.getElementById('publicSection').style.display = 'block';
-        }
-
-        function showCreateThreadForm() {
-            document.getElementById('createThreadForm').style.display = 'block';
-            document.getElementById('threadTitle').value = '';
-            document.getElementById('threadDescription').value = '';
-        }
-
-        function hideCreateThreadForm() {
-            document.getElementById('createThreadForm').style.display = 'none';
-        }
-
-        function createNewThread() {
-            const title = document.getElementById('threadTitle').value.trim();
-            const description = document.getElementById('threadDescription').value.trim();
-            
-            if(!title) {
-                alert("Введите название треда!");
-                return;
-            }
-            
-            if(!description) {
-                alert("Введите описание треда!");
-                return;
-            }
-
-            const newThreadRef = threadsRef.push();
-            newThreadRef.set({
-                title: title,
-                description: description,
-                created: Date.now(),
-                author: currentUser.name,
-                rooms: {}
-            }).then(() => {
-                hideCreateThreadForm();
-                loadThreads();
-            }).catch(error => {
-                console.error("Ошибка при создании треда:", error);
-                alert("Произошла ошибка при создании треда");
-            });
-        }
-
-        function loadThreads() {
-            threadsRef.on('value', (snapshot) => {
-                const threads = snapshot.val() || {};
-                currentThreads = [];
-                const container = document.getElementById('threadsGrid');
-                container.innerHTML = '';
-                
-                Object.keys(threads).forEach(threadId => {
-                    const thread = threads[threadId];
-                    currentThreads.push({...thread, id: threadId});
+            db.collection('rooms').doc(currentRoom).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .get()
+                .then(querySnapshot => {
+                    chatContainer.innerHTML = '';
                     
-                    const roomCount = thread.rooms ? Object.keys(thread.rooms).length : 0;
+                    if (querySnapshot.empty) {
+                        chatContainer.innerHTML = '<div class="message">В этой комнате пока нет сообщений. Будьте первым!</div>';
+                        return;
+                    }
                     
-                    const threadElement = document.createElement('div');
-                    threadElement.className = 'room-card';
-                    threadElement.innerHTML = `
-                        <div class="room-title">${thread.title}</div>
-                        <div class="room-desc">${thread.description}</div>
-                        <div class="room-footer">
-                            <div>Комнат: ${roomCount}</div>
-                            <button onclick="openThread('${threadId}')">Открыть</button>
-                        </div>
-                    `;
-                    
-                    container.appendChild(threadElement);
+                    querySnapshot.forEach(doc => {
+                        addMessageToChat(doc.data());
+                    });
+                    scrollToBottom();
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки сообщений:', error);
+                    chatContainer.innerHTML = '<div class="message">Ошибка загрузки сообщений</div>';
                 });
-            });
         }
 
-        function openThread(threadId) {
-            currentThreadId = threadId;
-            const thread = currentThreads.find(t => t.id === threadId);
+        function setupMessageListener() {
+            unsubscribeMessages = db.collection('rooms').doc(currentRoom).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot(snapshot => {
+                    const chatContainer = document.getElementById('chatContainer');
+                    
+                    if (chatContainer.innerHTML.includes('Загрузка сообщений')) {
+                        chatContainer.innerHTML = '';
+                    }
+                    
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            addMessageToChat(change.doc.data());
+                        }
+                    });
+                    
+                    scrollToBottom();
+                }, error => {
+                    console.error('Ошибка прослушивания сообщений:', error);
+                });
+        }
+
+        function addMessageToChat(messageData) {
+            const chatContainer = document.getElementById('chatContainer');
             
-            document.getElementById('threadsGrid').innerHTML = `
-                <div class="thread-header">
-                    <h3>${thread.title}</h3>
-                    <p>${thread.description}</p>
-                    <button onclick="showCreateRoomInThreadForm()">Создать комнату</button>
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const time = messageData.timestamp ? 
+                new Date(messageData.timestamp.toDate()).toLocaleTimeString() : 'только что';
+            
+            let content = escapeHtml(messageData.text);
+            
+            // Обработка изображений
+            if (messageData.imageUrl) {
+                content = content.replace(/!\[image\]\((.*?)\)/, `<img src="$1" alt="Загруженное изображение">`);
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span>${escapeHtml(messageData.user)}</span>
+                    <span class="message-time">${time}</span>
                 </div>
-                <div class="rooms-grid" id="threadRooms"></div>
-                <button onclick="backToThreadsList()" class="back-btn">← Назад к тредам</button>
+                <div class="message-content">${content}</div>
             `;
-
-            // Загружаем комнаты для этого треда
-            db.ref(`threads/${threadId}/rooms`).on('value', (snapshot) => {
-                const rooms = snapshot.val() || {};
-                const container = document.getElementById('threadRooms');
-                container.innerHTML = '';
-                
-                Object.keys(rooms).forEach(roomId => {
-                    const room = rooms[roomId];
-                    const roomElement = document.createElement('div');
-                    roomElement.className = 'room-card';
-                    roomElement.innerHTML = `
-                        <div class="room-title">${room.title}</div>
-                        <div class="room-desc">${room.description}</div>
-                        <div class="room-footer">
-                            <button onclick="connectToThreadRoom('${threadId}', '${roomId}')">Войти</button>
-                        </div>
-                    `;
-                    container.appendChild(roomElement);
-                });
-            });
-        }
-
-        function backToThreadsList() {
-            loadThreads();
-        }
-
-        function showCreateRoomInThreadForm() {
-            const title = prompt('Введите название комнаты:');
-            if (!title) return;
             
-            const description = prompt('Введите описание комнаты:');
-            if (!description) return;
-            
-            const newRoomRef = db.ref(`threads/${currentThreadId}/rooms`).push();
-            newRoomRef.set({
-                title: title,
-                description: description,
-                created: Date.now(),
-                author: currentUser.name
-            }).then(() => {
-                console.log("Комната успешно создана");
-            }).catch(error => {
-                console.error("Ошибка при создании комнаты:", error);
-                alert("Произошла ошибка при создании комнаты");
-            });
+            chatContainer.appendChild(messageDiv);
         }
 
-        function connectToThreadRoom(threadId, roomId) {
-            currentRoomId = `thread-${threadId}-${roomId}`;
-            startChat();
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Автоподключение если в URL есть room ID
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('room')) {
-            document.getElementById('nameScreen').style.display = 'none';
-            document.getElementById('connectScreen').style.display = 'block';
-            document.getElementById('roomIdInput').value = urlParams.get('room');
-            renderPublicRooms();
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        // Обработка нажатия Enter в поле сообщения
+        // Обработчики событий
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+            if (e.key === 'Enter') {
                 sendMessage();
             }
         });
+
+        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                setUsername();
+            }
+        });
+
+        document.getElementById('roomNameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                createRoom();
+            }
+        });
+
+        document.getElementById('joinRoomInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinRoom();
+            }
+        });
+
+        // Уведомления при скрытии вкладки
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                checkForNotifications();
+            }
+        });
+
+        // Загрузка при старте
+        window.onload = function() {
+            document.getElementById('usernameInput').focus();
+            loadSavedRooms();
+            requestNotificationPermission();
+        };
     </script>
 </body>
 </html>
