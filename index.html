@@ -548,6 +548,7 @@
         let notificationCheckInterval = null;
         let isIOS = false;
         let isStandalone = false;
+        let messageListenerActive = false;
 
         // ================== УВЕДОМЛЕНИЯ ================== //
 
@@ -593,7 +594,7 @@
                     statusElement.style.color = 'green';
                     break;
                 case 'denied':
-                    statusElement.innerHTML = '❌ Уведомления запрещены';
+                    statusElement.innerHTML = '❌ Уведomления запрещены';
                     statusElement.style.color = 'red';
                     break;
                 default:
@@ -619,7 +620,7 @@
                     if (isIOS) {
                         alert('Уведомления запрещены. Разрешите их в Настройки → Уведомления → Фичат.');
                     } else {
-                        alert('Уведомления запрещены. Разрешите их в настройках браузера.');
+                        alert('Уведomления запрещены. Разрешите их в настройках браузера.');
                     }
                     return false;
                 }
@@ -811,8 +812,10 @@
         }
 
         function joinRoomById(roomId, roomName) {
-            if (unsubscribeMessages) {
+            // Отключаем предыдущий слушатель, если он активен
+            if (unsubscribeMessages && typeof unsubscribeMessages === 'function') {
                 unsubscribeMessages();
+                messageListenerActive = false;
             }
             
             currentRoom = roomId;
@@ -838,9 +841,11 @@
         }
 
         function leaveRoom() {
-            if (unsubscribeMessages) {
+            // Отключаем слушатель сообщений
+            if (unsubscribeMessages && typeof unsubscribeMessages === 'function') {
                 unsubscribeMessages();
                 unsubscribeMessages = null;
+                messageListenerActive = false;
             }
             
             currentRoom = '';
@@ -944,6 +949,8 @@
         }
 
         function setupMessageListener() {
+            if (messageListenerActive) return;
+            
             unsubscribeMessages = db.collection('rooms').doc(currentRoom).collection('messages')
                 .orderBy('timestamp', 'asc')
                 .onSnapshot(snapshot => {
@@ -960,9 +967,11 @@
                     });
                     
                     scrollToBottom();
+                    messageListenerActive = true;
                 }, error => {
                     console.error('Ошибка прослушивания сообщений:', error);
                     document.getElementById('chatContainer').innerHTML = '<div class="error">Ошибка подключения к чату</div>';
+                    messageListenerActive = false;
                 });
         }
 
@@ -1048,13 +1057,6 @@
                                     roomId
                                 );
                             }
-                            
-                            // Обновляем бейдж
-                            const badge = document.getElementById(`badge-${roomId}`);
-                            if (badge) {
-                                badge.textContent = unreadCount;
-                                badge.style.display = 'inline';
-                            }
                         }
                     }
                 } catch (error) {
@@ -1065,60 +1067,61 @@
             loadSavedRooms();
         }
 
-        // ================== ОБРАБОТЧИКИ СОБЫТИЙ ================== //
+        // ================== ИНИЦИАЛИЗАЦИЯ ================== //
 
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем сохраненное имя пользователя
+            const savedUsername = localStorage.getItem('chatUsername');
+            if (savedUsername) {
+                currentUser = savedUsername;
+                document.getElementById('usernameInput').value = currentUser;
+                document.getElementById('roomSection').classList.remove('hidden');
+                loadSavedRooms();
             }
-        });
-
-        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                setUsername();
-            }
-        });
-
-        document.getElementById('roomNameInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                createRoom();
-            }
-        });
-
-        document.getElementById('joinRoomInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                joinRoom();
-            }
-        });
-
-        // Запуск при загрузке
-        window.addEventListener('load', function() {
-            document.getElementById('usernameInput').focus();
+            
+            // Проверяем iOS и PWA статус
             checkIOSAndPWA();
             updateNotificationStatus();
             
-            // Проверяем авторизацию
-            const savedUsername = localStorage.getItem('chatUsername');
-            if (savedUsername) {
-                document.getElementById('usernameInput').value = savedUsername;
-                setUsername();
-            }
+            // Обработка отправки сообщения по Enter
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
             
-            // Показываем промо установки PWA для iOS пользователей
-            if (isIOS && !isStandalone) {
+            // Сохраняем имя при изменении
+            document.getElementById('usernameInput').addEventListener('change', function() {
+                currentUser = this.value.trim() || 'Аноним';
+                localStorage.setItem('chatUsername', currentUser);
+            });
+            
+            // Автоматически запрашиваем разрешение на уведомления
+            if (Notification.permission === 'default') {
                 setTimeout(() => {
-                    document.getElementById('pwaPromo').classList.remove('hidden');
+                    if (currentUser !== 'Аноним') {
+                        requestNotificationPermission();
+                    }
                 }, 2000);
             }
         });
 
-        // Сохраняем имя при выходе
-        window.addEventListener('beforeunload', function() {
-            if (currentUser && currentUser !== 'Аноним') {
-                localStorage.setItem('chatUsername', currentUser);
-            }
-        });
-
+        // Обработка FCM сообщений (если messaging доступен)
+        if (messaging) {
+            messaging.onMessage((payload) => {
+                console.log('Сообщение получено:', payload);
+                
+                const { title, body, roomId } = payload.data || {};
+                
+                if (title && body) {
+                    if (Notification.permission === 'granted') {
+                        new Notification(title, { body });
+                    } else {
+                        showCustomNotification(title, body, roomId);
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
