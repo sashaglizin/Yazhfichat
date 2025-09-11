@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - Фичат</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #FFFFEE;
+            color: #000;
+            line-height: 1.4;
+            font-size: 14px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .header {
+            background-color: #FF6600;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #000;
+            font-weight: bold;
+            font-size: 1.5rem;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .profile-screen {
+            background-color: #F6E6CC;
+            border: 1px solid #000;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            cursor: pointer;
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #FF6600;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .avatar-container:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #117743;
+            margin-bottom: 5px;
+        }
+
+        .user-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        input[type="text"], input[type="password"], input[type="email"] {
+            background-color: #FFFFEE;
+            border: 1px solid #000;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+        }
+
+        button {
+            background-color: #FF6600;
+            border: 1px solid #000;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #000;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #FF8833;
+        }
+
+        .btn-primary {
+            background-color: #117743;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #3366CC;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #CC3333;
+            color: white;
+        }
+
+        .btn-back {
+            background-color: #666;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            background-color: #FFEEEE;
+            color: #FF0000;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background-color: #EEFFEE;
+            color: #007700;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .stats {
+            background-color: #FFFFEE;
+            border: 1px solid #CCC;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #EEE;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .header {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .profile-screen {
+                padding: 15px;
+            }
+            
+            .avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            input[type="text"], input[type="password"], input[type="email"], button {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Мой Профиль</h1>
+            <div class="header-buttons">
+                <button onclick="goToChat()" class="btn-secondary">💬 Чат</button>
+                <button onclick="goToHome()" class="btn-back">← Назад</button>
+            </div>
+        </div>
+
+        <div id="profileScreen" class="profile-screen">
+            <div class="profile-header">
+                <div class="avatar-container" onclick="document.getElementById('avatarInput').click()">
+                    <img id="avatarImage" class="avatar-image" src="" alt="Аватар">
+                    <div class="avatar-overlay">
+                        Нажмите для<br>смены аватара
+                    </div>
+                </div>
+                <input type="file" id="avatarInput" class="file-input" accept="image/*" onchange="uploadAvatar()">
+                
+                <div class="user-info">
+                    <div id="userName" class="user-name"></div>
+                    <div id="userEmail" class="user-email"></div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error hidden"></div>
+            <div id="successMessage" class="success hidden"></div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Дата регистрации:</span>
+                    <span id="joinDate"></span>
+                </div>
+                <div class="stat-item">
+                    <span>ID пользователя:</span>
+                    <span id="userId"></span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="usernameInput">Имя пользователя:</label>
+                <input type="text" id="usernameInput" placeholder="Введите новое имя" maxlength="30">
+                <button onclick="updateUsername()" class="btn-primary">✏️ Изменить имя</button>
+            </div>
+
+            <div class="input-group">
+                <label for="emailInput">Email:</label>
+                <input type="email" id="emailInput" placeholder="Введите новый email" disabled>
+                <small style="color: #666;">Email используется для входа и не может быть изменен</small>
+            </div>
+
+            <div class="input-group">
+                <label for="currentPassword">Текущий пароль:</label>
+                <div class="password-input">
+                    <input type="password" id="currentPassword" placeholder="Введите текущий пароль">
+                    <button class="toggle-password" onclick="togglePassword('currentPassword')">👁️</button>
+                </div>
+                
+                <label for="newPassword">Новый пароль:</label>
+                <div class="password-input">
+                    <input type="password" id="newPassword" placeholder="Введите новый пароль" maxlength="30">
+                    <button class="toggle-password" onclick="togglePassword('newPassword')">👁️</button>
+                </div>
+                
+                <label for="confirmPassword">Подтвердите пароль:</label>
+                <div class="password-input">
+                    <input type="password" id="confirmPassword" placeholder="Подтвердите новый пароль" maxlength="30">
+                    <button class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</button>
+                </div>
+                
+                <button onclick="updatePassword()" class="btn-primary">🔒 Изменить пароль</button>
+            </div>
+
+            <div class="input-group">
+                <button onclick="logout()" class="btn-danger">🚪 Выйти из аккаунта</button>
+            </div>
+        </div>
+
+        <div id="loadingScreen" class="loading">
+            Загрузка профиля...
+        </div>
+    </div>
+
+    <script>
+        // Firebase конфигурация
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
+            measurementId: "G-T5N77WGWYP"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Ключ API для imgBB
+        const IMGBB_API_KEY = '532c1a46efe25420841b8296f7eeed3f';
+
+        // DOM элементы
+        const profileScreen = document.getElementById('profileScreen');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const avatarImage = document.getElementById('avatarImage');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const usernameInput = document.getElementById('usernameInput');
+        const emailInput = document.getElementById('emailInput');
+        const currentPassword = document.getElementById('currentPassword');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const joinDate = document.getElementById('joinDate');
+        const userId = document.getElementById('userId');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Текущий пользователь
+        let currentUser = null;
+        let userProfile = null;
+
+        // Инициализация при загрузке
+        function init() {
+            checkAuthState();
+        }
+
+        // Проверка состояния аутентификации
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadUserProfile(user.uid);
+                } else {
+                    // Если пользователь не авторизован, перенаправляем на главную
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // Загрузка профиля пользователя
+        async function loadUserProfile(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                
+                if (userDoc.exists) {
+                    userProfile = userDoc.data();
+                    displayProfile(userProfile);
+                } else {
+                    showError('Профиль не найден');
+                }
+                
+                loadingScreen.classList.add('hidden');
+                profileScreen.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                showError('Ошибка загрузки профиля');
+                loadingScreen.classList.add('hidden');
+            }
+        }
+
+        // Отображение профиля
+        function displayProfile(profile) {
+            // Аватар
+            avatarImage.src = profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username)}&background=FF6600&color=fff&size=150`;
+            
+            // Имя и email
+            userName.textContent = profile.username;
+            userEmail.textContent = currentUser.email;
+            
+            // Поля формы
+            usernameInput.value = profile.username;
+            emailInput.value = currentUser.email;
+            
+            // Статистика
+            if (profile.createdAt) {
+                const date = profile.createdAt.toDate();
+                joinDate.textContent = date.toLocaleDateString('ru-RU');
+            } else {
+                joinDate.textContent = 'Неизвестно';
+            }
+            
+            userId.textContent = currentUser.uid.substring(0, 8) + '...';
+        }
+
+        // Загрузка аватара
+        async function uploadAvatar() {
+            const fileInput = document.getElementById('avatarInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            // Проверка размера файла
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Размер изображения не должен превышать 5MB');
+                return;
+            }
+            
+            // Проверка типа файла
+            if (!file.type.startsWith('image/')) {
+                showError('Пожалуйста, выберите изображение');
+                return;
+            }
+            
+            showLoading('Загрузка аватара...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Сохраняем URL аватара в профиль
+                    await db.collection('users').doc(currentUser.uid).update({
+                        avatar: data.data.url,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Обновляем аватар на странице
+                    avatarImage.src = data.data.url;
+                    
+                    showSuccess('Аватар успешно обновлен!');
+                } else {
+                    showError('Ошибка загрузки изображения');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки аватара:', error);
+                showError('Ошибка загрузки аватара');
+            }
+        }
+
+        // Обновление имени пользователя
+        async function updateUsername() {
+            const newUsername = usernameInput.value.trim();
+            
+            if (!newUsername) {
+                showError('Введите новое имя пользователя');
+                return;
+            }
+            
+            if (newUsername === userProfile.username) {
+                showError('Это ваше текущее имя');
+                return;
+            }
+            
+            // Проверка уникальности имени
+            try {
+                const usernameSnapshot = await db.collection('users')
+                    .where('username', '==', newUsername)
+                    .get();
+                
+                if (!usernameSnapshot.empty) {
+                    showError('Это имя пользователя уже занято');
+                    return;
+                }
+                
+                showLoading('Обновление имени...');
+                
+                // Обновляем имя в Firestore
+                await db.collection('users').doc(currentUser.uid).update({
+                    username: newUsername,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Обновляем displayName в Auth
+                await currentUser.updateProfile({
+                    displayName: newUsername
+                });
+                
+                // Обновляем локальные данные
+                userProfile.username = newUsername;
+                userName.textContent = newUsername;
+                
+                showSuccess('Имя успешно обновлено!');
+                
+            } catch (error) {
+                console.error('Ошибка обновления имени:', error);
+                showError('Ошибка обновления имени: ' + error.message);
+            }
+        }
+
+        // Обновление пароля
+        async function updatePassword() {
+            const currentPass = currentPassword.value;
+            const newPass = newPassword.value;
+            const confirmPass = confirmPassword.value;
+            
+            if (!currentPass || !newPass || !confirmPass) {
+                showError('Заполните все поля паролей');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                showError('Новые пароли не совпадают');
+                return;
+            }
+            
+            if (newPass.length < 6) {
+                showError('Пароль должен содержать минимум 6 символов');
+                return;
+            }
+            
+            showLoading('Обновление пароля...');
+            
+            try {
+                // Реаутентификация пользователя
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    currentUser.email,
+                    currentPass
+                );
+                
+                await currentUser.reauthenticateWithCredential(credential);
+                
+                // Обновление пароля
+                await currentUser.updatePassword(newPass);
+                
+                // Очищаем поля паролей
+                currentPassword.value = '';
+                newPassword.value = '';
+                confirmPassword.value = '';
+                
+                showSuccess('Пароль успешно обновлен!');
+                
+            } catch (error) {
+                console.error('Ошибка обновления пароля:', error);
+                
+                if (error.code === 'auth/wrong-password') {
+                    showError('Неверный текущий пароль');
+                } else if (error.code === 'auth/weak-password') {
+                    showError('Пароль слишком слабый');
+                } else {
+                    showError('Ошибка обновления пароля: ' + error.message);
+                }
+            }
+        }
+
+        // Выход из аккаунта
+        async function logout() {
+            try {
+                await auth.signOut();
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Ошибка выхода:', error);
+                showError('Ошибка выхода из аккаунта');
+            }
+        }
+
+        // Вспомогательные функции
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+            
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showLoading(message) {
+            // Можно добавить индикатор загрузки
+            console.log(message);
+        }
+
+        function goToChat() {
+            window.location.href = 'chat.html';
+        }
+
+        function goToHome() {
+            window.location.href = 'index.html';
+        }
+
+        // Инициализация при загрузке
+        window.onload = init;
+    </script>
+</body>
+</html>
