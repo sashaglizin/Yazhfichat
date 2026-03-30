@@ -2,435 +2,457 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чаты - Фичат</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2d1b4e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="YzFi">
+    <title>YzFi — чаты</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
+        :root {
+            --bg: #1a0f2e;
+            --panel: #2d1b4e;
+            --panel2: #3d2666;
+            --cream: #f5e6ff;
+            --text: #e8d5f2;
+            --green: #7fdb8a;
+            --accent: #b47aff;
+            --header: #4a2f7a;
+            --border: #110822;
+            --shadow: rgba(0,0,0,.35);
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'MS Sans Serif', Arial, sans-serif;
         }
-
+        html, body {
+            height: 100%;
+            height: 100dvh;
+        }
         body {
-            background-color: #FFFFEE;
-            color: #000;
-            line-height: 1.4;
-            font-size: 14px;
-            padding: 0;
-            margin: 0;
+            font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.45;
+            background: var(--bg);
+            color: var(--text);
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            -webkit-tap-highlight-color: transparent;
         }
-
-        .container {
-            max-width: 100%;
+        .app {
+            max-width: 520px;
             margin: 0 auto;
-            padding: 10px;
-        }
-
-        .header {
-            background-color: #FF6600;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #000;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            min-height: 100dvh;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            color: #000;
-            font-weight: bold;
-            font-size: 1.5rem;
-            flex: 1;
-            text-align: center;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chats-screen {
-            background-color: #F6E6CC;
-            border: 1px solid #000;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-
-        .chat-screen {
-            background-color: #F6E6CC;
-            border: 1px solid #000;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-
-        .search-container {
-            margin-bottom: 15px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .search-input {
-            flex: 1;
-            background-color: #FFFFEE;
-            border: 1px solid #000;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 4px;
-        }
-
-        .chats-list {
-            max-height: 60vh;
-            overflow-y: auto;
-            background-color: #FFFFEE;
-            border: 1px solid #000;
-            border-radius: 4px;
-        }
-
-        .chat-item {
-            padding: 12px;
-            border-bottom: 1px solid #EEE;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .chat-item:hover {
-            background-color: #F6E6CC;
-        }
-
-        .chat-item:last-child {
-            border-bottom: none;
-        }
-
-        .chat-item.unread {
-            background-color: #FFF0E0;
-            border-left: 4px solid #FF6600;
-        }
-
-        .chat-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #FF6600;
-        }
-
-        .chat-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .chat-name {
-            font-weight: bold;
-            color: #117743;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-last-message {
-            color: #666;
-            font-size: 13px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-meta {
-            text-align: right;
-            min-width: 60px;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: #707070;
-            margin-bottom: 4px;
-        }
-
-        .chat-unread {
-            background-color: #FF6600;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: auto;
-        }
-
-        .chat-container {
-            max-height: 60vh;
-            overflow-y: auto;
-            background-color: #FFFFEE;
-            border: 1px solid #000;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-bottom: 1px solid #CCC;
-        }
-
-        .message-header {
-            color: #117743;
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-
-        .message-time {
-            color: #707070;
-            font-size: 12px;
-        }
-
-        .message-content {
-            color: #000;
-            word-break: break-word;
-        }
-
-        .message-content img {
-            max-width: 100%;
-            margin-top: 5px;
-            border: 1px solid #CCC;
-            border-radius: 4px;
-            max-height: 300px;
-            object-fit: contain;
-        }
-
-        .message-form {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
             flex-direction: column;
         }
-
-        .message-input {
-            flex: 1;
-            background-color: #FFFFEE;
-            border: 1px solid #000;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 4px;
+        .header {
+            flex-shrink: 0;
+            background: linear-gradient(180deg, var(--header) 0%, var(--panel) 100%);
+            border: 2px solid var(--border);
+            border-radius: 0 0 8px 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 0 var(--border);
         }
-
-        .chat-header {
-            background-color: #FF6600;
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.15rem;
+            letter-spacing: 0.04em;
+            color: var(--cream);
+            text-shadow: 1px 1px 0 var(--border);
+        }
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        button, .btn {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            padding: 10px 12px;
+            cursor: pointer;
+            background: var(--accent);
+            color: #1a0f2e;
+            box-shadow: 2px 2px 0 var(--border);
+            touch-action: manipulation;
+            transition: all 0.05s ease;
+        }
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 var(--border);
+        }
+        button.secondary {
+            background: var(--panel2);
+            color: var(--cream);
+        }
+        button.small {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+        button.danger {
+            background: #c44;
+            color: #fff;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            min-height: 0;
+        }
+        .panel {
+            background: var(--panel);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 3px 3px 0 var(--shadow);
+        }
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="search"] {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 14px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: var(--cream);
+            color: #1a0f2e;
+        }
+        .chats-list, .user-search-list {
+            max-height: min(52vh, 420px);
+            overflow-y: auto;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: #12081f;
+        }
+        @media (min-width: 600px) {
+            .chats-list, .user-search-list { max-height: 480px; }
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #2a1a45;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+        .chat-item:hover { background: var(--panel2); }
+        .chat-item.unread {
+            border-left: 4px solid var(--accent);
+            background: #251840;
+        }
+        .chat-item:last-child { border-bottom: none; }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            flex-shrink: 0;
+        }
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-name {
+            font-weight: bold;
+            color: var(--green);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-preview {
+            font-size: 13px;
+            color: #b9a0d4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-meta {
+            text-align: right;
+            font-size: 12px;
+            color: #8a739e;
+            flex-shrink: 0;
+        }
+        .badge-unread {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            background: var(--accent);
+            color: #1a0f2e;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .group-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .hidden { display: none !important; }
+        .empty {
+            text-align: center;
+            padding: 32px 16px;
+            color: #8a739e;
+        }
+        .empty strong { color: var(--green); display: block; margin-bottom: 8px; }
+        .error-toast {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            background: #5a1a1a;
+            border: 2px solid var(--border);
+            color: #ffcccc;
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 200;
+            font-size: 14px;
+            box-shadow: 4px 4px 0 var(--border);
+        }
+        .success-toast {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            background: #1a5a2a;
+            border: 2px solid var(--border);
+            color: #ccffcc;
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 200;
+            font-size: 14px;
+            box-shadow: 4px 4px 0 var(--border);
+        }
+        /* chat view */
+        .chat-view .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .chat-view .chat-header .title {
+            flex: 1;
+            font-weight: bold;
+            color: var(--cream);
+            font-size: 15px;
+        }
+        .messages {
+            flex: 1;
+            min-height: 200px;
+            max-height: min(55vh, 520px);
+            overflow-y: auto;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: #12081f;
             padding: 10px;
             margin-bottom: 10px;
-            border: 1px solid #000;
-            font-weight: bold;
+        }
+        @media (max-height: 640px) {
+            .messages { max-height: 42vh; }
+            .chats-list, .user-search-list { max-height: 38vh; }
+        }
+        .msg {
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a1a45;
+            word-break: break-word;
+        }
+        .msg-head {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .msg-user { color: var(--green); font-weight: bold; }
+        .msg-time { color: #8a739e; flex-shrink: 0; }
+        .msg-body { color: var(--text); }
+        .msg-body img {
+            max-width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            border: 2px solid var(--border);
             border-radius: 4px;
+            margin-top: 6px;
+            display: block;
         }
-
-        .back-button {
-            background-color: #666;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .composer {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 4px;
+            background: var(--bg);
+            padding-bottom: env(safe-area-inset-bottom);
         }
-
-        .hidden {
-            display: none;
+        .composer-row {
+            display: flex;
+            gap: 8px;
         }
-
-        .loading {
+        .composer-row input[type="text"] { flex: 1; }
+        .composer-row button { flex: 1; }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.85);
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 12px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+        @media (min-width: 480px) {
+            .modal-overlay { align-items: center; }
+        }
+        .modal {
+            background: var(--panel);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90dvh;
+            overflow-y: auto;
+            padding: 16px;
+            box-shadow: 6px 6px 0 var(--border);
+        }
+        .modal h3 {
+            color: var(--cream);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+        .modal .field { margin-bottom: 12px; }
+        .modal label {
+            display: block;
+            font-size: 12px;
+            color: #b9a0d4;
+            margin-bottom: 4px;
+        }
+        .hint { font-size: 12px; color: #8a739e; margin-top: 6px; }
+        .mono { font-family: ui-monospace, monospace; font-size: 13px; }
+        .loading-spinner {
             text-align: center;
             padding: 20px;
-            color: #666;
-        }
-
-        .error {
-            background-color: #FFEEEE;
-            color: #FF0000;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: #117743;
-        }
-
-        button {
-            background-color: #FF6600;
-            border: 1px solid #000;
-            padding: 10px 16px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #000;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #FF8833;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background-color: #117743;
-            color: white;
-        }
-
-        .btn-secondary {
-            background-color: #3366CC;
-            color: white;
-        }
-
-        .upload-btn {
-            background-color: #117743;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 8px;
-            }
-            
-            .header {
-                padding: 10px;
-                margin-bottom: 10px;
-            }
-            
-            .header h1 {
-                font-size: 1.3rem;
-            }
-            
-            .chats-screen, .chat-screen {
-                padding: 12px;
-            }
-            
-            .chat-container, .chats-list {
-                max-height: 55vh;
-            }
-            
-            .message-form {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.2rem;
-            }
-            
-            input[type="text"], button {
-                padding: 12px;
-            }
-            
-            .chat-container, .chats-list {
-                max-height: 50vh;
-            }
-            
-            .chat-avatar {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .chat-item {
-                padding: 8px;
-                gap: 8px;
-            }
+            color: var(--accent);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Мои Чаты</h1>
-            <div class="header-buttons">
-                <button onclick="goToHome()" class="btn-secondary">🏠 Комнаты</button>
-                <button onclick="goToProfile()" class="btn-primary">👤 Профиль</button>
+    <div class="app">
+        <header class="header">
+            <div class="header-title" id="screenTitle">YzFi</div>
+            <div class="header-actions">
+                <button type="button" class="small secondary" id="btnProfile" onclick="goProfile()">👤 я</button>
             </div>
-        </div>
+        </header>
 
-        <!-- Экран списка чатов -->
-        <div id="chatsScreen" class="chats-screen">
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Поиск чатов..." oninput="filterChats()">
-                <button onclick="searchUsers()">🔍</button>
-            </div>
-
-            <div id="chatsList" class="chats-list">
-                <div class="loading">Загрузка чатов...</div>
-            </div>
-
-            <div id="userSearchResults" class="chats-list hidden"></div>
-
-            <div id="emptyState" class="empty-state hidden">
-                <h3>У вас пока нет чатов</h3>
-                <p>Найдите пользователей через поиск и начните общение!</p>
-            </div>
-        </div>
-
-        <!-- Экран конкретного чата -->
-        <div id="chatScreen" class="chat-screen hidden">
-            <div class="chat-header">
-                <button onclick="backToChats()" class="back-button">← Назад</button>
-                <span id="currentChatName">Чат с пользователем</span>
-                <div id="chatUserInfo"></div>
-            </div>
-            
-            <div id="chatContainer" class="chat-container">
-                <div class="loading">Загрузка сообщений...</div>
-            </div>
-            
-            <div class="message-form">
-                <input type="text" id="messageInput" class="message-input" placeholder="Введите сообщение..." maxlength="500" onkeypress="handleKeyPress(event)">
-                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="uploadImage()">
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="sendMessage()" style="flex: 2;">📤 Отправить</button>
-                    <button onclick="document.getElementById('imageInput').click()" class="upload-btn" style="flex: 1;">📷 Фото</button>
+        <main class="main" id="listMain">
+            <div class="panel">
+                <div class="search-row">
+                    <input type="search" id="searchInput" placeholder="🔍 Поиск по нику или $юз..." autocomplete="off">
+                    <button type="button" class="small" id="btnSearchUsers" onclick="runUserSearch()">найти</button>
+                </div>
+                <div id="userSearchWrap" class="user-search-list hidden"></div>
+                <div class="group-actions">
+                    <button type="button" class="secondary" onclick="openCreateGroupModal()">➕ группа</button>
+                    <button type="button" class="secondary" onclick="openJoinModal()">🔑 войти по коду</button>
                 </div>
             </div>
-        </div>
+            <div class="chats-list" id="chatsList">
+                <div class="empty">⏳ Загрузка...</div>
+            </div>
+            <div id="emptyChats" class="empty hidden">
+                <strong>✨ Пока пусто</strong>
+                Найди человека выше или создай группу.
+            </div>
+        </main>
 
-        <div id="errorMessage" class="error hidden"></div>
+        <main class="main chat-view hidden" id="chatMain">
+            <div class="panel chat-header">
+                <button type="button" class="small secondary" onclick="backToList()">←</button>
+                <div class="title" id="chatTitle">чат</div>
+                <span id="chatExtra" class="mono" style="font-size:12px;color:#b9a0d4;max-width:40%;overflow:hidden;text-overflow:ellipsis;"></span>
+            </div>
+            <div class="messages" id="messagesEl"></div>
+            <div class="composer">
+                <input type="text" id="messageInput" placeholder="💬 Сообщение..." maxlength="2000" autocomplete="off">
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                <div class="composer-row">
+                    <button type="button" onclick="sendNow()">📤 отправить</button>
+                    <button type="button" class="secondary" onclick="pickImage()">🖼️ фото</button>
+                </div>
+            </div>
+        </main>
     </div>
 
+    <div id="modalCreate" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>✨ Создать группу</h3>
+            <div class="field">
+                <label>📛 Название группы</label>
+                <input type="text" id="newGroupName" maxlength="40" placeholder="Например: Ночной /b/">
+            </div>
+            <div class="field">
+                <label>🔑 Код приглашения</label>
+                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--text);">
+                    <input type="radio" name="codeMode" value="random" checked> 🎲 случайный
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;color:var(--text);">
+                    <input type="radio" name="codeMode" value="custom"> ✍️ свой ($ник)
+                </label>
+                <input type="text" id="customGroupCode" class="hidden" maxlength="24" placeholder="$mycrew" style="margin-top:8px;width:100%;">
+            </div>
+            <p class="hint">💡 Свой код: от 3 символов, формат с $, латиница, цифры, _</p>
+            <div class="composer-row">
+                <button type="button" onclick="submitCreateGroup()">✅ создать</button>
+                <button type="button" class="secondary" onclick="closeModals()">❌ отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalJoin" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>🔓 Войти по коду</h3>
+            <div class="field">
+                <label>🔑 Код группы</label>
+                <input type="text" id="joinCodeInput" maxlength="32" placeholder="ABC12XY или $mycrew">
+            </div>
+            <div class="composer-row">
+                <button type="button" onclick="submitJoinGroup()">✅ войти</button>
+                <button type="button" class="secondary" onclick="closeModals()">❌ отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="error-toast hidden"></div>
+    <div id="successToast" class="success-toast hidden"></div>
+
     <script>
-        // Firebase конфигурация
         const firebaseConfig = {
             apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
             authDomain: "hlypalka.firebaseapp.com",
@@ -440,468 +462,838 @@
             appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
             measurementId: "G-T5N77WGWYP"
         };
-
-        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-
-        // Ключ API для imgBB
         const IMGBB_API_KEY = '532c1a46efe25420841b8296f7eeed3f';
 
-        // DOM элементы
-        const chatsScreen = document.getElementById('chatsScreen');
-        const chatScreen = document.getElementById('chatScreen');
-        const chatsList = document.getElementById('chatsList');
-        const searchInput = document.getElementById('searchInput');
-        const userSearchResults = document.getElementById('userSearchResults');
-        const emptyState = document.getElementById('emptyState');
-        const chatContainer = document.getElementById('chatContainer');
-        const messageInput = document.getElementById('messageInput');
-        const currentChatName = document.getElementById('currentChatName');
-        const chatUserInfo = document.getElementById('chatUserInfo');
-        const errorMessage = document.getElementById('errorMessage');
-
-        // Текущий пользователь и состояние
         let currentUser = null;
-        let currentChat = null;
-        let currentChatUser = null;
+        let myUsername = '';
+        let myUserData = null;
         let unsubscribeChats = null;
         let unsubscribeMessages = null;
         let chats = [];
+
+        let chatMode = null;
+        let dmPeerId = null;
+        let dmPeerProfile = null;
+        let groupIdOpen = null;
+        let groupMetaOpen = null;
         let lastUploadedImage = null;
 
-        // Инициализация при загрузке
-        function init() {
-            checkAuthState();
+        const listMain = document.getElementById('listMain');
+        const chatMain = document.getElementById('chatMain');
+        const chatsList = document.getElementById('chatsList');
+        const emptyChats = document.getElementById('emptyChats');
+        const searchInput = document.getElementById('searchInput');
+        const userSearchWrap = document.getElementById('userSearchWrap');
+        const messagesEl = document.getElementById('messagesEl');
+        const messageInput = document.getElementById('messageInput');
+        const chatTitle = document.getElementById('chatTitle');
+        const chatExtra = document.getElementById('chatExtra');
+        const screenTitle = document.getElementById('screenTitle');
+
+        // Утилиты
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
         }
 
-        // Проверка состояния аутентификации
-        function checkAuthState() {
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    currentUser = user;
-                    loadChats();
-                } else {
-                    window.location.href = 'index.html';
-                }
-            });
+        function showError(msg) {
+            const el = document.getElementById('errorToast');
+            el.textContent = '❌ ' + msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
         }
 
-        // Загрузка чатов пользователя
-        async function loadChats() {
-            try {
-                unsubscribeChats = db.collection('users').doc(currentUser.uid)
-                    .collection('chats')
-                    .orderBy('lastMessageTime', 'desc')
-                    .onSnapshot(async (snapshot) => {
-                        chats = [];
-                        chatsList.innerHTML = '';
-
-                        if (snapshot.empty) {
-                            emptyState.classList.remove('hidden');
-                            return;
-                        }
-
-                        emptyState.classList.add('hidden');
-
-                        for (const doc of snapshot.docs) {
-                            const chatData = doc.data();
-                            const userDoc = await db.collection('users').doc(chatData.userId).get();
-                            
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
-                                chats.push({
-                                    id: doc.id,
-                                    ...chatData,
-                                    userData: userData
-                                });
-
-                                displayChatItem(doc.id, chatData, userData);
-                            }
-                        }
-                    });
-
-            } catch (error) {
-                console.error('Ошибка загрузки чатов:', error);
-                showError('Ошибка загрузки чатов');
-            }
+        function showSuccess(msg) {
+            const el = document.getElementById('successToast');
+            el.textContent = '✅ ' + msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
         }
 
-        // Отображение элемента чата
-        function displayChatItem(chatId, chatData, userData) {
-            const chatItem = document.createElement('div');
-            chatItem.className = `chat-item ${chatData.unreadCount > 0 ? 'unread' : ''}`;
-            chatItem.onclick = () => openChat(chatId, userData);
-
-            const time = chatData.lastMessageTime ? 
-                formatTime(chatData.lastMessageTime.toDate()) : '';
-
-            chatItem.innerHTML = `
-                <img src="${userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username)}&background=FF6600&color=fff&size=50`}" 
-                     class="chat-avatar" 
-                     alt="${userData.username}">
-                <div class="chat-info">
-                    <div class="chat-name">${userData.username}</div>
-                    <div class="chat-last-message">${chatData.lastMessage || 'Нет сообщений'}</div>
-                </div>
-                <div class="chat-meta">
-                    <div class="chat-time">${time}</div>
-                    ${chatData.unreadCount > 0 ? 
-                        `<div class="chat-unread">${chatData.unreadCount}</div>` : 
-                        '<div style="width: 20px;"></div>'}
-                </div>
-            `;
-
-            chatsList.appendChild(chatItem);
+        function formatTime(d) {
+            if (!d) return '';
+            return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Поиск пользователей
-        async function searchUsers() {
-            const searchTerm = searchInput.value.trim();
-            if (!searchTerm) {
-                userSearchResults.classList.add('hidden');
-                return;
-            }
-
-            try {
-                const usersRef = db.collection('users');
-                const snapshot = await usersRef
-                    .where('username', '>=', searchTerm)
-                    .where('username', '<=', searchTerm + '\uf8ff')
-                    .limit(10)
-                    .get();
-
-                userSearchResults.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    userSearchResults.innerHTML = '<div class="chat-item">Пользователи не найдены</div>';
-                } else {
-                    snapshot.forEach(doc => {
-                        const user = doc.data();
-                        if (user.username !== currentUser.displayName && doc.id !== currentUser.uid) {
-                            const userElement = document.createElement('div');
-                            userElement.className = 'chat-item';
-                            userElement.onclick = () => startChatWithUser(user.username, doc.id);
-                            userElement.innerHTML = `
-                                <img src="${user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=FF6600&color=fff&size=50`}" 
-                                     class="chat-avatar" 
-                                     alt="${user.username}">
-                                <div class="chat-info">
-                                    <div class="chat-name">${user.username}</div>
-                                    <div class="chat-last-message">Начать чат</div>
-                                </div>
-                                <div class="chat-meta">
-                                    <button class="btn-small" style="background: #117743; color: white;">💬</button>
-                                </div>
-                            `;
-                            userSearchResults.appendChild(userElement);
-                        }
-                    });
-                }
-                
-                userSearchResults.classList.remove('hidden');
-            } catch (error) {
-                console.error('Ошибка поиска:', error);
-                showError('Ошибка поиска пользователей');
-            }
-        }
-
-        // Фильтрация чатов
-        function filterChats() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const chatItems = chatsList.querySelectorAll('.chat-item');
-            
-            chatItems.forEach(item => {
-                const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
-                if (chatName.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
-
-        // Начать чат с пользователем
-        async function startChatWithUser(username, userId) {
-            try {
-                // Проверяем, есть ли уже чат с этим пользователем
-                const existingChat = await db.collection('users').doc(currentUser.uid)
-                    .collection('chats').doc(userId)
-                    .get();
-
-                if (existingChat.exists) {
-                    // Открываем существующий чат
-                    const userDoc = await db.collection('users').doc(userId).get();
-                    openChat(userId, userDoc.data());
-                } else {
-                    // Создаем новый чат
-                    const userDoc = await db.collection('users').doc(userId).get();
-                    const userData = userDoc.data();
-
-                    const chatData = {
-                        userId: userId,
-                        username: userData.username,
-                        lastMessage: '',
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        unreadCount: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    await db.collection('users').doc(currentUser.uid)
-                        .collection('chats').doc(userId)
-                        .set(chatData);
-
-                    // Создаем чат и для второго пользователя
-                    const currentUserData = {
-                        userId: currentUser.uid,
-                        username: currentUser.displayName,
-                        lastMessage: '',
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        unreadCount: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    await db.collection('users').doc(userId)
-                        .collection('chats').doc(currentUser.uid)
-                        .set(currentUserData);
-
-                    openChat(userId, userData);
-                }
-
-                userSearchResults.classList.add('hidden');
-                searchInput.value = '';
-
-            } catch (error) {
-                console.error('Ошибка создания чата:', error);
-                showError('Ошибка создания чата');
-            }
-        }
-
-        // Открыть чат
-        async function openChat(userId, userData) {
-            currentChat = userId;
-            currentChatUser = userData;
-
-            // Обновляем заголовок чата
-            currentChatName.textContent = userData.username;
-            chatUserInfo.innerHTML = `
-                <img src="${userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username)}&background=FF6600&color=fff&size=30`}" 
-                     style="width: 30px; height: 30px; border-radius: 50%; margin-left: 10px;"
-                     alt="${userData.username}">
-            `;
-
-            // Сбрасываем счетчик непрочитанных
-            await db.collection('users').doc(currentUser.uid)
-                .collection('chats').doc(userId)
-                .update({
-                    unreadCount: 0
-                });
-
-            // Переключаем экраны
-            chatsScreen.classList.add('hidden');
-            chatScreen.classList.remove('hidden');
-
-            // Загружаем сообщения
-            loadMessages();
-        }
-
-        // Загрузка сообщений
-        function loadMessages() {
-            if (unsubscribeMessages) {
-                unsubscribeMessages();
-            }
-
-            const chatId = getChatId(currentUser.uid, currentChat);
-            chatContainer.innerHTML = '<div class="loading">Загрузка сообщений...</div>';
-
-            unsubscribeMessages = db.collection('chats').doc(chatId)
-                .collection('messages')
-                .orderBy('timestamp', 'asc')
-                .onSnapshot((snapshot) => {
-                    chatContainer.innerHTML = '';
-
-                    if (snapshot.empty) {
-                        chatContainer.innerHTML = '<div class="empty-state"><h3>Нет сообщений</h3><p>Начните общение первым!</p></div>';
-                        return;
-                    }
-
-                    snapshot.forEach((doc) => {
-                        const message = doc.data();
-                        displayMessage(message);
-                    });
-
-                    scrollToBottom();
-                });
-        }
-
-        // Отображение сообщения
-        function displayMessage(message) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message';
-            
-            const timestamp = message.timestamp ? message.timestamp.toDate() : new Date();
-            const timeString = formatTime(timestamp);
-
-            let messageContent = message.text || '';
-            if (message.imageUrl) {
-                messageContent += `<br><img src="${message.imageUrl}" alt="Загруженное изображение" loading="lazy">`;
-            }
-
-            messageElement.innerHTML = `
-                <div class="message-header">
-                    <span>${message.username || 'Аноним'}</span>
-                    <span class="message-time">${timeString}</span>
-                </div>
-                <div class="message-content">${messageContent}</div>
-            `;
-
-            chatContainer.appendChild(messageElement);
-        }
-
-        // Отправка сообщения
-        async function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text && !lastUploadedImage) return;
-
-            const chatId = getChatId(currentUser.uid, currentChat);
-            
-            const messageData = {
-                userId: currentUser.uid,
-                username: currentUser.displayName,
-                text: text,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            if (lastUploadedImage) {
-                messageData.imageUrl = lastUploadedImage;
-                lastUploadedImage = null;
-            }
-
-            try {
-                // Сохраняем сообщение
-                await db.collection('chats').doc(chatId)
-                    .collection('messages').add(messageData);
-
-                // Обновляем последнее сообщение в чатах обоих пользователей
-                const lastMessageText = text || '📷 Изображение';
-                
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('chats').doc(currentChat)
-                    .update({
-                        lastMessage: lastMessageText,
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                await db.collection('users').doc(currentChat)
-                    .collection('chats').doc(currentUser.uid)
-                    .update({
-                        lastMessage: lastMessageText,
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        unreadCount: firebase.firestore.FieldValue.increment(1)
-                    });
-
-                messageInput.value = '';
-
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                showError('Ошибка отправки сообщения');
-            }
-        }
-
-        // Загрузка изображения
-        async function uploadImage() {
-            const fileInput = document.getElementById('imageInput');
-            const file = fileInput.files[0];
-            
-            if (!file) return;
-            
-            if (file.size > 5 * 1024 * 1024) {
-                showError('Размер изображения не должен превышать 5MB');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('image', file);
-
-            try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    lastUploadedImage = data.data.url;
-                    messageInput.focus();
-                    
-                    // Автоматически отправляем сообщение с изображением
-                    sendMessage();
-                } else {
-                    showError('Ошибка загрузки изображения');
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                showError('Ошибка загрузки изображения');
-            }
-        }
-
-        // Вспомогательные функции
-        function getChatId(userId1, userId2) {
-            return [userId1, userId2].sort().join('_');
-        }
-
-        function formatTime(date) {
-            return date.toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        function scrollToBottom() {
+        function scrollBottom() {
             setTimeout(() => {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
             }, 100);
         }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        function goProfile() { 
+            window.location.href = 'profil.html'; 
+        }
+
+        // Инициализация
+        async function init() {
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                currentUser = user;
+                await loadMyProfile();
+                loadChatsListener();
+            });
+        }
+
+        async function loadMyProfile() {
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    myUserData = doc.data();
+                    myUsername = myUserData.username || currentUser.displayName || 'anon';
+                    
+                    // Миграция для юзернейма
+                    if (myUserData.username && !myUserData.usernameLower) {
+                        await doc.ref.update({
+                            usernameLower: myUserData.username.toLowerCase()
+                        });
+                    }
+                    
+                    // Миграция для хэндла
+                    if (myUserData.username && !myUserData.userHandle) {
+                        const norm = myUserData.username.toLowerCase();
+                        const wantHandle = '$' + norm;
+                        await doc.ref.update({
+                            userHandle: wantHandle,
+                            userHandleNorm: norm
+                        });
+                        await db.collection('handles').doc(norm).set({ uid: currentUser.uid }, { merge: true });
+                    }
+                } else {
+                    showError('Профиль не найден');
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки профиля:', e);
+                showError('Ошибка загрузки профиля');
             }
         }
 
-        function backToChats() {
+        // Загрузка списка чатов
+        function loadChatsListener() {
+            if (unsubscribeChats) unsubscribeChats();
+            
+            unsubscribeChats = db.collection('users').doc(currentUser.uid)
+                .collection('chats')
+                .orderBy('lastMessageTime', 'desc')
+                .onSnapshot((snap) => {
+                    chats = [];
+                    chatsList.innerHTML = '';
+                    
+                    if (snap.empty) {
+                        emptyChats.classList.remove('hidden');
+                        chatsList.innerHTML = '<div class="empty">📭 Нет чатов</div>';
+                        return;
+                    }
+                    
+                    emptyChats.classList.add('hidden');
+                    snap.forEach((doc) => {
+                        const chatData = { id: doc.id, ...doc.data() };
+                        chats.push(chatData);
+                        renderChatRow(chatData);
+                    });
+                    
+                    filterChatsLocal();
+                }, (err) => {
+                    console.error('Ошибка загрузки чатов:', err);
+                    showError('Не удалось загрузить чаты');
+                    chatsList.innerHTML = '<div class="empty">⚠️ Ошибка загрузки</div>';
+                });
+        }
+
+        function renderChatRow(chat) {
+            const el = document.createElement('div');
+            const unread = (chat.unreadCount || 0) > 0;
+            el.className = 'chat-item' + (unread ? ' unread' : '');
+            
+            const isGroup = chat.type === 'group';
+            const title = isGroup ? (chat.name || 'группа') : (chat.username || 'Пользователь');
+            const avatar = isGroup
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=5c3d8c&color=f5e6ff&bold=true&size=88`
+                : (chat.peerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=5c3d8c&color=f5e6ff&size=88`);
+            const when = chat.lastMessageTime && chat.lastMessageTime.toDate
+                ? formatTime(chat.lastMessageTime.toDate())
+                : '';
+            const preview = chat.lastMessage || '—';
+            
+            el.innerHTML = `
+                <img class="avatar" src="${escapeHtml(avatar)}" alt="">
+                <div class="chat-info">
+                    <div class="chat-name">${escapeHtml(title)}${isGroup ? ' <span class="mono" style="font-size:11px;">👥</span>' : ''}</div>
+                    <div class="chat-preview">${escapeHtml(preview.length > 50 ? preview.substring(0, 50) + '...' : preview)}</div>
+                </div>
+                <div class="chat-meta">
+                    <div>${escapeHtml(when)}</div>
+                    ${unread ? `<div class="badge-unread">${chat.unreadCount}</div>` : ''}
+                </div>
+            `;
+            
+            el.onclick = () => {
+                if (chat.type === 'group') {
+                    openGroupChat(chat.groupId || chat.id, chat);
+                } else {
+                    openDMChat(chat.userId || chat.id, { 
+                        username: chat.username, 
+                        avatar: chat.peerAvatar,
+                        userHandle: chat.userHandle 
+                    });
+                }
+            };
+            
+            chatsList.appendChild(el);
+        }
+
+        function filterChatsLocal() {
+            const q = searchInput.value.trim().toLowerCase();
+            const items = chatsList.querySelectorAll('.chat-item');
+            items.forEach((node, i) => {
+                const chat = chats[i];
+                if (!chat) return;
+                if (!q) {
+                    node.style.display = 'flex';
+                    return;
+                }
+                const title = (chat.type === 'group' ? chat.name : chat.username) || '';
+                node.style.display = title.toLowerCase().includes(q) ? 'flex' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', () => {
+            userSearchWrap.classList.add('hidden');
+            userSearchWrap.innerHTML = '';
+            filterChatsLocal();
+        });
+
+        // Поиск пользователей
+        async function runUserSearch() {
+            const raw = searchInput.value.trim();
+            if (!raw) {
+                userSearchWrap.classList.add('hidden');
+                return;
+            }
+            
+            const isHandleQuery = raw.startsWith('$');
+            userSearchWrap.innerHTML = '<div class="loading-spinner">🔍 Поиск...</div>';
+            userSearchWrap.classList.remove('hidden');
+            
+            try {
+                if (isHandleQuery) {
+                    if (!/^\$[A-Za-z0-9_]{2,20}$/.test(raw)) {
+                        userSearchWrap.innerHTML = '<div class="empty">❌ Неверный формат юза (пример: $username)</div>';
+                        return;
+                    }
+                    const norm = raw.slice(1).toLowerCase();
+                    const hDoc = await db.collection('handles').doc(norm).get();
+                    
+                    if (!hDoc.exists) {
+                        userSearchWrap.innerHTML = '<div class="empty">🔍 Юз не найден</div>';
+                        return;
+                    }
+                    
+                    const peerId = hDoc.data().uid;
+                    if (peerId === currentUser.uid) {
+                        userSearchWrap.innerHTML = '<div class="empty">👤 Это вы</div>';
+                        return;
+                    }
+                    
+                    const uDoc = await db.collection('users').doc(peerId).get();
+                    const user = uDoc.data();
+                    if (!user) {
+                        userSearchWrap.innerHTML = '<div class="empty">❌ Пользователь не найден</div>';
+                        return;
+                    }
+                    
+                    renderSearchResult(peerId, user);
+                    return;
+                }
+                
+                // Поиск по имени
+                let snap = await db.collection('users')
+                    .where('usernameLower', '>=', raw.toLowerCase())
+                    .where('usernameLower', '<=', raw.toLowerCase() + '\uf8ff')
+                    .limit(20)
+                    .get();
+                
+                if (snap.empty) {
+                    snap = await db.collection('users')
+                        .where('username', '>=', raw)
+                        .where('username', '<=', raw + '\uf8ff')
+                        .limit(20)
+                        .get();
+                }
+                
+                userSearchWrap.innerHTML = '';
+                if (snap.empty) {
+                    userSearchWrap.innerHTML = '<div class="empty">🔍 Никого не найдено</div>';
+                    return;
+                }
+                
+                let found = false;
+                snap.forEach((doc) => {
+                    if (doc.id === currentUser.uid) return;
+                    found = true;
+                    renderSearchResult(doc.id, doc.data());
+                });
+                
+                if (!found) {
+                    userSearchWrap.innerHTML = '<div class="empty">👤 Это вы или пользователь не найден</div>';
+                }
+                
+            } catch (e) {
+                console.error('Ошибка поиска:', e);
+                showError('Ошибка поиска: ' + e.message);
+                userSearchWrap.innerHTML = '<div class="empty">⚠️ Ошибка поиска</div>';
+            }
+        }
+
+        function renderSearchResult(userId, userData) {
+            const name = userData.username || 'anon';
+            const avatar = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=5c3d8c&color=f5e6ff&size=88`;
+            const handle = userData.userHandle || ('$' + (userData.usernameLower || name.toLowerCase()));
+            
+            const row = document.createElement('div');
+            row.className = 'chat-item';
+            row.innerHTML = `
+                <img class="avatar" src="${escapeHtml(avatar)}" alt="">
+                <div class="chat-info">
+                    <div class="chat-name">${escapeHtml(name)}</div>
+                    <div class="chat-preview">${escapeHtml(handle)}</div>
+                </div>
+                <button type="button" class="small" style="background: var(--green);">💬 написать</button>
+            `;
+            const btn = row.querySelector('button');
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                startDMWith(userId, userData);
+            };
+            row.onclick = () => startDMWith(userId, userData);
+            userSearchWrap.appendChild(row);
+        }
+
+        // Создание DM чата
+        async function startDMWith(peerId, peerProfile) {
+            userSearchWrap.classList.add('hidden');
+            searchInput.value = '';
+            
+            const username = peerProfile.username || 'Пользователь';
+            const peerAvatar = peerProfile.avatar || '';
+            const userHandle = peerProfile.userHandle || '';
+            
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            
+            try {
+                // Получаем свой аватар
+                let myAvatar = '';
+                if (myUserData && myUserData.avatar) {
+                    myAvatar = myUserData.avatar;
+                } else {
+                    const myDoc = await db.collection('users').doc(currentUser.uid).get();
+                    myAvatar = myDoc.data()?.avatar || '';
+                }
+                
+                // Данные для моего чата
+                const myChatData = {
+                    type: 'dm',
+                    userId: peerId,
+                    username: username,
+                    peerAvatar: peerAvatar,
+                    userHandle: userHandle,
+                    lastMessage: '',
+                    lastMessageTime: ts,
+                    unreadCount: 0,
+                    createdAt: ts,
+                    updatedAt: ts
+                };
+                
+                // Данные для чата собеседника
+                const peerChatData = {
+                    type: 'dm',
+                    userId: currentUser.uid,
+                    username: myUsername,
+                    peerAvatar: myAvatar,
+                    userHandle: myUserData?.userHandle || ('$' + myUsername.toLowerCase()),
+                    lastMessage: '',
+                    lastMessageTime: ts,
+                    unreadCount: 0,
+                    createdAt: ts,
+                    updatedAt: ts
+                };
+                
+                // Сохраняем оба чата
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(peerId).set(myChatData);
+                await db.collection('users').doc(peerId).collection('chats').doc(currentUser.uid).set(peerChatData);
+                
+                showSuccess('Чат создан!');
+                openDMChat(peerId, { username, avatar: peerAvatar, userHandle });
+                
+            } catch (e) {
+                console.error('Ошибка создания чата:', e);
+                showError('Не удалось создать чат: ' + e.message);
+            }
+        }
+
+        function openDMChat(userId, userData) {
+            chatMode = 'dm';
+            dmPeerId = userId;
+            dmPeerProfile = userData;
+            groupIdOpen = null;
+            groupMetaOpen = null;
+            chatTitle.textContent = userData.username || 'Чат';
+            chatExtra.textContent = userData.userHandle || '';
+            showChatShell();
+            clearUnreadDM(userId);
+            subscribeMessagesDM(userId);
+        }
+
+        async function clearUnreadDM(uid) {
+            try {
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(uid)
+                    .update({ unreadCount: 0 });
+            } catch (e) { /* ignore */ }
+        }
+
+        function dmChatId(a, b) {
+            return [a, b].sort().join('_');
+        }
+
+        function subscribeMessagesDM(peerId) {
+            if (unsubscribeMessages) unsubscribeMessages();
+            const chatId = dmChatId(currentUser.uid, peerId);
+            messagesEl.innerHTML = '<div class="empty">💬 Загрузка сообщений...</div>';
+            
+            unsubscribeMessages = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snap) => {
+                    messagesEl.innerHTML = '';
+                    if (snap.empty) {
+                        messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений. Напишите первое!</div>';
+                        return;
+                    }
+                    snap.forEach((doc) => renderMessageDoc(doc.data()));
+                    scrollBottom();
+                }, (e) => {
+                    console.error('Ошибка загрузки сообщений:', e);
+                    showError('Не удалось загрузить переписку');
+                    messagesEl.innerHTML = '<div class="empty">⚠️ Ошибка загрузки</div>';
+                });
+        }
+
+        function openGroupChat(gid, meta) {
+            chatMode = 'group';
+            groupIdOpen = gid;
+            groupMetaOpen = meta;
+            dmPeerId = null;
+            dmPeerProfile = null;
+            chatTitle.textContent = meta.name || 'Группа';
+            chatExtra.textContent = meta.inviteCode ? ('код: ' + meta.inviteCode) : '';
+            showChatShell();
+            clearUnreadGroup(gid);
+            subscribeMessagesGroup(gid);
+        }
+
+        async function clearUnreadGroup(gid) {
+            try {
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid)
+                    .update({ unreadCount: 0 });
+            } catch (e) { /* ignore */ }
+        }
+
+        function subscribeMessagesGroup(gid) {
+            if (unsubscribeMessages) unsubscribeMessages();
+            messagesEl.innerHTML = '<div class="empty">💬 Загрузка сообщений...</div>';
+            
+            unsubscribeMessages = db.collection('groups').doc(gid).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snap) => {
+                    messagesEl.innerHTML = '';
+                    if (snap.empty) {
+                        messagesEl.innerHTML = '<div class="empty">💭 Пока нет сообщений. Напишите первое!</div>';
+                        return;
+                    }
+                    snap.forEach((doc) => renderMessageDoc(doc.data()));
+                    scrollBottom();
+                }, (e) => {
+                    console.error('Ошибка загрузки сообщений группы:', e);
+                    showError('Не удалось загрузить сообщения группы');
+                    messagesEl.innerHTML = '<div class="empty">⚠️ Ошибка загрузки</div>';
+                });
+        }
+
+        function renderMessageDoc(message) {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            const ts = message.timestamp && message.timestamp.toDate ? message.timestamp.toDate() : new Date();
+            const uname = escapeHtml(message.username || 'anon');
+            let body = escapeHtml(message.text || '');
+            if (message.imageUrl) {
+                body += '<br><img src="' + escapeHtml(message.imageUrl) + '" alt="📷 фото" loading="lazy" style="max-width:100%;border-radius:4px;">';
+            }
+            div.innerHTML = `
+                <div class="msg-head">
+                    <span class="msg-user">${uname}</span>
+                    <span class="msg-time">${formatTime(ts)}</span>
+                </div>
+                <div class="msg-body">${body || '<i>📎 Вложение</i>'}</div>
+            `;
+            messagesEl.appendChild(div);
+        }
+
+        function showChatShell() {
+            listMain.classList.add('hidden');
+            chatMain.classList.remove('hidden');
+            screenTitle.textContent = 'YzFi · 💬';
+            messageInput.value = '';
+            lastUploadedImage = null;
+            setTimeout(() => messageInput.focus(), 200);
+        }
+
+        function backToList() {
             if (unsubscribeMessages) {
                 unsubscribeMessages();
                 unsubscribeMessages = null;
             }
-
-            currentChat = null;
-            currentChatUser = null;
-            chatScreen.classList.add('hidden');
-            chatsScreen.classList.remove('hidden');
-            chatContainer.innerHTML = '';
+            chatMode = null;
+            dmPeerId = null;
+            groupIdOpen = null;
+            chatMain.classList.add('hidden');
+            listMain.classList.remove('hidden');
+            screenTitle.textContent = 'YzFi';
+            messagesEl.innerHTML = '';
         }
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.classList.remove('hidden');
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendNow();
+            }
+        });
+
+        async function sendNow() {
+            const text = messageInput.value.trim();
+            if (!text && !lastUploadedImage) return;
+
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            const payload = {
+                userId: currentUser.uid,
+                username: myUsername,
+                text: text || '',
+                timestamp: ts
+            };
             
-            setTimeout(() => {
-                errorMessage.classList.add('hidden');
-            }, 5000);
+            if (lastUploadedImage) {
+                payload.imageUrl = lastUploadedImage;
+                lastUploadedImage = null;
+            }
+
+            const preview = text || '📷 Фото';
+
+            try {
+                if (chatMode === 'dm') {
+                    const chatId = dmChatId(currentUser.uid, dmPeerId);
+                    await db.collection('chats').doc(chatId).collection('messages').add(payload);
+                    
+                    await db.collection('users').doc(currentUser.uid).collection('chats').doc(dmPeerId).update({
+                        lastMessage: preview,
+                        lastMessageTime: ts,
+                        unreadCount: 0
+                    });
+                    
+                    await db.collection('users').doc(dmPeerId).collection('chats').doc(currentUser.uid).update({
+                        lastMessage: preview,
+                        lastMessageTime: ts,
+                        unreadCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                } 
+                else if (chatMode === 'group') {
+                    await db.collection('groups').doc(groupIdOpen).collection('messages').add(payload);
+                    await updateGroupPreviews(groupIdOpen, preview);
+                }
+                
+                messageInput.value = '';
+                scrollBottom();
+                
+            } catch (e) {
+                console.error('Ошибка отправки:', e);
+                showError('Не удалось отправить: ' + e.message);
+            }
         }
 
-        function goToHome() {
-            window.location.href = 'index.html';
+        async function updateGroupPreviews(gid, preview) {
+            const gref = db.collection('groups').doc(gid);
+            const gdoc = await gref.get();
+            if (!gdoc.exists) return;
+            
+            const groupData = gdoc.data();
+            const members = groupData.memberIds || [];
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            
+            for (const uid of members) {
+                const chatRef = db.collection('users').doc(uid).collection('chats').doc(gid);
+                const updateData = {
+                    type: 'group',
+                    groupId: gid,
+                    name: groupData.name,
+                    inviteCode: groupData.inviteCode,
+                    lastMessage: preview,
+                    lastMessageTime: ts
+                };
+                
+                if (uid === currentUser.uid) {
+                    await chatRef.set({ ...updateData, unreadCount: 0 }, { merge: true });
+                } else {
+                    await chatRef.set(updateData, { merge: true });
+                    await chatRef.update({
+                        unreadCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                }
+            }
         }
 
-        function goToProfile() {
-            window.location.href = 'profil.html';
+        function pickImage() {
+            document.getElementById('imageInput').click();
         }
 
-        // Инициализация при загрузке
+        document.getElementById('imageInput').addEventListener('change', async function () {
+            const file = this.files && this.files[0];
+            this.value = '';
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Файл больше 5 МБ');
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                showError('Пожалуйста, выберите изображение');
+                return;
+            }
+            
+            showSuccess('Загрузка фото...');
+            
+            const fd = new FormData();
+            fd.append('image', file);
+            
+            try {
+                const res = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY, {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.success) {
+                    lastUploadedImage = data.data.url;
+                    sendNow();
+                } else {
+                    showError('imgBB: ' + (data.error?.message || 'ошибка загрузки'));
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки фото:', e);
+                showError('Не удалось загрузить фото');
+            }
+        });
+
+        function randomInvite() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+
+        function openCreateGroupModal() {
+            document.getElementById('newGroupName').value = '';
+            document.getElementById('customGroupCode').value = '';
+            document.querySelector('input[name="codeMode"][value="random"]').checked = true;
+            document.getElementById('customGroupCode').classList.add('hidden');
+            document.getElementById('modalCreate').classList.remove('hidden');
+        }
+
+        function openJoinModal() {
+            document.getElementById('joinCodeInput').value = '';
+            document.getElementById('modalJoin').classList.remove('hidden');
+        }
+
+        function closeModals() {
+            document.getElementById('modalCreate').classList.add('hidden');
+            document.getElementById('modalJoin').classList.add('hidden');
+        }
+
+        document.querySelectorAll('input[name="codeMode"]').forEach(r => {
+            r.addEventListener('change', () => {
+                const isCustom = document.querySelector('input[name="codeMode"]:checked').value === 'custom';
+                document.getElementById('customGroupCode').classList.toggle('hidden', !isCustom);
+            });
+        });
+
+        async function submitCreateGroup() {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) {
+                showError('Введите название группы');
+                return;
+            }
+            
+            const mode = document.querySelector('input[name="codeMode"]:checked').value;
+            let inviteCode = '';
+            
+            if (mode === 'random') {
+                inviteCode = randomInvite();
+            } else {
+                const raw = document.getElementById('customGroupCode').value.trim();
+                if (!raw) {
+                    showError('Введите код группы');
+                    return;
+                }
+                if (!/^\$[A-Za-z0-9_]{2,20}$/.test(raw)) {
+                    showError('Код должен быть в формате $ник (латиница, цифры, _, минимум 2 символа после $)');
+                    return;
+                }
+                inviteCode = raw;
+            }
+            
+            const norm = inviteCode.toLowerCase();
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            
+            try {
+                // Проверка уникальности кода
+                const existing = await db.collection('groups')
+                    .where('inviteCodeNorm', '==', norm)
+                    .limit(1)
+                    .get();
+                
+                if (!existing.empty) {
+                    showError('Такой код уже существует');
+                    return;
+                }
+                
+                const groupRef = db.collection('groups').doc();
+                const gid = groupRef.id;
+                
+                // Создаем группу
+                await groupRef.set({
+                    name: name,
+                    inviteCode: inviteCode,
+                    inviteCodeNorm: norm,
+                    ownerId: currentUser.uid,
+                    memberIds: [currentUser.uid],
+                    createdAt: ts,
+                    updatedAt: ts
+                });
+                
+                // Добавляем чат для создателя
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({
+                    type: 'group',
+                    groupId: gid,
+                    name: name,
+                    inviteCode: inviteCode,
+                    lastMessage: '',
+                    lastMessageTime: ts,
+                    unreadCount: 0,
+                    createdAt: ts,
+                    updatedAt: ts
+                });
+                
+                closeModals();
+                showSuccess('Группа "' + name + '" создана!');
+                
+                openGroupChat(gid, {
+                    type: 'group',
+                    groupId: gid,
+                    name: name,
+                    inviteCode: inviteCode,
+                    memberIds: [currentUser.uid]
+                });
+                
+            } catch (e) {
+                console.error('Ошибка создания группы:', e);
+                showError('Не удалось создать группу: ' + e.message);
+            }
+        }
+
+        async function submitJoinGroup() {
+            let code = document.getElementById('joinCodeInput').value.trim();
+            if (!code) {
+                showError('Введите код группы');
+                return;
+            }
+            
+            const norm = code.toLowerCase();
+            
+            try {
+                const snap = await db.collection('groups')
+                    .where('inviteCodeNorm', '==', norm)
+                    .limit(1)
+                    .get();
+                
+                if (snap.empty) {
+                    showError('Группа с таким кодом не найдена');
+                    return;
+                }
+                
+                const groupDoc = snap.docs[0];
+                const gid = groupDoc.id;
+                const groupData = groupDoc.data();
+                
+                // Проверяем, не в группе ли уже
+                const isMember = groupData.memberIds && groupData.memberIds.includes(currentUser.uid);
+                
+                if (!isMember) {
+                    await db.collection('groups').doc(gid).update({
+                        memberIds: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                const ts = firebase.firestore.FieldValue.serverTimestamp();
+                
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({
+                    type: 'group',
+                    groupId: gid,
+                    name: groupData.name,
+                    inviteCode: groupData.inviteCode,
+                    lastMessage: '',
+                    lastMessageTime: ts,
+                    unreadCount: 0,
+                    createdAt: ts,
+                    updatedAt: ts
+                }, { merge: true });
+                
+                closeModals();
+                showSuccess('Вы вступили в группу "' + groupData.name + '"!');
+                
+                openGroupChat(gid, {
+                    type: 'group',
+                    groupId: gid,
+                    name: groupData.name,
+                    inviteCode: groupData.inviteCode,
+                    memberIds: groupData.memberIds || [currentUser.uid]
+                });
+                
+            } catch (e) {
+                console.error('Ошибка входа в группу:', e);
+                showError('Не удалось войти в группу: ' + e.message);
+            }
+        }
+
+        // Экспорт глобальных функций
+        window.goProfile = goProfile;
+        window.runUserSearch = runUserSearch;
+        window.openCreateGroupModal = openCreateGroupModal;
+        window.openJoinModal = openJoinModal;
+        window.closeModals = closeModals;
+        window.submitCreateGroup = submitCreateGroup;
+        window.submitJoinGroup = submitJoinGroup;
+        window.backToList = backToList;
+        window.sendNow = sendNow;
+        window.pickImage = pickImage;
+
+        // Запуск
         window.onload = init;
     </script>
 </body>
