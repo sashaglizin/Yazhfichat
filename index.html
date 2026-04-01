@@ -4,32 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#2d1b4e">
-    <title>YzFi — вход</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="YzFi">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzJkMWI0ZSIgcng9IjEwIi8+PHRleHQgeD0iMzUiIHk9IjkwIiBmb250LWZhbWlseT0iVGFob21hIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2U4ZDVmMiI+WTtGPC90ZXh0Pjwvc3ZnPg==">
+    <title>YzFi — войти</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #1a0f2e;
+            --panel: #2d1b4e;
+            --panel2: #3d2666;
+            --cream: #f5e6ff;
+            --text: #e8d5f2;
+            --green: #7fdb8a;
+            --accent: #b47aff;
+            --header: #4a2f7a;
+            --border: #110822;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
-            background: #1a0f2e;
-            color: #e8d5f2;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.45;
             font-size: 15px;
             min-height: 100dvh;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
         }
-        .container {
-            max-width: 440px;
-            margin: 0 auto;
-            padding: 10px;
-        }
+        .container { max-width: 440px; margin: 0 auto; }
         .header {
-            background: linear-gradient(180deg, #4a2f7a, #2d1b4e);
-            border: 2px solid #110822;
+            background: linear-gradient(180deg, var(--header), var(--panel));
+            border: 2px solid var(--border);
             border-radius: 0 0 8px 8px;
             padding: 12px;
             margin-bottom: 14px;
@@ -38,150 +48,52 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            box-shadow: 0 4px 0 #110822;
+            box-shadow: 0 4px 0 var(--border);
         }
         .header h1 {
             flex: 1 1 100%;
             text-align: center;
-            font-size: 1.2rem;
-            color: #ffd700;
-            text-shadow: 0 0 5px rgba(255,215,0,0.5);
+            font-size: 1.15rem;
+            color: var(--cream);
+            text-shadow: 1px 1px 0 #000;
             letter-spacing: 0.06em;
         }
-        .tagline {
-            text-align: center;
-            font-size: 12px;
-            color: #b9a0d4;
-            margin-top: -5px;
-            margin-bottom: 10px;
-        }
+        .header-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; }
         button {
             font-family: inherit;
             font-size: 14px;
             font-weight: bold;
-            border: 2px solid #110822;
+            border: 2px solid var(--border);
             border-radius: 4px;
             padding: 10px 14px;
             cursor: pointer;
-            background: #b47aff;
+            background: var(--accent);
             color: #1a0f2e;
-            box-shadow: 2px 2px 0 #110822;
+            box-shadow: 2px 2px 0 var(--border);
             touch-action: manipulation;
-            transition: all 0.05s ease;
         }
-        button:active {
-            transform: translate(1px, 1px);
-            box-shadow: 1px 1px 0 #110822;
-        }
-        button.secondary {
-            background: #3d2666;
-            color: #f5e6ff;
-        }
+        button:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--border); }
+        button.ghost { background: var(--panel2); color: var(--cream); }
+        button.danger { background: #a33; color: #fff; }
         .setup-screen {
-            background: #2d1b4e;
-            border: 2px solid #110822;
+            background: var(--panel);
+            border: 2px solid var(--border);
             border-radius: 6px;
             padding: 16px;
             box-shadow: 4px 4px 0 rgba(0,0,0,.35);
         }
-        .input-group {
-            margin-bottom: 14px;
-        }
-        .input-group h3 {
-            color: #f5e6ff;
-            margin-bottom: 10px;
-            font-size: 1rem;
-        }
-        input {
+        .input-group { margin-bottom: 14px; }
+        .input-group h3 { color: var(--cream); margin-bottom: 10px; font-size: 1rem; }
+        input[type="text"], input[type="password"] {
             width: 100%;
             padding: 12px 14px;
             font-size: 16px;
-            border: 2px solid #110822;
+            border: 2px solid var(--border);
             border-radius: 4px;
-            background: #f5e6ff;
+            background: var(--cream);
             color: #1a0f2e;
         }
-        .auth-tabs {
-            display: flex;
-            border-bottom: 2px solid #110822;
-            margin-bottom: 14px;
-        }
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: #3d2666;
-            color: #e8d5f2;
-            border-radius: 6px 6px 0 0;
-            margin-right: 4px;
-            box-shadow: none;
-            cursor: pointer;
-            text-align: center;
-        }
-        .auth-tab.active {
-            background: #b47aff;
-            color: #1a0f2e;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .dashboard-card {
-            background: #12081f;
-            border: 2px dashed #4a2f7a;
-            padding: 14px;
-            border-radius: 6px;
-            margin-top: 12px;
-            font-size: 14px;
-            color: #b9a0d4;
-            text-align: center;
-        }
-        .big-cta {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            margin-top: 8px;
-        }
-        .toast {
-            position: fixed;
-            bottom: max(20px, env(safe-area-inset-bottom));
-            left: 12px;
-            right: 12px;
-            background: #1a5a2a;
-            border: 2px solid #110822;
-            color: #ccffcc;
-            padding: 12px;
-            border-radius: 6px;
-            text-align: center;
-            z-index: 1100;
-            animation: fadeInUp 0.3s ease;
-        }
-        .toast.error {
-            background: #5a1a1a;
-            color: #ffcccc;
-        }
-        @keyframes fadeInUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        .premium-note {
-            background: rgba(255,215,0,0.1);
-            border: 1px solid #ffd700;
-            border-radius: 6px;
-            padding: 10px;
-            margin-top: 12px;
-            font-size: 12px;
-            text-align: center;
-            color: #ffd700;
-        }
-        .password-input {
-            position: relative;
-        }
+        .password-input { position: relative; }
         .toggle-password {
             position: absolute;
             right: 6px;
@@ -192,54 +104,139 @@
             box-shadow: none;
             font-size: 18px;
             padding: 6px;
+        }
+        .auth-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 14px; }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: var(--panel2);
+            color: var(--text);
+            border-radius: 6px 6px 0 0;
+            margin-right: 4px;
+            box-shadow: none;
+        }
+        .auth-tab.active { background: var(--accent); color: #1a0f2e; }
+        .hidden { display: none !important; }
+        .tagline {
+            text-align: center;
+            font-size: 13px;
+            color: #9a84b8;
+            margin: 12px 0;
+        }
+        .big-cta { width: 100%; padding: 14px; font-size: 16px; margin-top: 8px; }
+        .dashboard-card {
+            background: #12081f;
+            border: 2px dashed #4a2f7a;
+            padding: 14px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #b9a0d4;
+        }
+        .pwa-promo {
+            background: var(--panel2);
+            border: 2px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            text-align: center;
             cursor: pointer;
+            color: var(--cream);
+        }
+        .ios-steps {
+            background: #2a2040;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .ios-steps h4 { color: var(--green); margin-bottom: 8px; }
+        .ios-steps ol { padding-left: 18px; }
+        .notification-status { text-align: center; margin: 8px 0; font-weight: bold; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .custom-notification {
+            position: fixed;
+            top: max(16px, env(safe-area-inset-top));
+            right: 12px;
+            left: 12px;
+            max-width: 360px;
+            margin-left: auto;
+            background: var(--panel);
+            border: 2px solid var(--border);
+            color: var(--cream);
+            padding: 12px;
+            z-index: 10000;
+            border-radius: 8px;
+            animation: slideIn 0.25s ease;
+            box-shadow: 4px 4px 0 var(--border);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>⭐ YzFi ⭐</h1>
-            <div class="tagline">мини-мессенджер с привкусом имиджборды</div>
+            <h1>YzFi</h1>
+            <p class="tagline" style="flex:1 1 100%;margin:0;">мини-мессенджер с привкусом имиджборды · Firebase + imgBB</p>
+            <div class="header-actions">
+                <button type="button" id="chatsButton" class="ghost hidden" onclick="goToChats()">чаты</button>
+                <button type="button" id="profileButton" class="ghost hidden" onclick="goToProfile()">профиль</button>
+            </div>
         </div>
 
         <div id="setupScreen" class="setup-screen">
             <div class="auth-tabs">
-                <div class="auth-tab active" onclick="showLoginForm()">Вход</div>
-                <div class="auth-tab" onclick="showRegisterForm()">Регистрация</div>
+                <button type="button" class="auth-tab active" id="loginTab" onclick="showLoginForm()">Вход</button>
+                <button type="button" class="auth-tab" id="registerTab" onclick="showRegisterForm()">Регистрация</button>
             </div>
 
             <div id="loginSection" class="input-group">
                 <h3>Вход</h3>
-                <input type="text" id="loginUsernameInput" placeholder="Ник" maxlength="30">
+                <input type="text" id="loginUsernameInput" placeholder="Ник" maxlength="30" autocomplete="username">
                 <div class="password-input">
-                    <input type="password" id="loginPasswordInput" placeholder="Пароль" maxlength="64">
+                    <input type="password" id="loginPasswordInput" placeholder="Пароль" maxlength="64" autocomplete="current-password">
                     <button type="button" class="toggle-password" onclick="toggleLoginPassword()">👁</button>
                 </div>
-                <button onclick="loginUser()">Войти</button>
+                <button type="button" onclick="loginUser()">Войти</button>
             </div>
 
             <div id="registerSection" class="input-group hidden">
                 <h3>Регистрация</h3>
-                <input type="text" id="usernameInput" placeholder="Ник (виден в чате)" maxlength="30">
+                <input type="text" id="usernameInput" placeholder="Ник (виден в чате)" maxlength="30" autocomplete="username">
                 <div class="password-input">
-                    <input type="password" id="passwordInput" placeholder="Пароль (6+)" maxlength="64">
+                    <input type="password" id="passwordInput" placeholder="Пароль (6+)" maxlength="64" autocomplete="new-password">
                     <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
                 </div>
-                <button onclick="registerUser()">Создать аккаунт</button>
-                <div class="premium-note">
-                    ⭐ Премиум-доступ можно получить только через администратора
-                </div>
+                <button type="button" onclick="registerUser()">Создать аккаунт</button>
             </div>
 
             <div id="dashboardSection" class="hidden">
-                <div class="dashboard-card">
-                    <strong>✨ Добро пожаловать в YzFi!</strong><br>
-                    Общайтесь в личных сообщениях и группах, делитесь фото в ленте.
-                    Премиум-доступ открывает дополнительные возможности.
+                <div id="pwaPromo" class="pwa-promo hidden" onclick="scrollToIosHint()">
+                    📱 На iPhone — «Поделиться» → «На экран Домой»
                 </div>
-                <button class="big-cta" onclick="goToChats()">📱 Открыть мессенджер</button>
-                <button class="big-cta secondary" onclick="goToLenta()">📸 Лента постов</button>
+                <div class="dashboard-card">
+                    Все личные сообщения и группы — в разделе «чаты». Поиск людей — по нику, данные в облаке Firebase.
+                </div>
+                <button type="button" class="big-cta" onclick="goToChats()">Открыть мессенджер</button>
+
+                <div class="input-group">
+                    <button type="button" class="ghost" onclick="requestNotificationPermission()" style="width:100%;">
+                        🔔 Уведомления (FCM)
+                    </button>
+                    <div id="notificationStatus" class="notification-status"></div>
+                </div>
+
+                <div id="iosInstructions" class="ios-steps hidden">
+                    <h4>iOS · добавь на домашний экран</h4>
+                    <ol>
+                        <li>Поделиться → На экран «Домой»</li>
+                        <li>Открывай с иконки — так стабильнее</li>
+                    </ol>
+                </div>
             </div>
         </div>
     </div>
@@ -251,32 +248,42 @@
             projectId: "hlypalka",
             storageBucket: "hlypalka.firebasestorage.app",
             messagingSenderId: "41063525028",
-            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
+            measurementId: "G-T5N77WGWYP"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        let messaging = null;
+        try { messaging = firebase.messaging(); } catch (e) { console.warn('FCM недоступен', e); }
 
-        function showToast(msg, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = 'toast' + (isError ? ' error' : '');
-            toast.textContent = isError ? '❌ ' + msg : '✅ ' + msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        let currentUser = null;
+
+        const loginSection = document.getElementById('loginSection');
+        const registerSection = document.getElementById('registerSection');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const profileButton = document.getElementById('profileButton');
+        const chatsButton = document.getElementById('chatsButton');
+
+        function init() {
+            checkAuthState();
+            checkPWAHints();
         }
 
         function showLoginForm() {
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('registerSection').classList.add('hidden');
-            document.querySelectorAll('.auth-tab')[0].classList.add('active');
-            document.querySelectorAll('.auth-tab')[1].classList.remove('active');
+            loginSection.classList.remove('hidden');
+            registerSection.classList.add('hidden');
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
         }
 
         function showRegisterForm() {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('registerSection').classList.remove('hidden');
-            document.querySelectorAll('.auth-tab')[1].classList.add('active');
-            document.querySelectorAll('.auth-tab')[0].classList.remove('active');
+            loginSection.classList.add('hidden');
+            registerSection.classList.remove('hidden');
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
         }
 
         function togglePassword() {
@@ -289,20 +296,163 @@
             el.type = el.type === 'password' ? 'text' : 'password';
         }
 
+        // Флаг для предотвращения повторного редиректа
+        let isRedirecting = false;
+
+        async function checkAuthState() {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    // Показываем индикатор загрузки
+                    showSuccess('Загрузка профиля...');
+                    
+                    try {
+                        // Ждем полной миграции профиля
+                        await migrateUserDoc(user.uid);
+                        // Даем небольшую задержку для завершения всех операций Firestore
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        if (!isRedirecting) {
+                            isRedirecting = true;
+                            window.location.href = 'chat.html';
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при миграции:', error);
+                        showError('Ошибка загрузки профиля, попробуйте войти снова');
+                        // Выходим из аккаунта при ошибке
+                        await auth.signOut();
+                        showLoginForm();
+                        isRedirecting = false;
+                    }
+                } else {
+                    currentUser = null;
+                    loginSection.classList.remove('hidden');
+                    registerSection.classList.add('hidden');
+                    dashboardSection.classList.add('hidden');
+                    showLoginForm();
+                    profileButton.classList.add('hidden');
+                    chatsButton.classList.add('hidden');
+                    isRedirecting = false;
+                }
+            });
+        }
+
+        async function migrateUserDoc(uid) {
+            const ref = db.collection('users').doc(uid);
+            const doc = await ref.get();
+            
+            // Если документа нет, создаем его (на случай если регистрация не завершилась)
+            if (!doc.exists) {
+                console.warn('Документ пользователя не найден, создаем...');
+                const username = auth.currentUser?.displayName || 'Пользователь';
+                const term = username.toLowerCase();
+                await ref.set({
+                    username: username,
+                    usernameLower: term,
+                    userHandle: '$' + term,
+                    userHandleNorm: term,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`
+                });
+                
+                // Пытаемся создать usernames и handles (если правила позволяют)
+                try {
+                    await db.collection('usernames').doc(term).set({ uid });
+                } catch (e) { console.warn('usernames create error:', e); }
+                try {
+                    await db.collection('handles').doc(term).set({ uid });
+                } catch (e) { console.warn('handles create error:', e); }
+                
+                return;
+            }
+            
+            const d = doc.data();
+            const patch = {};
+            
+            if (d.username && !d.usernameLower) {
+                patch.usernameLower = String(d.username).toLowerCase();
+            }
+            
+            if (Object.keys(patch).length) {
+                await ref.update(patch);
+            }
+            
+            if (d.username && auth.currentUser && auth.currentUser.displayName !== d.username) {
+                try { 
+                    await auth.currentUser.updateProfile({ displayName: d.username }); 
+                } catch (e) { 
+                    console.warn(e); 
+                }
+            }
+            
+            if (d.username) {
+                const tl = String(d.username).toLowerCase();
+                try {
+                    const uref = db.collection('usernames').doc(tl);
+                    const us = await uref.get();
+                    if (!us.exists) await uref.set({ uid });
+                } catch (e) { 
+                    console.warn('usernames migrate', e); 
+                }
+            }
+
+            // Публичный юз: $юз по которому ищем пользователя
+            try {
+                const normFromUser =
+                    (d.userHandleNorm ? String(d.userHandleNorm).toLowerCase() : '') ||
+                    (d.usernameLower ? String(d.usernameLower).toLowerCase() : '') ||
+                    (d.username ? String(d.username).toLowerCase() : '');
+                    
+                if (normFromUser) {
+                    const want = '$' + normFromUser;
+                    const needUpdate = !d.userHandle || !d.userHandleNorm || d.userHandle !== want || String(d.userHandleNorm).toLowerCase() !== normFromUser;
+                    if (needUpdate) {
+                        await ref.update({
+                            userHandle: want,
+                            userHandleNorm: normFromUser,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    // Мапа handle -> uid
+                    const hRef = db.collection('handles').doc(normFromUser);
+                    const hDoc = await hRef.get();
+                    if (!hDoc.exists) await hRef.set({ uid });
+                }
+            } catch (e) {
+                console.warn('handles migrate', e);
+            }
+        }
+
+        function showDashboard() {
+            loginSection.classList.add('hidden');
+            registerSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            checkNotificationPermission();
+        }
+
+        function checkPWAHints() {
+            const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (ios && !standalone) {
+                document.getElementById('iosInstructions').classList.remove('hidden');
+                document.getElementById('pwaPromo').classList.remove('hidden');
+            }
+        }
+
+        function scrollToIosHint() {
+            document.getElementById('iosInstructions')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
         async function registerUser() {
             const username = document.getElementById('usernameInput').value.trim();
             const password = document.getElementById('passwordInput').value.trim();
             
             if (!username || !password) {
-                showToast('Заполните все поля', true);
+                showError('Заполните поля');
                 return;
             }
             if (password.length < 6) {
-                showToast('Пароль должен быть не менее 6 символов', true);
-                return;
-            }
-            if (username.length < 2 || username.length > 30) {
-                showToast('Имя должно быть от 2 до 30 символов', true);
+                showError('Пароль от 6 символов');
                 return;
             }
             
@@ -311,54 +461,74 @@
             try {
                 const nameLock = await db.collection('usernames').doc(term).get();
                 if (nameLock.exists) {
-                    showToast('Это имя уже занято', true);
+                    showError('Ник занят');
                     return;
                 }
-            } catch(e) {}
+            } catch (e) {
+                console.warn('Проверка usernames:', e.code || e);
+            }
             
             try {
                 const taken = await db.collection('users').where('usernameLower', '==', term).limit(1).get();
                 if (!taken.empty) {
-                    showToast('Это имя уже занято', true);
+                    showError('Ник занят');
                     return;
                 }
-            } catch(e) {}
+            } catch (e) {
+                console.warn('Проверка users до входа недоступна — полагаемся на Auth:', e.code || e);
+            }
+            
+            const submitBtn = document.querySelector('#registerSection button');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Регистрация...';
+            submitBtn.disabled = true;
             
             try {
-                const email = `${username}@yazhfi.com`;
-                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                const cred = await auth.createUserWithEmailAndPassword(`${username}@fichat.com`, password);
                 await cred.user.updateProfile({ displayName: username });
                 
+                // Создаем документ пользователя
                 await db.collection('users').doc(cred.user.uid).set({
-                    username: username,
+                    username,
                     usernameLower: term,
                     userHandle: '$' + term,
                     userHandleNorm: term,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`,
-                    premium: false,
-                    userIcon: '',
-                    online: false,
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                    globalBlockedUsers: []
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`
                 });
                 
+                // Пытаемся создать usernames (если правила позволяют)
                 try {
                     await db.collection('usernames').doc(term).set({ uid: cred.user.uid });
-                    await db.collection('handles').doc(term).set({ uid: cred.user.uid });
-                } catch(e) {}
-                
-                showToast('Аккаунт создан!');
-                setTimeout(() => {
-                    window.location.href = 'chat.html';
-                }, 1500);
-                
-            } catch(e) {
-                if (e.code === 'auth/email-already-in-use') {
-                    showToast('Аккаунт уже существует', true);
-                } else {
-                    showToast('Ошибка: ' + (e.message || e), true);
+                } catch (e2) {
+                    console.warn('Запись usernames (обновите правила в Firebase):', e2.code || e2);
                 }
+                
+                // Пытаемся создать handles
+                try {
+                    await db.collection('handles').doc(term).set({ uid: cred.user.uid });
+                } catch (e2) {
+                    console.warn('Запись handles (обновите правила в Firebase):', e2.code || e2);
+                }
+                
+                showSuccess('Регистрация успешна! Перенаправление...');
+                
+                // Ждем завершения всех операций Firestore
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Редирект произойдет в onAuthStateChanged
+                
+            } catch (e) {
+                console.error(e);
+                if (e.code === 'auth/email-already-in-use') {
+                    showError('Аккаунт с этим ником уже есть — войди');
+                } else if (e.code === 'permission-denied') {
+                    showError('Нет доступа к базе — проверьте правила Firestore в консоли');
+                } else {
+                    showError('Регистрация: ' + (e.message || e));
+                }
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         }
 
@@ -367,39 +537,95 @@
             const password = document.getElementById('loginPasswordInput').value.trim();
             
             if (!username || !password) {
-                showToast('Введите ник и пароль', true);
+                showError('Ник и пароль');
                 return;
             }
             
+            const submitBtn = document.querySelector('#loginSection button');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Вход...';
+            submitBtn.disabled = true;
+            
             try {
-                const email = `${username}@yazhfi.com`;
-                await auth.signInWithEmailAndPassword(email, password);
-                showToast('Добро пожаловать!');
-                setTimeout(() => {
-                    window.location.href = 'chat.html';
-                }, 500);
-            } catch(e) {
-                showToast('Неверный ник или пароль', true);
+                await auth.signInWithEmailAndPassword(`${username}@fichat.com`, password);
+                showSuccess('С возвращением');
+                // Редирект произойдет в onAuthStateChanged
+            } catch (e) {
+                if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+                    showError('Неверный логин или пароль');
+                } else {
+                    showError('Вход: ' + (e.message || e));
+                }
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         }
 
-        function goToChats() { window.location.href = 'chat.html'; }
-        function goToLenta() { window.location.href = 'lenta.html'; }
-        function goToProfile() { window.location.href = 'profil.html'; }
-
-        auth.onAuthStateChanged((user) => {
-            const setupScreen = document.getElementById('setupScreen');
-            const dashboardSection = document.getElementById('dashboardSection');
-            
-            if (user) {
-                setupScreen.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-            } else {
-                setupScreen.classList.remove('hidden');
-                dashboardSection.classList.add('hidden');
-                showLoginForm();
+        async function requestNotificationPermission() {
+            if (!messaging) {
+                showError('Браузер без FCM');
+                return;
             }
-        });
+            try {
+                const perm = await Notification.requestPermission();
+                if (perm === 'granted') {
+                    const token = await messaging.getToken();
+                    if (currentUser && token) {
+                        await db.collection('users').doc(currentUser.uid).update({
+                            fcmToken: token,
+                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
+                checkNotificationPermission();
+            } catch (e) {
+                console.error(e);
+                showError('Не удалось запросить уведомления');
+            }
+        }
+
+        function checkNotificationPermission() {
+            const el = document.getElementById('notificationStatus');
+            if (!el) return;
+            if (!('Notification' in window)) {
+                el.textContent = '';
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                el.textContent = '✅ уведомления ок';
+            } else if (Notification.permission === 'denied') {
+                el.textContent = '⛔ заблокированы';
+            } else {
+                el.textContent = 'можно включить кнопкой выше';
+            }
+            el.style.color = Notification.permission === 'granted' ? 'var(--green)' : 'var(--cream)';
+        }
+
+        function showError(msg) {
+            const n = document.createElement('div');
+            n.className = 'custom-notification';
+            n.style.borderColor = '#822';
+            n.textContent = msg;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 3200);
+        }
+
+        function showSuccess(msg) {
+            const n = document.createElement('div');
+            n.className = 'custom-notification';
+            n.style.color = 'var(--green)';
+            n.textContent = msg;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 2200);
+        }
+
+        function goToChats() { 
+            window.location.href = 'chat.html'; 
+        }
+        
+        function goToProfile() { 
+            window.location.href = 'profil.html'; 
+        }
 
         window.showLoginForm = showLoginForm;
         window.showRegisterForm = showRegisterForm;
@@ -407,9 +633,12 @@
         window.toggleLoginPassword = toggleLoginPassword;
         window.registerUser = registerUser;
         window.loginUser = loginUser;
+        window.requestNotificationPermission = requestNotificationPermission;
+        window.scrollToIosHint = scrollToIosHint;
         window.goToChats = goToChats;
-        window.goToLenta = goToLenta;
         window.goToProfile = goToProfile;
+
+        window.onload = init;
     </script>
 </body>
 </html>
