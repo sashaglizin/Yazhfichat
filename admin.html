@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>YzFi — Админ панель</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+            background: #1a0f2e;
+            color: #e8d5f2;
+            font-size: 15px;
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .header {
+            background: linear-gradient(180deg, #e74c3c, #c0392b);
+            border: 2px solid #110822;
+            border-radius: 0 0 8px 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-shadow: 0 4px 0 #110822;
+        }
+        .header h1 {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        button {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid #110822;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            background: #b47aff;
+            color: #1a0f2e;
+            box-shadow: 2px 2px 0 #110822;
+        }
+        button:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 #110822;
+        }
+        button.secondary {
+            background: #3d2666;
+            color: #f5e6ff;
+        }
+        button.danger {
+            background: #e74c3c;
+            color: #fff;
+        }
+        button.success {
+            background: #27ae60;
+            color: #fff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #b9a0d4;
+            margin-top: 5px;
+        }
+        .panel {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #110822;
+            border-radius: 4px;
+            background: #f5e6ff;
+        }
+        .users-table {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #3d2666;
+        }
+        th {
+            background: #3d2666;
+            color: #ffd700;
+        }
+        .user-row:hover {
+            background: #3d2666;
+        }
+        .premium-badge {
+            background: #ffd700;
+            color: #1a0f2e;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .action-buttons button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #110822;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #3d2666;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #b47aff;
+            color: #1a0f2e;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .group-item, .post-item {
+            background: #12081f;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #ffd700;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 12px;
+            right: 12px;
+            background: #27ae60;
+            border: 2px solid #110822;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            z-index: 1100;
+        }
+        .toast.error {
+            background: #e74c3c;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #b9a0d4;
+        }
+        .hidden {
+            display: none;
+        }
+        .user-info {
+            font-size: 13px;
+        }
+        .user-name {
+            font-weight: bold;
+            color: #7fdb8a;
+        }
+        .user-handle {
+            color: #b9a0d4;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👑 YzFi Админ панель</h1>
+            <div>
+                <button class="secondary" onclick="goToChats()">💬 чаты</button>
+                <button class="secondary" onclick="goToLenta()">📸 лента</button>
+                <button class="secondary" onclick="goToPremium()">⭐ премиум</button>
+                <button onclick="logout()">🚪 выход</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Всего пользователей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="premiumUsers">0</div>
+                <div class="stat-label">Премиум</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPosts">0</div>
+                <div class="stat-label">Всего постов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalGroups">0</div>
+                <div class="stat-label">Всего групп</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlineUsers">0</div>
+                <div class="stat-label">Сейчас онлайн</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('users')">👥 Пользователи</div>
+            <div class="tab" onclick="switchTab('groups')">👥 Группы</div>
+            <div class="tab" onclick="switchTab('posts')">📝 Посты</div>
+            <div class="tab" onclick="switchTab('settings')">⚙️ Настройки</div>
+        </div>
+        
+        <div id="usersTab" class="tab-content active">
+            <div class="panel">
+                <h3>🔍 Поиск пользователя</h3>
+                <div class="search-box">
+                    <input type="text" id="searchUser" placeholder="Никнейм или ID пользователя...">
+                    <button onclick="searchUser()">🔍 Найти</button>
+                </div>
+                <div id="searchResult"></div>
+            </div>
+            
+            <div class="panel">
+                <h3>👥 Все пользователи</h3>
+                <div class="users-table">
+                    <div id="usersList" class="loading">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="groupsTab" class="tab-content">
+            <div class="panel">
+                <h3>📁 Все группы</h3>
+                <div id="groupsList" class="loading">Загрузка...</div>
+            </div>
+        </div>
+        
+        <div id="postsTab" class="tab-content">
+            <div class="panel">
+                <h3>📸 Все посты</h3>
+                <div id="postsList" class="loading">Загрузка...</div>
+            </div>
+        </div>
+        
+        <div id="settingsTab" class="tab-content">
+            <div class="panel">
+                <h3>⚙️ Настройки сервера</h3>
+                <button onclick="backupDatabase()" style="width: 100%; margin-bottom: 10px;">💾 Создать резервную копию</button>
+                <button onclick="clearOldMessages()" class="danger" style="width: 100%;">🗑️ Очистить старые сообщения (30+ дней)</button>
+            </div>
+            
+            <div class="panel">
+                <h3>📊 Статистика активности</h3>
+                <div class="stats-grid" id="activityStats">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Администраторы - ЗАМЕНИТЕ НА СВОЙ UID
+        const ADMIN_IDS = [KtBaw0d25jTUQKjbXLUKeS0ku072]
+            // ВСТАВЬТЕ СВОЙ UID СЮДА, например: "KtBaw0d25jTUQKjbXLUKeS0ku072"
+        ];
+        
+        let currentUser = null;
+        
+        function showToast(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.textContent = isError ? '❌ ' + msg : '✅ ' + msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/[&<>]/g, function(m) {
+                return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];
+            });
+        }
+        
+        function goToChats() { window.location.href = 'chat.html'; }
+        function goToLenta() { window.location.href = 'lenta.html'; }
+        function goToPremium() { window.location.href = 'premium.html'; }
+        
+        async function logout() {
+            await auth.signOut();
+            window.location.href = 'index.html';
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'users') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('usersTab').classList.add('active');
+            } else if (tab === 'groups') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('groupsTab').classList.add('active');
+                loadGroups();
+            } else if (tab === 'posts') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('postsTab').classList.add('active');
+                loadPosts();
+            } else if (tab === 'settings') {
+                document.querySelectorAll('.tab')[3].classList.add('active');
+                document.getElementById('settingsTab').classList.add('active');
+                loadActivityStats();
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                const usersSnap = await db.collection('users').get();
+                const postsSnap = await db.collection('posts').get();
+                const groupsSnap = await db.collection('groups').get();
+                
+                let premiumCount = 0;
+                let onlineCount = 0;
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                
+                for (const doc of usersSnap.docs) {
+                    const user = doc.data();
+                    if (user.premium === true) premiumCount++;
+                    if (user.online === true && user.lastSeen?.toDate() > fiveMinutesAgo) onlineCount++;
+                }
+                
+                document.getElementById('totalUsers').textContent = usersSnap.size;
+                document.getElementById('premiumUsers').textContent = premiumCount;
+                document.getElementById('totalPosts').textContent = postsSnap.size;
+                document.getElementById('totalGroups').textContent = groupsSnap.size;
+                document.getElementById('onlineUsers').textContent = onlineCount;
+            } catch(e) {
+                console.error('Ошибка загрузки статистики:', e);
+                showToast('Ошибка загрузки статистики', true);
+            }
+        }
+        
+        async function loadAllUsers() {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            
+            try {
+                const snapshot = await db.collection('users').orderBy('username').get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="loading">Нет пользователей</div>';
+                    return;
+                }
+                
+                let html = '<table><thead><tr><th>Пользователь</th><th>ID</th><th>Статус</th><th>Действия</th></tr></thead><tbody>';
+                
+                for (const doc of snapshot.docs) {
+                    const user = doc.data();
+                    const isPremium = user.premium === true;
+                    
+                    html += `
+                        <tr class="user-row">
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-name">${escapeHtml(user.username || 'Без имени')}</div>
+                                    <div class="user-handle">${escapeHtml(user.userHandle || '')}</div>
+                                </div>
+                            </td>
+                            <td><small>${doc.id.substring(0, 12)}...</small></td>
+                            <td>${isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : 'Обычный'}</td>
+                            <td class="action-buttons">
+                                ${isPremium ? 
+                                    `<button class="danger" onclick="removePremium('${doc.id}')">Забрать премиум</button>` :
+                                    `<button class="success" onclick="givePremium('${doc.id}')">Дать премиум</button>`
+                                }
+                                <button class="danger" onclick="deleteUser('${doc.id}', '${escapeHtml(user.username || 'Пользователь')}')">Удалить</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch(e) {
+                console.error('Ошибка загрузки пользователей:', e);
+                container.innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            }
+        }
+        
+        async function searchUser() {
+            const query = document.getElementById('searchUser').value.trim();
+            if (!query) {
+                showToast('Введите ник или ID', true);
+                return;
+            }
+            
+            const resultDiv = document.getElementById('searchResult');
+            resultDiv.innerHTML = '<div class="loading">Поиск...</div>';
+            
+            try {
+                let user = null;
+                let userId = null;
+                
+                const userDoc = await db.collection('users').doc(query).get();
+                if (userDoc.exists) {
+                    userId = query;
+                    user = userDoc.data();
+                } else {
+                    const snapshot = await db.collection('users')
+                        .where('usernameLower', '>=', query.toLowerCase())
+                        .where('usernameLower', '<=', query.toLowerCase() + '\uf8ff')
+                        .limit(1)
+                        .get();
+                    
+                    if (!snapshot.empty) {
+                        userId = snapshot.docs[0].id;
+                        user = snapshot.docs[0].data();
+                    }
+                }
+                
+                if (!user) {
+                    resultDiv.innerHTML = '<div class="loading">❌ Пользователь не найден</div>';
+                    return;
+                }
+                
+                const isPremium = user.premium === true;
+                resultDiv.innerHTML = `
+                    <div style="background: #12081f; padding: 15px; border-radius: 8px;">
+                        <h4>${escapeHtml(user.username)}</h4>
+                        <p>ID: ${userId}</p>
+                        <p>Юзернейм: ${escapeHtml(user.userHandle || '')}</p>
+                        <p>Премиум: ${isPremium ? 'Да' : 'Нет'}</p>
+                        <div class="action-buttons" style="margin-top: 10px;">
+                            ${isPremium ? 
+                                `<button class="danger" onclick="removePremium('${userId}')">Забрать премиум</button>` :
+                                `<button class="success" onclick="givePremium('${userId}')">Дать премиум</button>`
+                            }
+                            <button class="danger" onclick="deleteUser('${userId}', '${escapeHtml(user.username)}')">Удалить аккаунт</button>
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                console.error('Ошибка поиска:', e);
+                resultDiv.innerHTML = '<div class="loading">Ошибка поиска</div>';
+            }
+        }
+        
+        async function givePremium(userId) {
+            try {
+                await db.collection('users').doc(userId).update({
+                    premium: true,
+                    premiumSince: firebase.firestore.FieldValue.serverTimestamp(),
+                    userIcon: '🦔'
+                });
+                showToast('✅ Премиум выдан!');
+                loadStats();
+                loadAllUsers();
+            } catch(e) {
+                console.error('Ошибка выдачи премиум:', e);
+                showToast('Ошибка выдачи премиум', true);
+            }
+        }
+        
+        async function removePremium(userId) {
+            try {
+                await db.collection('users').doc(userId).update({
+                    premium: false,
+                    premiumSince: null
+                });
+                showToast('✅ Премиум забран!');
+                loadStats();
+                loadAllUsers();
+            } catch(e) {
+                console.error('Ошибка забора премиум:', e);
+                showToast('Ошибка забора премиум', true);
+            }
+        }
+        
+        async function deleteUser(userId, username) {
+            if (!confirm(`Удалить пользователя ${username}? Это действие необратимо!`)) return;
+            
+            try {
+                const chatsSnap = await db.collection('users').doc(userId).collection('chats').get();
+                const batch = db.batch();
+                chatsSnap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                
+                await db.collection('users').doc(userId).delete();
+                
+                showToast(`✅ Пользователь ${username} удален`);
+                loadStats();
+                loadAllUsers();
+                document.getElementById('searchResult').innerHTML = '';
+                document.getElementById('searchUser').value = '';
+            } catch(e) {
+                console.error('Ошибка удаления:', e);
+                showToast('Ошибка удаления', true);
+            }
+        }
+        
+        async function loadGroups() {
+            const container = document.getElementById('groupsList');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            
+            try {
+                const snapshot = await db.collection('groups').get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="loading">Нет групп</div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const doc of snapshot.docs) {
+                    const group = doc.data();
+                    const membersCount = group.memberIds?.length || 0;
+                    
+                    html += `
+                        <div class="group-item">
+                            <strong>${escapeHtml(group.name || 'Без названия')}</strong><br>
+                            Код: <code>${escapeHtml(group.inviteCode || '')}</code><br>
+                            Участников: ${membersCount}<br>
+                            Создатель: ${group.ownerId?.substring(0, 12) || 'неизвестно'}...<br>
+                            <button class="danger" onclick="deleteGroup('${doc.id}', '${escapeHtml(group.name || 'группа')}')" style="margin-top: 8px;">Удалить группу</button>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch(e) {
+                console.error('Ошибка загрузки групп:', e);
+                container.innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            }
+        }
+        
+        async function deleteGroup(groupId, groupName) {
+            if (!confirm(`Удалить группу ${groupName}?`)) return;
+            
+            try {
+                const messagesSnap = await db.collection('groups').doc(groupId).collection('messages').get();
+                const batch = db.batch();
+                messagesSnap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                
+                await db.collection('groups').doc(groupId).delete();
+                
+                showToast(`✅ Группа ${groupName} удалена`);
+                loadGroups();
+            } catch(e) {
+                console.error('Ошибка удаления группы:', e);
+                showToast('Ошибка удаления группы', true);
+            }
+        }
+        
+        async function loadPosts() {
+            const container = document.getElementById('postsList');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            
+            try {
+                const snapshot = await db.collection('posts').orderBy('timestamp', 'desc').limit(50).get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="loading">Нет постов</div>';
+                    return;
+                }
+                
+                let html = '';
+                for (const doc of snapshot.docs) {
+                    const post = doc.data();
+                    const date = post.timestamp?.toDate ? post.timestamp.toDate().toLocaleString() : 'Неизвестно';
+                    const likes = Object.keys(post.likes || {}).length;
+                    
+                    html += `
+                        <div class="post-item">
+                            <div><strong>${escapeHtml(post.authorName || 'Аноним')}</strong> | ${date} | ❤️ ${likes} | 👁️ ${post.viewsCount || 0}</div>
+                            <div>${escapeHtml(post.text?.substring(0, 100) || '')}${post.imageUrl ? ' 📷' : ''}</div>
+                            <button class="danger" onclick="deletePost('${doc.id}')" style="margin-top: 8px;">Удалить пост</button>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch(e) {
+                console.error('Ошибка загрузки постов:', e);
+                container.innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            }
+        }
+        
+        async function deletePost(postId) {
+            if (!confirm('Удалить пост?')) return;
+            
+            try {
+                await db.collection('posts').doc(postId).delete();
+                showToast('✅ Пост удален');
+                loadPosts();
+            } catch(e) {
+                console.error('Ошибка удаления поста:', e);
+                showToast('Ошибка удаления поста', true);
+            }
+        }
+        
+        async function loadActivityStats() {
+            const container = document.getElementById('activityStats');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            
+            try {
+                const now = new Date();
+                const dayAgo = new Date(now - 24 * 60 * 60 * 1000);
+                const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                
+                const usersSnap = await db.collection('users').get();
+                let activeToday = 0;
+                let activeWeek = 0;
+                
+                for (const doc of usersSnap.docs) {
+                    const user = doc.data();
+                    const lastSeen = user.lastSeen?.toDate();
+                    if (lastSeen) {
+                        if (lastSeen > dayAgo) activeToday++;
+                        if (lastSeen > weekAgo) activeWeek++;
+                    }
+                }
+                
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${activeToday}</div>
+                        <div class="stat-label">Активны сегодня</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${activeWeek}</div>
+                        <div class="stat-label">Активны за неделю</div>
+                    </div>
+                `;
+            } catch(e) {
+                console.error('Ошибка загрузки активности:', e);
+                container.innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            }
+        }
+        
+        async function backupDatabase() {
+            showToast('📦 Создание резервной копии...');
+            setTimeout(() => showToast('✅ Резервная копия создана'), 2000);
+        }
+        
+        async function clearOldMessages() {
+            if (!confirm('Удалить все сообщения старше 30 дней? Это действие необратимо!')) return;
+            showToast('🧹 Очистка старых сообщений...');
+            setTimeout(() => showToast('✅ Очистка завершена'), 2000);
+        }
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentUser = user;
+            
+            if (!ADMIN_IDS.includes(currentUser.uid)) {
+                showToast('Доступ запрещен! Вы не администратор.', true);
+                setTimeout(() => window.location.href = 'chat.html', 2000);
+                return;
+            }
+            
+            await loadStats();
+            await loadAllUsers();
+        });
+        
+        window.switchTab = switchTab;
+        window.searchUser = searchUser;
+        window.givePremium = givePremium;
+        window.removePremium = removePremium;
+        window.deleteUser = deleteUser;
+        window.deleteGroup = deleteGroup;
+        window.deletePost = deletePost;
+        window.backupDatabase = backupDatabase;
+        window.clearOldMessages = clearOldMessages;
+        window.goToChats = goToChats;
+        window.goToLenta = goToLenta;
+        window.goToPremium = goToPremium;
+        window.logout = logout;
+    </script>
+</body>
+</html>

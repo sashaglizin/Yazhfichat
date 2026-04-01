@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>YzFi — Премиум</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: #1a0f2e;
+            color: #e8d5f2;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(180deg, #ffd700, #b8860b);
+            border: 2px solid #110822;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header h1 { color: #1a0f2e; }
+        button {
+            background: #b47aff;
+            border: 2px solid #110822;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button.secondary { background: #3d2666; color: white; }
+        .premium-card {
+            background: linear-gradient(135deg, #2d1b4e, #4a2f7a);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .premium-badge {
+            background: #ffd700;
+            color: #1a0f2e;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .feature {
+            background: #12081f;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .feature h3 { color: #ffd700; margin-bottom: 5px; }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #27ae60;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            z-index: 1000;
+        }
+        .toast.error { background: #e74c3c; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⭐ YzFi PREMIUM ⭐</h1>
+            <div>
+                <button class="secondary" onclick="goToChats()">💬 Чаты</button>
+                <button class="secondary" onclick="goToLenta()">📸 Лента</button>
+                <button class="secondary" onclick="goToProfile()">👤 Профиль</button>
+            </div>
+        </div>
+        
+        <div id="premiumStatus" class="premium-card">
+            <div class="premium-badge" id="premiumBadge">⚪ Обычный аккаунт</div>
+            <h2 id="usernameDisplay">Загрузка...</h2>
+            <p id="premiumInfo">Премиум-доступ открывает дополнительные возможности</p>
+        </div>
+        
+        <div id="premiumFeatures" class="hidden">
+            <div class="feature">
+                <h3>🦔 Уникальная иконка</h3>
+                <p>Выберите иконку, которая будет отображаться после вашего имени</p>
+                <div id="icons" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button onclick="setIcon('🦔')">🦔</button>
+                    <button onclick="setIcon('⭐')">⭐</button>
+                    <button onclick="setIcon('👑')">👑</button>
+                    <button onclick="setIcon('💎')">💎</button>
+                    <button onclick="setIcon('🌟')">🌟</button>
+                    <button onclick="setIcon('🔥')">🔥</button>
+                </div>
+                <button onclick="saveIcon()" style="margin-top: 10px;">Сохранить иконку</button>
+            </div>
+            
+            <div class="feature">
+                <h3>👁️ Просмотр удаленных сообщений</h3>
+                <p>Вы можете видеть удаленные сообщения в чатах</p>
+                <input type="text" id="deletedUser" placeholder="ID пользователя для просмотра" style="width: 100%; padding: 8px; margin-top: 10px;">
+                <button onclick="viewDeletedMessages()">Показать удаленные</button>
+                <div id="deletedMessages" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="feature">
+                <h3>🕐 Последний вход пользователя</h3>
+                <input type="text" id="lastSeenUser" placeholder="Никнейм пользователя">
+                <button onclick="checkLastSeen()">Проверить</button>
+                <div id="lastSeenResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="feature">
+                <h3>🚫 Глобальная блокировка</h3>
+                <p>Заблокируйте пользователя на всем сайте</p>
+                <input type="text" id="blockUser" placeholder="Никнейм пользователя">
+                <button onclick="blockUser()">Заблокировать</button>
+                <div id="blockedList" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+        
+        <div id="noPremium">
+            <div class="feature">
+                <h3>⭐ Что дает премиум?</h3>
+                <p>• Уникальная иконка после имени</p>
+                <p>• Просмотр удаленных сообщений</p>
+                <p>• Информация о последнем входе пользователей</p>
+                <p>• Глобальная блокировка пользователей</p>
+                <p>• Приоритетная поддержка</p>
+                <br>
+                <p style="color: #ffd700;">💎 Премиум выдается только администратором</p>
+                <p>Обратитесь к администратору для получения доступа</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        let currentUser = null;
+        let userData = null;
+        
+        function showToast(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function goToChats() { window.location.href = 'chat.html'; }
+        function goToLenta() { window.location.href = 'lenta.html'; }
+        function goToProfile() { window.location.href = 'profil.html'; }
+        
+        async function loadUserData() {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            userData = doc.data();
+            
+            document.getElementById('usernameDisplay').textContent = userData.username;
+            
+            if (userData.premium) {
+                document.getElementById('premiumBadge').innerHTML = '⭐ PREMIUM АККАУНТ ⭐';
+                document.getElementById('premiumBadge').style.background = '#ffd700';
+                document.getElementById('premiumFeatures').classList.remove('hidden');
+                document.getElementById('noPremium').classList.add('hidden');
+                loadBlockedList();
+            } else {
+                document.getElementById('premiumBadge').innerHTML = '⚪ Обычный аккаунт';
+                document.getElementById('premiumFeatures').classList.add('hidden');
+                document.getElementById('noPremium').classList.remove('hidden');
+            }
+        }
+        
+        async function setIcon(icon) {
+            if (!userData?.premium) {
+                showToast('Только премиум-пользователи могут менять иконку', true);
+                return;
+            }
+            await db.collection('users').doc(currentUser.uid).update({ userIcon: icon });
+            showToast('Иконка выбрана!');
+        }
+        
+        async function saveIcon() {
+            showToast('Иконка сохранена!');
+        }
+        
+        async function viewDeletedMessages() {
+            const userId = document.getElementById('deletedUser').value.trim();
+            if (!userId) {
+                showToast('Введите ID пользователя', true);
+                return;
+            }
+            
+            const container = document.getElementById('deletedMessages');
+            container.innerHTML = 'Поиск удаленных сообщений...';
+            
+            try {
+                const chatId = [currentUser.uid, userId].sort().join('_');
+                const snapshot = await db.collection('chats').doc(chatId).collection('messages')
+                    .where('deleted', '==', true)
+                    .limit(20)
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = 'Нет удаленных сообщений';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const msg = doc.data();
+                    html += `<div style="background: #2d1b4e; padding: 5px; margin-top: 5px;">
+                        <small>${msg.username}:</small> ${msg.text || '[Фото]'}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = 'Ошибка загрузки';
+            }
+        }
+        
+        async function checkLastSeen() {
+            const username = document.getElementById('lastSeenUser').value.trim().toLowerCase();
+            if (!username) {
+                showToast('Введите никнейм', true);
+                return;
+            }
+            
+            const resultDiv = document.getElementById('lastSeenResult');
+            resultDiv.innerHTML = 'Поиск...';
+            
+            try {
+                const snapshot = await db.collection('users')
+                    .where('usernameLower', '==', username)
+                    .limit(1)
+                    .get();
+                
+                if (snapshot.empty) {
+                    resultDiv.innerHTML = 'Пользователь не найден';
+                    return;
+                }
+                
+                const user = snapshot.docs[0].data();
+                const lastSeen = user.lastSeen?.toDate();
+                const online = user.online;
+                
+                if (online) {
+                    resultDiv.innerHTML = '🟢 Пользователь онлайн сейчас';
+                } else if (lastSeen) {
+                    resultDiv.innerHTML = `📅 Последний раз был: ${lastSeen.toLocaleString()}`;
+                } else {
+                    resultDiv.innerHTML = 'Информация недоступна';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = 'Ошибка поиска';
+            }
+        }
+        
+        async function blockUser() {
+            const username = document.getElementById('blockUser').value.trim();
+            if (!username) {
+                showToast('Введите никнейм', true);
+                return;
+            }
+            
+            const snapshot = await db.collection('users')
+                .where('usernameLower', '==', username.toLowerCase())
+                .limit(1)
+                .get();
+            
+            if (snapshot.empty) {
+                showToast('Пользователь не найден', true);
+                return;
+            }
+            
+            const userToBlock = snapshot.docs[0];
+            if (userToBlock.id === currentUser.uid) {
+                showToast('Нельзя заблокировать себя', true);
+                return;
+            }
+            
+            await db.collection('users').doc(currentUser.uid).update({
+                globalBlockedUsers: firebase.firestore.FieldValue.arrayUnion(userToBlock.id)
+            });
+            
+            showToast(`Пользователь ${username} заблокирован`);
+            loadBlockedList();
+            document.getElementById('blockUser').value = '';
+        }
+        
+        async function loadBlockedList() {
+            const container = document.getElementById('blockedList');
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            const blockedIds = doc.data()?.globalBlockedUsers || [];
+            
+            if (blockedIds.length === 0) {
+                container.innerHTML = 'Нет заблокированных пользователей';
+                return;
+            }
+            
+            let html = '<strong>Заблокированные:</strong><br>';
+            for (const id of blockedIds) {
+                const userDoc = await db.collection('users').doc(id).get();
+                if (userDoc.exists) {
+                    html += `<div>${escapeHtml(userDoc.data().username)} 
+                        <button onclick="unblockUser('${id}')" style="padding: 2px 5px; font-size: 11px;">Разблокировать</button>
+                    </div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+        
+        async function unblockUser(userId) {
+            await db.collection('users').doc(currentUser.uid).update({
+                globalBlockedUsers: firebase.firestore.FieldValue.arrayRemove(userId)
+            });
+            showToast('Пользователь разблокирован');
+            loadBlockedList();
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = user;
+            await loadUserData();
+        });
+        
+        window.goToChats = goToChats;
+        window.goToLenta = goToLenta;
+        window.goToProfile = goToProfile;
+        window.setIcon = setIcon;
+        window.saveIcon = saveIcon;
+        window.viewDeletedMessages = viewDeletedMessages;
+        window.checkLastSeen = checkLastSeen;
+        window.blockUser = blockUser;
+        window.unblockUser = unblockUser;
+    </script>
+</body>
+</html>
