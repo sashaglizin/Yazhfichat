@@ -13,10 +13,12 @@
     <style>
         :root {
             --bg: #1a0f2e;
+            --bg-light: #2a1a45;
             --panel: #2d1b4e;
             --panel2: #3d2666;
             --cream: #f5e6ff;
             --text: #e8d5f2;
+            --text-muted: #b9a0d4;
             --green: #7fdb8a;
             --accent: #b47aff;
             --header: #4a2f7a;
@@ -26,16 +28,10 @@
             --offline: #7f8c8d;
             --danger: #c44;
             --warning: #f39c12;
+            --success: #2ecc71;
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            height: 100%;
-            height: 100dvh;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; height: 100dvh; }
         body {
             font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
             font-size: 15px;
@@ -45,13 +41,9 @@
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             -webkit-tap-highlight-color: transparent;
         }
-        .app {
-            max-width: 520px;
-            margin: 0 auto;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-        }
+        .app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+        
+        /* Header */
         .header {
             flex-shrink: 0;
             background: linear-gradient(180deg, var(--header) 0%, var(--panel) 100%);
@@ -71,16 +63,12 @@
             text-align: center;
             font-weight: bold;
             font-size: 1.15rem;
-            letter-spacing: 0.04em;
             color: var(--cream);
             text-shadow: 1px 1px 0 var(--border);
         }
-        .header-actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
+        .header-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        
+        /* Buttons */
         button, .btn {
             font-family: inherit;
             font-size: 14px;
@@ -95,38 +83,16 @@
             touch-action: manipulation;
             transition: all 0.05s ease;
         }
-        button:active, .btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 1px 1px 0 var(--border);
-        }
-        button.secondary {
-            background: var(--panel2);
-            color: var(--cream);
-        }
-        button.small {
-            padding: 8px 10px;
-            font-size: 13px;
-        }
-        button.danger {
-            background: var(--danger);
-            color: #fff;
-        }
-        button.warning {
-            background: var(--warning);
-            color: #fff;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-            min-height: 0;
-        }
+        button:active, .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--border); }
+        button.secondary { background: var(--panel2); color: var(--cream); }
+        button.small { padding: 8px 10px; font-size: 13px; }
+        button.danger { background: var(--danger); color: #fff; }
+        button.warning { background: var(--warning); color: #fff; }
+        button.success { background: var(--success); color: #1a0f2e; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Main */
+        .main { flex: 1; display: flex; flex-direction: column; padding: 10px; padding-bottom: max(12px, env(safe-area-inset-bottom)); min-height: 0; }
         .panel {
             background: var(--panel);
             border: 2px solid var(--border);
@@ -135,12 +101,10 @@
             margin-bottom: 10px;
             box-shadow: 3px 3px 0 var(--shadow);
         }
-        .search-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        input[type="text"], input[type="search"] {
+        
+        /* Search */
+        .search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        input[type="text"], input[type="search"], input[type="password"], textarea {
             flex: 1;
             min-width: 0;
             padding: 12px 14px;
@@ -150,6 +114,9 @@
             background: var(--cream);
             color: #1a0f2e;
         }
+        textarea { font-family: inherit; resize: vertical; }
+        
+        /* Chats list */
         .chats-list, .user-search-list {
             max-height: min(52vh, 420px);
             overflow-y: auto;
@@ -157,9 +124,8 @@
             border-radius: 4px;
             background: #12081f;
         }
-        @media (min-width: 600px) {
-            .chats-list, .user-search-list { max-height: 480px; }
-        }
+        @media (min-width: 600px) { .chats-list, .user-search-list { max-height: 480px; } }
+        
         .chat-item {
             display: flex;
             align-items: center;
@@ -170,15 +136,10 @@
             cursor: pointer;
         }
         .chat-item:hover { background: var(--panel2); }
-        .chat-item.unread {
-            border-left: 4px solid var(--accent);
-            background: #251840;
-        }
+        .chat-item.unread { border-left: 4px solid var(--accent); background: #251840; }
         .chat-item:last-child { border-bottom: none; }
-        .avatar-wrapper {
-            position: relative;
-            flex-shrink: 0;
-        }
+        
+        .avatar-wrapper { position: relative; flex-shrink: 0; }
         .avatar {
             width: 44px;
             height: 44px;
@@ -197,33 +158,12 @@
             border: 2px solid var(--border);
             background: var(--offline);
         }
-        .status-dot.online {
-            background: var(--online);
-        }
-        .chat-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .chat-name {
-            font-weight: bold;
-            color: var(--green);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .chat-preview {
-            font-size: 13px;
-            color: #b9a0d4;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .chat-meta {
-            text-align: right;
-            font-size: 12px;
-            color: #8a739e;
-            flex-shrink: 0;
-        }
+        .status-dot.online { background: var(--online); }
+        
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-name { font-weight: bold; color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-preview { font-size: 13px; color: #b9a0d4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-meta { text-align: right; font-size: 12px; color: #8a739e; flex-shrink: 0; }
         .badge-unread {
             display: inline-flex;
             align-items: center;
@@ -238,53 +178,35 @@
             font-size: 12px;
             margin-top: 4px;
         }
-        .group-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
+        
+        .group-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
         .hidden { display: none !important; }
-        .empty {
-            text-align: center;
-            padding: 32px 16px;
-            color: #8a739e;
-        }
+        .empty { text-align: center; padding: 32px 16px; color: #8a739e; }
         .empty strong { color: var(--green); display: block; margin-bottom: 8px; }
-        .error-toast {
+        
+        /* Toast */
+        .error-toast, .success-toast {
             position: fixed;
             left: 12px;
             right: 12px;
             bottom: max(16px, env(safe-area-inset-bottom));
-            background: #5a1a1a;
-            border: 2px solid var(--border);
-            color: #ffcccc;
             padding: 12px;
             border-radius: 6px;
             z-index: 200;
             font-size: 14px;
             box-shadow: 4px 4px 0 var(--border);
         }
-        .success-toast {
-            position: fixed;
-            left: 12px;
-            right: 12px;
-            bottom: max(16px, env(safe-area-inset-bottom));
-            background: #1a5a2a;
-            border: 2px solid var(--border);
-            color: #ccffcc;
-            padding: 12px;
-            border-radius: 6px;
-            z-index: 200;
-            font-size: 14px;
-            box-shadow: 4px 4px 0 var(--border);
-        }
+        .error-toast { background: #5a1a1a; border: 2px solid var(--border); color: #ffcccc; }
+        .success-toast { background: #1a5a2a; border: 2px solid var(--border); color: #ccffcc; }
+        
+        /* Chat view */
         .chat-view .chat-header {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-bottom: 8px;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
         .chat-view .chat-header .title {
             flex: 1;
@@ -292,12 +214,9 @@
             color: var(--cream);
             font-size: 15px;
             cursor: pointer;
-            transition: color 0.2s ease;
         }
-        .chat-view .chat-header .title:hover {
-            color: #b47aff;
-            text-decoration: underline;
-        }
+        .chat-view .chat-header .title:hover { color: var(--accent); text-decoration: underline; }
+        
         .messages {
             flex: 1;
             min-height: 200px;
@@ -309,10 +228,9 @@
             padding: 10px;
             margin-bottom: 10px;
         }
-        @media (max-height: 640px) {
-            .messages { max-height: 42vh; }
-            .chats-list, .user-search-list { max-height: 38vh; }
-        }
+        @media (max-height: 640px) { .messages { max-height: 42vh; } .chats-list, .user-search-list { max-height: 38vh; } }
+        
+        /* Message */
         .msg {
             margin-bottom: 14px;
             padding: 8px;
@@ -321,56 +239,29 @@
             position: relative;
             transition: background 0.2s ease;
         }
-        .msg:hover {
-            background: #251840;
-        }
-        .msg:hover .msg-actions {
-            display: flex;
-        }
-        .msg-head {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            font-size: 13px;
-            margin-bottom: 6px;
-        }
-        .msg-user {
-            color: var(--green);
-            font-weight: bold;
+        .msg:hover { background: #251840; }
+        .msg:hover .msg-actions { display: flex; }
+        .msg-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 6px; flex-wrap: wrap; }
+        .msg-user { color: var(--green); font-weight: bold; cursor: pointer; }
+        .msg-user:hover { color: #9effaa; text-decoration: underline; }
+        .msg-time { color: #8a739e; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+        .msg-body { color: var(--text); word-break: break-word; }
+        .msg-body img { max-width: 100%; max-height: 280px; object-fit: contain; border: 2px solid var(--border); border-radius: 4px; margin-top: 6px; display: block; }
+        
+        /* Read status */
+        .msg-read-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; margin-left: 6px; }
+        .msg-read-status .read { color: var(--green); }
+        .msg-read-status .delivered { color: #b9a0d4; }
+        .msg-read-status .sent { color: #8a739e; }
+        .msg-read-status .read-count {
+            background: var(--panel2);
+            border-radius: 10px;
+            padding: 0 6px;
+            font-size: 10px;
             cursor: pointer;
-            transition: color 0.2s ease;
         }
-        .msg-user:hover {
-            color: #9effaa;
-            text-decoration: underline;
-        }
-        .msg-time { color: #8a739e; flex-shrink: 0; }
-        .msg-body { 
-            color: var(--text);
-            word-break: break-word;
-        }
-        .msg-body img {
-            max-width: 100%;
-            max-height: 280px;
-            object-fit: contain;
-            border: 2px solid var(--border);
-            border-radius: 4px;
-            margin-top: 6px;
-            display: block;
-        }
-        .msg-status {
-            font-size: 11px;
-            margin-left: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .msg-status .read {
-            color: var(--green);
-        }
-        .msg-status .delivered {
-            color: #b9a0d4;
-        }
+        .msg-read-status .read-count:hover { background: var(--accent); color: #1a0f2e; }
+        
         .msg-actions {
             position: absolute;
             right: 8px;
@@ -391,25 +282,31 @@
             border: 1px solid var(--border);
             border-radius: 3px;
         }
-        .msg-action-btn:hover {
-            background: var(--accent);
-            color: #1a0f2e;
-        }
-        .composer {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-top: 4px;
-            background: var(--bg);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        .composer-row {
-            display: flex;
-            gap: 8px;
-        }
+        .msg-action-btn:hover { background: var(--accent); color: #1a0f2e; }
+        
+        /* Composer */
+        .composer { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; background: var(--bg); padding-bottom: env(safe-area-inset-bottom); }
+        .composer-row { display: flex; gap: 8px; }
         .composer-row input[type="text"] { flex: 1; }
         .composer-row button { flex: 1; }
+        
+        .image-preview-container { position: relative; display: inline-block; width: fit-content; margin-bottom: 8px; }
+        .image-preview-img { max-height: 80px; border-radius: 4px; border: 2px solid var(--border); }
+        .remove-image-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1;
+            box-shadow: 1px 1px 0 var(--border);
+        }
+        
+        /* Modals */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -421,9 +318,7 @@
             padding: 12px;
             padding-bottom: max(12px, env(safe-area-inset-bottom));
         }
-        @media (min-width: 480px) {
-            .modal-overlay { align-items: center; }
-        }
+        @media (min-width: 480px) { .modal-overlay { align-items: center; } }
         .modal {
             background: var(--panel);
             border: 2px solid var(--border);
@@ -435,42 +330,26 @@
             padding: 16px;
             box-shadow: 6px 6px 0 var(--border);
         }
-        .modal h3 {
-            color: var(--cream);
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-        }
+        .modal h3 { color: var(--cream); margin-bottom: 12px; font-size: 1.1rem; }
         .modal .field { margin-bottom: 12px; }
-        .modal label {
-            display: block;
-            font-size: 12px;
-            color: #b9a0d4;
-            margin-bottom: 4px;
-        }
-        .modal textarea {
-            width: 100%;
-            padding: 8px;
-            font-family: inherit;
-            font-size: 14px;
-            border: 2px solid var(--border);
-            border-radius: 4px;
-            background: var(--cream);
-            color: #1a0f2e;
-            resize: vertical;
-        }
+        .modal label { display: block; font-size: 12px; color: #b9a0d4; margin-bottom: 4px; }
         .hint { font-size: 12px; color: #8a739e; margin-top: 6px; }
         .mono { font-family: ui-monospace, monospace; font-size: 13px; }
-        .loading-spinner {
-            text-align: center;
-            padding: 20px;
-            color: var(--accent);
-        }
-        .chat-actions-panel {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-            justify-content: space-between;
-        }
+        .loading-spinner { text-align: center; padding: 20px; color: var(--accent); }
+        
+        .read-list-modal { max-height: 300px; overflow-y: auto; }
+        .read-list-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid var(--border); }
+        .read-list-item img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; cursor: pointer; }
+        .read-list-item .name { flex: 1; font-weight: bold; color: var(--green); cursor: pointer; }
+        .read-list-item .name:hover { text-decoration: underline; }
+        .read-list-item .time { font-size: 10px; color: var(--text-muted); }
+        
+        .typing-indicator { font-size: 11px; color: var(--accent); margin-left: 8px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .chat-search-bar { display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .msg-highlight { background: #3a2a60 !important; }
+        
         .settings-btn {
             background: none;
             box-shadow: none;
@@ -480,10 +359,9 @@
             color: var(--cream);
             transform: none;
         }
-        .settings-btn:active {
-            transform: none;
-            box-shadow: none;
-        }
+        .settings-btn:active { transform: none; box-shadow: none; }
+        
+        hr { border-color: var(--panel2); margin: 12px 0; }
     </style>
 </head>
 <body>
@@ -508,9 +386,7 @@
                     <button type="button" class="secondary" onclick="openJoinModal()">🔑 войти по коду</button>
                 </div>
             </div>
-            <div class="chats-list" id="chatsList">
-                <div class="empty">⏳ Загрузка...</div>
-            </div>
+            <div class="chats-list" id="chatsList"><div class="empty">⏳ Загрузка...</div></div>
             <div id="emptyChats" class="empty hidden">
                 <strong>✨ Пока пусто</strong>
                 Найди человека выше или создай группу.
@@ -522,87 +398,87 @@
                 <button type="button" class="small secondary" onclick="backToList()">←</button>
                 <div class="title" id="chatTitle">чат</div>
                 <span id="chatExtra" class="mono" style="font-size:12px;color:#b9a0d4;max-width:40%;overflow:hidden;text-overflow:ellipsis;"></span>
-                <button type="button" class="settings-btn" id="chatSettingsBtn" onclick="openChatSettings()">⚙️</button>
+                <button type="button" class="small secondary" onclick="toggleChatSearch()">🔍</button>
+                <button type="button" class="settings-btn" onclick="openChatSettings()">⚙️</button>
             </div>
             <div class="messages" id="messagesEl"></div>
             <div class="composer">
+                <div id="imagePreviewContainer" class="hidden image-preview-container">
+                    <img id="previewImage" class="image-preview-img" alt="preview">
+                    <button type="button" id="removeImageBtn" class="remove-image-btn" onclick="removeAttachedImage()">✕</button>
+                </div>
                 <input type="text" id="messageInput" placeholder="💬 Сообщение..." maxlength="2000" autocomplete="off">
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
                 <div class="composer-row">
-                    <button type="button" onclick="sendNow()">📤 отправить</button>
+                    <button type="button" id="sendBtn" onclick="sendNow()">📤 отправить</button>
                     <button type="button" class="secondary" onclick="pickImage()">🖼️ фото</button>
+                </div>
+                <div id="chatSearchBar" class="chat-search-bar hidden">
+                    <input type="text" id="chatSearchInput" placeholder="🔍 Поиск в чате..." onkeypress="if(event.key==='Enter') searchInChat()">
+                    <button class="small" onclick="searchInChat()">найти</button>
+                    <button class="small secondary" onclick="clearChatSearch()">✕</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Модалка настроек чата (очистка / блокировка / разблокировка) -->
+    <!-- Modals -->
     <div id="modalChatSettings" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal">
             <h3>⚙️ Настройки чата</h3>
-            <div class="field">
-                <button type="button" class="warning" style="width:100%" id="modalClearChatBtn" onclick="clearChat()">🗑️ Очистить чат</button>
-            </div>
+            <div class="field"><button type="button" class="warning" style="width:100%" onclick="clearChat()">🗑️ Очистить чат</button></div>
             <div class="field" id="blockUnblockContainer">
                 <button type="button" class="danger" style="width:100%" id="modalBlockBtn" onclick="blockUser()">🚫 Заблокировать</button>
                 <button type="button" class="secondary" style="width:100%; margin-top:8px; display:none;" id="modalUnblockBtn" onclick="unblockUser()">🔓 Разблокировать</button>
             </div>
-            <div class="composer-row">
-                <button type="button" class="secondary" onclick="closeModals()">❌ Закрыть</button>
-            </div>
+            <div class="composer-row"><button type="button" class="secondary" onclick="closeModals()">❌ Закрыть</button></div>
         </div>
     </div>
 
     <div id="modalCreate" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal">
             <h3>✨ Создать группу</h3>
-            <div class="field">
-                <label>📛 Название группы</label>
-                <input type="text" id="newGroupName" maxlength="40" placeholder="Например: Ночной /b/">
-            </div>
+            <div class="field"><label>📛 Название группы</label><input type="text" id="newGroupName" maxlength="40" placeholder="Например: Ночной /b/"></div>
             <div class="field">
                 <label>🔑 Код приглашения</label>
-                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--text);">
-                    <input type="radio" name="codeMode" value="random" checked> 🎲 случайный
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;color:var(--text);">
-                    <input type="radio" name="codeMode" value="custom"> ✍️ свой ($ник)
-                </label>
+                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;"><input type="radio" name="codeMode" value="random" checked> 🎲 случайный</label>
+                <label style="display:flex;align-items:center;gap:8px;"><input type="radio" name="codeMode" value="custom"> ✍️ свой ($ник)</label>
                 <input type="text" id="customGroupCode" class="hidden" maxlength="24" placeholder="$mycrew" style="margin-top:8px;width:100%;">
             </div>
             <p class="hint">💡 Свой код: от 3 символов, формат с $, латиница, цифры, _</p>
-            <div class="composer-row">
-                <button type="button" onclick="submitCreateGroup()">✅ создать</button>
-                <button type="button" class="secondary" onclick="closeModals()">❌ отмена</button>
-            </div>
+            <div class="composer-row"><button onclick="submitCreateGroup()">✅ создать</button><button class="secondary" onclick="closeModals()">❌ отмена</button></div>
         </div>
     </div>
 
     <div id="modalJoin" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal">
             <h3>🔓 Войти по коду</h3>
-            <div class="field">
-                <label>🔑 Код группы</label>
-                <input type="text" id="joinCodeInput" maxlength="32" placeholder="ABC12XY или $mycrew">
-            </div>
-            <div class="composer-row">
-                <button type="button" onclick="submitJoinGroup()">✅ войти</button>
-                <button type="button" class="secondary" onclick="closeModals()">❌ отмена</button>
-            </div>
+            <div class="field"><label>🔑 Код группы</label><input type="text" id="joinCodeInput" maxlength="32" placeholder="ABC12XY или $mycrew"></div>
+            <div class="composer-row"><button onclick="submitJoinGroup()">✅ войти</button><button class="secondary" onclick="closeModals()">❌ отмена</button></div>
         </div>
     </div>
 
     <div id="modalEditMsg" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal">
             <h3>✏️ Редактировать сообщение</h3>
-            <div class="field">
-                <label>Текст сообщения</label>
-                <textarea id="editMsgText" rows="4" maxlength="2000"></textarea>
-            </div>
-            <div class="composer-row">
-                <button type="button" onclick="submitEditMessage()">💾 Сохранить</button>
-                <button type="button" class="secondary" onclick="closeModals()">❌ Отмена</button>
-            </div>
+            <div class="field"><label>Текст сообщения</label><textarea id="editMsgText" rows="4" maxlength="2000"></textarea></div>
+            <div class="composer-row"><button onclick="submitEditMessage()">💾 Сохранить</button><button class="secondary" onclick="closeModals()">❌ Отмена</button></div>
+        </div>
+    </div>
+
+    <div id="modalReadList" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal">
+            <h3>👥 Прочитали сообщение</h3>
+            <div id="readListContent" class="read-list-modal"><div class="loading-spinner">Загрузка...</div></div>
+            <div class="composer-row" style="margin-top: 16px;"><button class="secondary" onclick="closeModals()">❌ Закрыть</button></div>
+        </div>
+    </div>
+
+    <div id="modalForward" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal">
+            <h3>📤 Переслать сообщение</h3>
+            <div id="forwardChatsList" style="max-height: 300px; overflow-y: auto;"></div>
+            <div class="composer-row" style="margin-top: 12px;"><button class="secondary" onclick="closeModals()">Отмена</button></div>
         </div>
     </div>
 
@@ -616,14 +492,14 @@
             projectId: "hlypalka",
             storageBucket: "hlypalka.firebasestorage.app",
             messagingSenderId: "41063525028",
-            appId: "1:41063525028:web:253e10e09ec8ff4cf75431",
-            measurementId: "G-T5N77WGWYP"
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const IMGBB_API_KEY = '532c1a46efe25420841b8296f7eeed3f';
 
+        // State
         let currentUser = null;
         let myUsername = '';
         let myUserData = null;
@@ -632,7 +508,6 @@
         let chats = [];
         let onlineStatusListener = null;
         let userStatuses = new Map();
-
         let chatMode = null;
         let dmPeerId = null;
         let dmPeerProfile = null;
@@ -641,7 +516,13 @@
         let lastUploadedImage = null;
         let isSending = false;
         let currentEditingMessage = null;
+        let pendingMessages = [];
+        let typingTimeout = null;
+        let typingRef = null;
+        let currentSearchResults = [];
+        let currentForwardData = null;
 
+        // DOM elements
         const listMain = document.getElementById('listMain');
         const chatMain = document.getElementById('chatMain');
         const chatsList = document.getElementById('chatsList');
@@ -653,190 +534,511 @@
         const chatTitle = document.getElementById('chatTitle');
         const chatExtra = document.getElementById('chatExtra');
         const screenTitle = document.getElementById('screenTitle');
+        const sendBtn = document.getElementById('sendBtn');
 
-        function escapeHtml(s) {
-            if (s == null) return '';
-            const div = document.createElement('div');
-            div.textContent = s;
-            return div.innerHTML;
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('errorToast');
-            el.textContent = '❌ ' + msg;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 4000);
-        }
-
-        function showSuccess(msg) {
-            const el = document.getElementById('successToast');
-            el.textContent = '✅ ' + msg;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 3000);
-        }
-
-        function formatTime(d) {
-            if (!d) return '';
-            return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function scrollBottom() {
-            setTimeout(() => {
-                if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
-            }, 100);
-        }
-
+        // ========== Utils ==========
+        function escapeHtml(s) { if (s == null) return ''; const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
+        
+        function showError(msg) { const el = document.getElementById('errorToast'); el.textContent = '❌ ' + msg; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 4000); }
+        function showSuccess(msg) { const el = document.getElementById('successToast'); el.textContent = '✅ ' + msg; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 3000); }
+        
+        function formatTime(d) { if (!d) return ''; return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
+        function formatDate(d) { if (!d) return ''; const date = d.toDate ? d.toDate() : new Date(d); return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+        
+        function scrollBottom() { setTimeout(() => { if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight; }, 100); }
         function goProfile() { window.location.href = 'profil.html'; }
         function goToLenta() { window.location.href = 'lenta.html'; }
-        function goToUserProfile(userId) {
-            if (userId === currentUser?.uid) window.location.href = 'profil.html';
-            else window.location.href = `users_profil.html?userId=${userId}`;
+        function goToUserProfile(userId) { if (userId === currentUser?.uid) window.location.href = 'profil.html'; else window.location.href = `users_profil.html?userId=${userId}`; }
+        function dmChatId(a, b) { return [a, b].sort().join('_'); }
+
+        // ========== Offline Queue ==========
+        function loadPendingMessages() {
+            const saved = localStorage.getItem('pendingMessages_' + currentUser?.uid);
+            if (saved) { try { pendingMessages = JSON.parse(saved); if (pendingMessages.length) showSuccess(`📦 ${pendingMessages.length} сообщений ожидают отправки`); } catch(e) {} }
+        }
+        function savePendingMessages() { localStorage.setItem('pendingMessages_' + currentUser?.uid, JSON.stringify(pendingMessages)); }
+        
+        async function sendPendingMessages() {
+            if (!navigator.onLine || !pendingMessages.length) return;
+            const toSend = [...pendingMessages];
+            pendingMessages = [];
+            savePendingMessages();
+            showSuccess(`📤 Отправка ${toSend.length} сообщений...`);
+            for (const msg of toSend) { try { await sendMessageNow(msg.text, msg.image); } catch(e) { pendingMessages.push(msg); savePendingMessages(); } }
+        }
+        window.addEventListener('online', () => { showSuccess('🔄 Соединение восстановлено'); sendPendingMessages(); });
+
+        // ========== Read Status ==========
+        function getReadCount(readBy) { if (!readBy) return 0; return Object.keys(readBy).length; }
+        
+        function getMessageStatus(message, isOwn) {
+            if (!isOwn) return '';
+            if (chatMode === 'dm') {
+                const readBy = message.readBy || {};
+                const isRead = Object.keys(readBy).length > 1 || (readBy[dmPeerId] !== undefined);
+                return `<span class="msg-read-status" title="${isRead ? 'Прочитано' : 'Доставлено'}"><span class="${isRead ? 'read' : 'delivered'}">${isRead ? '✓✓' : '✓'}</span></span>`;
+            } else if (chatMode === 'group') {
+                const readCount = Math.max(0, getReadCount(message.readBy) - 1);
+                const totalMembers = Math.max(0, (groupMetaOpen?.memberCount || 1) - 1);
+                if (readCount === 0 || totalMembers === 0) return `<span class="msg-read-status"><span class="sent">✓</span></span>`;
+                return `<span class="msg-read-status"><span class="read-count" onclick="event.stopPropagation(); showReadList('${message.messageId}')">${readCount}</span><span class="delivered">/${totalMembers}</span></span>`;
+            }
+            return '';
         }
 
-        async function updateOnlineStatus() {
+        async function showReadList(messageId) {
+            const modal = document.getElementById('modalReadList');
+            const content = document.getElementById('readListContent');
+            modal.classList.remove('hidden');
+            content.innerHTML = '<div class="loading-spinner">⏳ Загрузка...</div>';
+            try {
+                let messageDoc;
+                if (chatMode === 'dm') {
+                    const chatId = dmChatId(currentUser.uid, dmPeerId);
+                    messageDoc = await db.collection('chats').doc(chatId).collection('messages').doc(messageId).get();
+                } else {
+                    messageDoc = await db.collection('groups').doc(groupIdOpen).collection('messages').doc(messageId).get();
+                }
+                const message = messageDoc.data();
+                const readBy = message?.readBy || {};
+                const readers = Object.keys(readBy).filter(id => id !== currentUser.uid);
+                if (readers.length === 0) { content.innerHTML = '<div class="empty">📭 Ещё никто не прочитал</div>'; return; }
+                content.innerHTML = '';
+                for (const userId of readers) {
+                    const userDoc = await db.collection('users').doc(userId).get();
+                    const userData = userDoc.data();
+                    const readTime = readBy[userId]?.toDate ? readBy[userId].toDate() : new Date();
+                    const div = document.createElement('div'); div.className = 'read-list-item';
+                    div.innerHTML = `<img src="${escapeHtml(userData?.avatar || `https://ui-avatars.com/api/?name=${userData?.username || 'User'}&background=5c3d8c&color=f5e6ff&size=64`)}" alt=""><div class="name">${escapeHtml(userData?.username || 'Пользователь')}</div><div class="time">${formatDate(readTime)}</div>`;
+                    div.querySelector('.name').addEventListener('click', () => { closeModals(); goToUserProfile(userId); });
+                    div.querySelector('img').addEventListener('click', () => { closeModals(); goToUserProfile(userId); });
+                    content.appendChild(div);
+                }
+            } catch(e) { content.innerHTML = '<div class="empty">❌ Ошибка загрузки</div>'; }
+        }
+
+        async function markAllMessagesAsRead(chatId) {
             if (!currentUser) return;
             try {
-                await db.collection('users').doc(currentUser.uid).update({
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                    online: true
-                });
-            } catch (e) { console.error(e); }
+                const unreadMessages = await db.collection('chats').doc(chatId).collection('messages').where('userId', '!=', currentUser.uid).get();
+                const batch = db.batch();
+                unreadMessages.forEach(doc => { if (!doc.data().readBy || !doc.data().readBy[currentUser.uid]) batch.update(doc.ref, { [`readBy.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp() }); });
+                await batch.commit();
+            } catch(e) {}
+        }
+
+        async function markAllGroupMessagesAsRead(groupId) {
+            if (!currentUser) return;
+            try {
+                const unreadMessages = await db.collection('groups').doc(groupId).collection('messages').where('userId', '!=', currentUser.uid).get();
+                const batch = db.batch();
+                unreadMessages.forEach(doc => { if (!doc.data().readBy || !doc.data().readBy[currentUser.uid]) batch.update(doc.ref, { [`readBy.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp() }); });
+                await batch.commit();
+            } catch(e) {}
+        }
+
+        // ========== Typing Indicator ==========
+        function startTyping() {
+            if (!chatMode) return;
+            if (typingTimeout) clearTimeout(typingTimeout);
+            const path = chatMode === 'dm' ? `chats/${dmChatId(currentUser.uid, dmPeerId)}/typing` : `groups/${groupIdOpen}/typing`;
+            typingRef = db.collection(path).doc(currentUser.uid);
+            typingRef.set({ typing: true, timestamp: firebase.firestore.FieldValue.serverTimestamp(), username: myUsername });
+            typingTimeout = setTimeout(() => { if (typingRef) typingRef.delete(); }, 3000);
+        }
+
+        function listenTyping() {
+            if (!chatMode) return;
+            const path = chatMode === 'dm' ? `chats/${dmChatId(currentUser.uid, dmPeerId)}/typing` : `groups/${groupIdOpen}/typing`;
+            db.collection(path).onSnapshot((snap) => {
+                const typingUsers = [];
+                snap.forEach(doc => { if (doc.id !== currentUser.uid && doc.data()?.typing === true) typingUsers.push(doc.data().username || 'Кто-то'); });
+                const extraSpan = document.getElementById('chatExtra');
+                if (typingUsers.length) {
+                    const text = typingUsers.length === 1 ? `${typingUsers[0]} печатает...` : `${typingUsers.length} человека печатают...`;
+                    extraSpan.innerHTML = `<span class="typing-indicator">✍️ ${text}</span>`;
+                } else { extraSpan.innerHTML = groupMetaOpen?.inviteCode || dmPeerProfile?.userHandle || ''; }
+            });
+        }
+
+        // ========== Chat Search ==========
+        function toggleChatSearch() { const bar = document.getElementById('chatSearchBar'); bar.classList.toggle('hidden'); if (!bar.classList.contains('hidden')) document.getElementById('chatSearchInput').focus(); else clearChatSearch(); }
+        
+        function searchInChat() {
+            const query = document.getElementById('chatSearchInput').value.toLowerCase().trim();
+            if (!query) return;
+            const messages = document.querySelectorAll('.msg');
+            currentSearchResults = [];
+            messages.forEach((msg, idx) => {
+                const text = msg.querySelector('.msg-body')?.innerText?.toLowerCase() || '';
+                if (text.includes(query)) { currentSearchResults.push(idx); msg.classList.add('msg-highlight'); }
+                else msg.classList.remove('msg-highlight');
+            });
+            if (currentSearchResults.length) { messages[currentSearchResults[0]].scrollIntoView({ behavior: 'smooth', block: 'center' }); showSuccess(`Найдено ${currentSearchResults.length} сообщений`); }
+            else showError('Ничего не найдено');
+        }
+        
+        function clearChatSearch() { document.querySelectorAll('.msg').forEach(msg => msg.classList.remove('msg-highlight')); currentSearchResults = []; }
+
+        // ========== Photo ==========
+        function removeAttachedImage() { lastUploadedImage = null; document.getElementById('imagePreviewContainer').classList.add('hidden'); document.getElementById('imageInput').value = ''; }
+        function pickImage() { document.getElementById('imageInput').click(); }
+
+        // ========== Online Status ==========
+        async function updateOnlineStatus() {
+            if (!currentUser) return;
+            try { await db.collection('users').doc(currentUser.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp(), online: true }); } catch(e) {}
         }
 
         async function isUserBlocked(targetUserId) {
-            try {
-                const blockDoc = await db.collection('users').doc(currentUser.uid).collection('blocked').doc(targetUserId).get();
-                return blockDoc.exists;
-            } catch (e) { return false; }
+            try { const blockDoc = await db.collection('users').doc(currentUser.uid).collection('blocked').doc(targetUserId).get(); return blockDoc.exists; } catch(e) { return false; }
         }
 
         async function unblockUser() {
             if (!currentUser || !dmPeerId) return;
-            const confirmUnblock = confirm('Разблокировать пользователя? Вы снова сможете отправлять сообщения.');
-            if (!confirmUnblock) return;
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('blocked').doc(dmPeerId).delete();
-                showSuccess('Пользователь разблокирован');
-                closeModals();
-                // Обновляем отображение кнопок в настройках
-                updateBlockButtonsInModal();
-            } catch (e) {
-                console.error(e);
-                showError('Не удалось разблокировать');
-            }
+            if (!confirm('Разблокировать пользователя?')) return;
+            try { await db.collection('users').doc(currentUser.uid).collection('blocked').doc(dmPeerId).delete(); showSuccess('Пользователь разблокирован'); closeModals(); updateBlockButtonsInModal(); } catch(e) { showError('Не удалось разблокировать'); }
         }
 
         async function updateBlockButtonsInModal() {
-            if (chatMode !== 'dm' || !dmPeerId) {
-                document.getElementById('modalBlockBtn').style.display = 'none';
-                document.getElementById('modalUnblockBtn').style.display = 'none';
-                return;
-            }
+            if (chatMode !== 'dm' || !dmPeerId) { document.getElementById('modalBlockBtn').style.display = 'none'; document.getElementById('modalUnblockBtn').style.display = 'none'; return; }
             const blocked = await isUserBlocked(dmPeerId);
-            if (blocked) {
-                document.getElementById('modalBlockBtn').style.display = 'none';
-                document.getElementById('modalUnblockBtn').style.display = 'block';
-            } else {
-                document.getElementById('modalBlockBtn').style.display = 'block';
-                document.getElementById('modalUnblockBtn').style.display = 'none';
-            }
+            if (blocked) { document.getElementById('modalBlockBtn').style.display = 'none'; document.getElementById('modalUnblockBtn').style.display = 'block'; }
+            else { document.getElementById('modalBlockBtn').style.display = 'block'; document.getElementById('modalUnblockBtn').style.display = 'none'; }
         }
 
         async function blockUser() {
-            if (!currentUser) return;
-            if (chatMode !== 'dm') { showError('Блокировка доступна только в личных чатах'); return; }
+            if (!currentUser || chatMode !== 'dm') { showError('Блокировка доступна только в личных чатах'); return; }
             if (!dmPeerId || dmPeerId === currentUser.uid) { showError('Некого блокировать'); return; }
-            const confirmBlock = confirm('Вы уверены, что хотите заблокировать пользователя? Вы не сможете отправлять ему сообщения, и чат будет удален.');
-            if (!confirmBlock) return;
+            if (!confirm('Заблокировать пользователя? Чат будет удален.')) return;
             try {
-                await db.collection('users').doc(currentUser.uid).collection('blocked').doc(dmPeerId).set({
-                    blockedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    userId: dmPeerId
-                });
+                await db.collection('users').doc(currentUser.uid).collection('blocked').doc(dmPeerId).set({ blockedAt: firebase.firestore.FieldValue.serverTimestamp(), userId: dmPeerId });
                 await db.collection('users').doc(currentUser.uid).collection('chats').doc(dmPeerId).delete();
                 await db.collection('users').doc(dmPeerId).collection('chats').doc(currentUser.uid).delete();
-                showSuccess('Пользователь заблокирован');
-                backToList();
-                closeModals();
-            } catch (e) { showError('Ошибка блокировки'); }
+                showSuccess('Пользователь заблокирован'); backToList(); closeModals();
+            } catch(e) { showError('Ошибка блокировки'); }
         }
 
         async function clearChat() {
-            const confirmClear = confirm('Вы уверены, что хотите очистить весь чат? Все сообщения будут удалены, а чат исчезнет из списка.');
-            if (!confirmClear) return;
+            if (!confirm('Очистить чат? Все сообщения будут удалены.')) return;
             try {
                 if (chatMode === 'dm') {
                     const chatId = dmChatId(currentUser.uid, dmPeerId);
-                    const messagesRef = db.collection('chats').doc(chatId).collection('messages');
-                    const snapshot = await messagesRef.get();
+                    const snapshot = await db.collection('chats').doc(chatId).collection('messages').get();
                     const batch = db.batch();
                     snapshot.forEach(doc => batch.delete(doc.ref));
                     await batch.commit();
                     await db.collection('users').doc(currentUser.uid).collection('chats').doc(dmPeerId).delete();
                     await db.collection('users').doc(dmPeerId).collection('chats').doc(currentUser.uid).delete();
-                    showSuccess('Чат очищен и удален');
-                    backToList();
+                    showSuccess('Чат очищен'); backToList();
                 } else if (chatMode === 'group') {
                     await db.collection('users').doc(currentUser.uid).collection('chats').doc(groupIdOpen).delete();
-                    showSuccess('Чат удален из списка');
-                    backToList();
+                    showSuccess('Чат удален из списка'); backToList();
                 }
                 closeModals();
-            } catch (e) { showError('Не удалось очистить чат'); }
+            } catch(e) { showError('Не удалось очистить чат'); }
         }
 
-        function openChatSettings() {
-            if (!chatMode) return;
-            updateBlockButtonsInModal();
-            document.getElementById('modalChatSettings').classList.remove('hidden');
-        }
+        function openChatSettings() { if (!chatMode) return; updateBlockButtonsInModal(); document.getElementById('modalChatSettings').classList.remove('hidden'); }
 
-        // остальные функции (init, dm, группы) без изменений, кроме вызова updateBlockButtonsInModal при открытии DM
-        function init() {
-            auth.onAuthStateChanged(async (user) => {
-                if (!user) { window.location.href = 'index.html'; return; }
-                currentUser = user;
-                await loadMyProfile();
-                updateOnlineStatus();
-                setInterval(() => updateOnlineStatus(), 30000);
-                loadChatsListener();
-            });
-        }
-
-        async function loadMyProfile() {
-            const doc = await db.collection('users').doc(currentUser.uid).get();
-            if (doc.exists) {
-                myUserData = doc.data();
-                myUsername = myUserData.username || currentUser.displayName || 'anon';
-                if (myUserData.username && !myUserData.usernameLower) {
-                    await doc.ref.update({ usernameLower: myUserData.username.toLowerCase() });
-                }
-                if (myUserData.username && !myUserData.userHandle) {
-                    const norm = myUserData.username.toLowerCase();
-                    const wantHandle = '$' + norm;
-                    await doc.ref.update({ userHandle: wantHandle, userHandleNorm: norm });
-                    await db.collection('handles').doc(norm).set({ uid: currentUser.uid }, { merge: true });
-                }
+        // ========== Send Message ==========
+        async function sendMessageNow(text, imageUrl) {
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            const uname = myUserData?.username || myUsername;
+            const payload = { userId: currentUser.uid, username: uname, text: text || '', timestamp: ts, readBy: { [currentUser.uid]: ts } };
+            if (imageUrl) payload.imageUrl = imageUrl;
+            const preview = text || (imageUrl ? '📷 Фото' : '');
+            
+            if (chatMode === 'dm') {
+                const cid = dmChatId(currentUser.uid, dmPeerId);
+                const msgRef = await db.collection('chats').doc(cid).collection('messages').add(payload);
+                await db.collection('users').doc(currentUser.uid).collection('chats').doc(dmPeerId).update({ lastMessage: preview, lastMessageTime: ts, unreadCount: 0, lastMessageId: msgRef.id });
+                await db.collection('users').doc(dmPeerId).collection('chats').doc(currentUser.uid).update({ lastMessage: preview, lastMessageTime: ts, unreadCount: firebase.firestore.FieldValue.increment(1), lastMessageId: msgRef.id });
+            } else if (chatMode === 'group') {
+                const msgRef = await db.collection('groups').doc(groupIdOpen).collection('messages').add(payload);
+                await updateGroupPreviews(groupIdOpen, preview, msgRef.id);
             }
         }
 
+        async function sendNow() {
+            if (isSending) return;
+            const text = messageInput.value.trim();
+            if (!text && !lastUploadedImage) return;
+            if (chatMode === 'dm' && await isUserBlocked(dmPeerId)) { showError('Вы не можете отправлять сообщения заблокированному пользователю'); return; }
+            
+            isSending = true;
+            if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '⏳ ...'; }
+            const img = lastUploadedImage;
+            const txt = text;
+            messageInput.value = '';
+            lastUploadedImage = null;
+            removeAttachedImage();
+            
+            try {
+                if (!navigator.onLine) {
+                    pendingMessages.push({ text: txt, image: img, timestamp: Date.now() });
+                    savePendingMessages();
+                    showSuccess('📦 Сохранено, отправится при соединении');
+                    addLocalMessage(txt, img);
+                    scrollBottom();
+                } else { await sendMessageNow(txt, img); scrollBottom(); }
+            } catch(e) { showError('Ошибка отправки'); if (txt) messageInput.value = txt; if (img) lastUploadedImage = img; }
+            finally { isSending = false; if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '📤 отправить'; } }
+        }
+
+        function addLocalMessage(text, imageUrl) {
+            const div = document.createElement('div'); div.className = 'msg'; div.style.opacity = '0.7';
+            let body = escapeHtml(text || '');
+            if (imageUrl) body += '<br><img src="' + escapeHtml(imageUrl) + '" alt="📷 фото">';
+            div.innerHTML = `<div class="msg-head"><span class="msg-user">${escapeHtml(myUsername)}</span><span class="msg-time">⏳ отправляется...</span></div><div class="msg-body">${body || '<i>📎 Вложение</i>'}</div>`;
+            messagesEl.appendChild(div);
+        }
+
+        async function updateGroupPreviews(gid, preview, msgId) {
+            const gdoc = await db.collection('groups').doc(gid).get();
+            if (!gdoc.exists) return;
+            const group = gdoc.data();
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            const memberCount = group.memberIds?.length || 0;
+            for (const uid of (group.memberIds || [])) {
+                const update = { type: 'group', groupId: gid, name: group.name, inviteCode: group.inviteCode, lastMessage: preview, lastMessageTime: ts, lastMessageId: msgId, memberCount: memberCount };
+                if (uid === currentUser.uid) await db.collection('users').doc(uid).collection('chats').doc(gid).set({ ...update, unreadCount: 0 }, { merge: true });
+                else { await db.collection('users').doc(uid).collection('chats').doc(gid).set(update, { merge: true }); await db.collection('users').doc(uid).collection('chats').doc(gid).update({ unreadCount: firebase.firestore.FieldValue.increment(1) }); }
+            }
+        }
+
+        // ========== Chat ==========
+        async function loadGroupMemberCount(gid) {
+            try { const groupDoc = await db.collection('groups').doc(gid).get(); return groupDoc.data()?.memberIds?.length || 0; } catch(e) { return 0; }
+        }
+
+        async function openGroupChat(gid, meta) {
+            chatMode = 'group'; groupIdOpen = gid; groupMetaOpen = meta; dmPeerId = null;
+            const memberCount = await loadGroupMemberCount(gid);
+            groupMetaOpen.memberCount = memberCount;
+            chatTitle.textContent = meta.name || 'Группа';
+            chatExtra.textContent = meta.inviteCode ? (`код: ${meta.inviteCode} · ${memberCount} уч.`) : `${memberCount} уч.`;
+            chatTitle.style.cursor = 'default'; chatTitle.onclick = null;
+            showChatShell(); clearUnreadGroup(gid); subscribeMessagesGroup(gid); listenTyping();
+        }
+
+        function openDMChat(userId, userData) {
+            chatMode = 'dm'; dmPeerId = userId; dmPeerProfile = userData; groupIdOpen = null;
+            chatTitle.textContent = userData.username || 'Чат';
+            chatExtra.textContent = userData.userHandle || '';
+            chatTitle.style.cursor = 'pointer'; chatTitle.onclick = () => goToUserProfile(userId);
+            showChatShell(); clearUnreadDM(userId); subscribeMessagesDM(userId); updateBlockButtonsInModal(); listenTyping();
+        }
+
+        function showChatShell() { listMain.classList.add('hidden'); chatMain.classList.remove('hidden'); screenTitle.textContent = 'YzFi · 💬'; messageInput.value = ''; clearChatSearch(); setTimeout(() => messageInput.focus(), 200); }
+        
+        function backToList() { if (unsubscribeMessages) unsubscribeMessages(); chatMode = null; chatMain.classList.add('hidden'); listMain.classList.remove('hidden'); screenTitle.textContent = 'YzFi'; messagesEl.innerHTML = ''; lastUploadedImage = null; removeAttachedImage(); }
+        
+        async function clearUnreadDM(uid) { try { await db.collection('users').doc(currentUser.uid).collection('chats').doc(uid).update({ unreadCount: 0 }); } catch(e) {} }
+        async function clearUnreadGroup(gid) { try { await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).update({ unreadCount: 0 }); } catch(e) {} }
+
+        function subscribeMessagesDM(peerId) {
+            if (unsubscribeMessages) unsubscribeMessages();
+            const chatId = dmChatId(currentUser.uid, peerId);
+            let firstLoad = true;
+            unsubscribeMessages = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc').onSnapshot(async (snap) => {
+                messagesEl.innerHTML = '';
+                if (snap.empty) { messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений.</div>'; return; }
+                snap.forEach(doc => { const data = doc.data(); data.messageId = doc.id; renderMessageDoc(data, doc.id); });
+                if (firstLoad) { await markAllMessagesAsRead(chatId); firstLoad = false; }
+                scrollBottom();
+            });
+        }
+
+        function subscribeMessagesGroup(gid) {
+            if (unsubscribeMessages) unsubscribeMessages();
+            let firstLoad = true;
+            unsubscribeMessages = db.collection('groups').doc(gid).collection('messages').orderBy('timestamp', 'asc').onSnapshot(async (snap) => {
+                messagesEl.innerHTML = '';
+                if (snap.empty) { messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений.</div>'; return; }
+                snap.forEach(doc => { const data = doc.data(); data.messageId = doc.id; renderMessageDoc(data, doc.id); });
+                if (firstLoad) { await markAllGroupMessagesAsRead(gid); firstLoad = false; }
+                scrollBottom();
+            });
+        }
+
+        function renderMessageDoc(message, msgId) {
+            const div = document.createElement('div'); div.className = 'msg'; div.dataset.messageId = msgId;
+            const ts = message.timestamp?.toDate?.() || new Date();
+            const isOwn = message.userId === currentUser.uid;
+            const statusHtml = getMessageStatus(message, isOwn);
+            let body = escapeHtml(message.text || '');
+            if (message.imageUrl) body += '<br><img src="' + escapeHtml(message.imageUrl) + '" alt="📷 фото" loading="lazy">';
+            div.innerHTML = `<div class="msg-head"><span class="msg-user" data-user-id="${message.userId}">${escapeHtml(message.username)}${message.isEdited ? ' <span style="font-size:10px;">(ред.)</span>' : ''}</span><span class="msg-time">${formatTime(ts)}${statusHtml}</span></div><div class="msg-body">${body || '<i>📎 Вложение</i>'}</div><div class="msg-actions"><button class="msg-action-btn" onclick="replyToMessage('${msgId}','${escapeHtml(message.text || '').replace(/'/g, "\\'")}')">💬</button>${isOwn ? `<button class="msg-action-btn" onclick="editMessage('${msgId}','${escapeHtml(message.text || '').replace(/'/g, "\\'")}')">✏️</button>` : ''}<button class="msg-action-btn" onclick="forwardMessage('${msgId}','${escapeHtml(message.text || '').replace(/'/g, "\\'")}','${message.imageUrl || ''}')">📤</button>${isOwn ? `<button class="msg-action-btn" onclick="deleteMessage('${msgId}')">🗑️</button>` : ''}</div>`;
+            div.querySelector('.msg-user')?.addEventListener('click', () => goToUserProfile(message.userId));
+            messagesEl.appendChild(div);
+        }
+
+        // ========== Reply ==========
+        let replyToData = null;
+        window.replyToMessage = function(msgId, text) {
+            replyToData = { msgId, text: text.substring(0, 50) + (text.length > 50 ? '...' : '') };
+            messageInput.placeholder = `💬 Ответ: "${replyToData.text}"`;
+            messageInput.focus();
+        };
+
+        // ========== Forward ==========
+        window.forwardMessage = async function(msgId, text, imageUrl) {
+            currentForwardData = { msgId, text, imageUrl };
+            const modal = document.getElementById('modalForward');
+            const list = document.getElementById('forwardChatsList');
+            list.innerHTML = '<div class="loading-spinner">Загрузка чатов...</div>';
+            modal.classList.remove('hidden');
+            
+            const chatsSnapshot = await db.collection('users').doc(currentUser.uid).collection('chats').orderBy('lastMessageTime', 'desc').get();
+            list.innerHTML = '';
+            for (const doc of chatsSnapshot.docs) {
+                const chat = doc.data();
+                const title = chat.type === 'group' ? chat.name : chat.username;
+                const div = document.createElement('div'); div.className = 'chat-item';
+                div.innerHTML = `<div class="avatar-wrapper"><img class="avatar" src="${chat.type === 'group' ? `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=5c3d8c&color=f5e6ff&size=88` : (chat.peerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=5c3d8c&color=f5e6ff&size=88`)}" alt=""></div><div class="chat-info"><div class="chat-name">${escapeHtml(title)}</div><div class="chat-preview">${chat.type === 'group' ? '👥 Группа' : '💬 Личный чат'}</div></div>`;
+                div.onclick = () => sendForwardTo(chat, text, imageUrl);
+                list.appendChild(div);
+            }
+        };
+        
+        async function sendForwardTo(chat, text, imageUrl) {
+            closeModals();
+            const oldMode = chatMode;
+            const oldGroupId = groupIdOpen;
+            const oldDmPeerId = dmPeerId;
+            
+            try {
+                if (chat.type === 'group') {
+                    const groupData = await db.collection('groups').doc(chat.groupId).get();
+                    if (!groupData.exists || !groupData.data().memberIds?.includes(currentUser.uid)) {
+                        showError('Вы не в этой группе');
+                        return;
+                    }
+                    const ts = firebase.firestore.FieldValue.serverTimestamp();
+                    const payload = { userId: currentUser.uid, username: myUsername, text: text || '', timestamp: ts, readBy: { [currentUser.uid]: ts }, forwarded: true };
+                    if (imageUrl) payload.imageUrl = imageUrl;
+                    await db.collection('groups').doc(chat.groupId).collection('messages').add(payload);
+                    await updateGroupPreviews(chat.groupId, text || '📎 Пересланное сообщение', null);
+                    showSuccess('Переслано в группу');
+                } else if (chat.type === 'dm') {
+                    const ts = firebase.firestore.FieldValue.serverTimestamp();
+                    const payload = { userId: currentUser.uid, username: myUsername, text: text || '', timestamp: ts, readBy: { [currentUser.uid]: ts }, forwarded: true };
+                    if (imageUrl) payload.imageUrl = imageUrl;
+                    const cid = dmChatId(currentUser.uid, chat.userId);
+                    const msgRef = await db.collection('chats').doc(cid).collection('messages').add(payload);
+                    await db.collection('users').doc(currentUser.uid).collection('chats').doc(chat.userId).update({ lastMessage: text || '📎 Пересланное сообщение', lastMessageTime: ts, unreadCount: 0, lastMessageId: msgRef.id });
+                    await db.collection('users').doc(chat.userId).collection('chats').doc(currentUser.uid).update({ lastMessage: text || '📎 Пересланное сообщение', lastMessageTime: ts, unreadCount: firebase.firestore.FieldValue.increment(1), lastMessageId: msgRef.id });
+                    showSuccess('Переслано в чат');
+                }
+            } catch(e) { showError('Ошибка пересылки'); }
+        }
+
+        // ========== Search Users ==========
+        async function runUserSearch() {
+            const raw = searchInput.value.trim();
+            if (!raw) { userSearchWrap.classList.add('hidden'); return; }
+            userSearchWrap.innerHTML = '<div class="loading-spinner">🔍 Поиск...</div>';
+            userSearchWrap.classList.remove('hidden');
+            try {
+                if (raw.startsWith('$')) {
+                    const norm = raw.slice(1).toLowerCase();
+                    const hDoc = await db.collection('handles').doc(norm).get();
+                    if (!hDoc.exists) { userSearchWrap.innerHTML = '<div class="empty">🔍 Юз не найден</div>'; return; }
+                    const peerId = hDoc.data().uid;
+                    if (peerId === currentUser.uid) { userSearchWrap.innerHTML = '<div class="empty">👤 Это вы</div>'; return; }
+                    const uDoc = await db.collection('users').doc(peerId).get();
+                    if (!uDoc.exists) { userSearchWrap.innerHTML = '<div class="empty">❌ Не найден</div>'; return; }
+                    renderSearchResult(peerId, uDoc.data()); return;
+                }
+                let snap = await db.collection('users').where('usernameLower', '>=', raw.toLowerCase()).where('usernameLower', '<=', raw.toLowerCase() + '\uf8ff').limit(20).get();
+                if (snap.empty) snap = await db.collection('users').where('username', '>=', raw).where('username', '<=', raw + '\uf8ff').limit(20).get();
+                userSearchWrap.innerHTML = '';
+                if (snap.empty) { userSearchWrap.innerHTML = '<div class="empty">🔍 Никого не найдено</div>'; return; }
+                snap.forEach(doc => { if (doc.id !== currentUser.uid) renderSearchResult(doc.id, doc.data()); });
+            } catch(e) { showError('Ошибка поиска'); }
+        }
+
+        function renderSearchResult(userId, userData) {
+            const row = document.createElement('div'); row.className = 'chat-item';
+            row.innerHTML = `<div class="avatar-wrapper"><img class="avatar" src="${escapeHtml(userData.avatar || `https://ui-avatars.com/api/?name=${userData.username}&background=5c3d8c&color=f5e6ff&size=88`)}" alt=""></div><div class="chat-info"><div class="chat-name">${escapeHtml(userData.username)}</div><div class="chat-preview">${escapeHtml(userData.userHandle || '$'+userData.username)}</div></div><button type="button" class="small" style="background: var(--green);">💬 написать</button>`;
+            const btn = row.querySelector('button');
+            btn.onclick = () => startDMWith(userId, userData);
+            row.onclick = () => startDMWith(userId, userData);
+            userSearchWrap.appendChild(row);
+        }
+
+        async function startDMWith(peerId, peerProfile) {
+            if (await isUserBlocked(peerId)) { showError('Вы заблокировали этого пользователя'); return; }
+            userSearchWrap.classList.add('hidden');
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+            const myAvatar = myUserData?.avatar || '';
+            await db.collection('users').doc(currentUser.uid).collection('chats').doc(peerId).set({ type:'dm', userId:peerId, username:peerProfile.username, peerAvatar:peerProfile.avatar||'', userHandle:peerProfile.userHandle, lastMessage:'', lastMessageTime:ts, unreadCount:0, createdAt:ts, updatedAt:ts }, {merge:true});
+            await db.collection('users').doc(peerId).collection('chats').doc(currentUser.uid).set({ type:'dm', userId:currentUser.uid, username:myUserData?.username||myUsername, peerAvatar:myAvatar, userHandle:myUserData?.userHandle, lastMessage:'', lastMessageTime:ts, unreadCount:0, createdAt:ts, updatedAt:ts }, {merge:true});
+            openDMChat(peerId, peerProfile);
+        }
+
+        // ========== Groups ==========
+        function randomInvite(){ let r=''; const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(let i=0;i<8;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
+        function openCreateGroupModal(){ document.getElementById('newGroupName').value=''; document.getElementById('customGroupCode').value=''; document.querySelector('input[name="codeMode"][value="random"]').checked=true; document.getElementById('customGroupCode').classList.add('hidden'); document.getElementById('modalCreate').classList.remove('hidden'); }
+        function openJoinModal(){ document.getElementById('joinCodeInput').value=''; document.getElementById('modalJoin').classList.remove('hidden'); }
+        function closeModals(){ 
+            const modals = ['modalCreate','modalJoin','modalEditMsg','modalChatSettings','modalReadList','modalForward'];
+            modals.forEach(id => document.getElementById(id).classList.add('hidden'));
+            currentEditingMessage = null; replyToData = null; currentForwardData = null;
+        }
+        
+        async function submitCreateGroup(){
+            const name=document.getElementById('newGroupName').value.trim();
+            if(!name){ showError('Введите название'); return; }
+            const mode=document.querySelector('input[name="codeMode"]:checked').value;
+            let code='';
+            if(mode==='random') code=randomInvite();
+            else{ const raw=document.getElementById('customGroupCode').value.trim(); if(!raw||!/^\$[A-Za-z0-9_]{2,20}$/.test(raw)){ showError('Код должен быть $ник'); return; } code=raw; }
+            const norm=code.toLowerCase();
+            const existing=await db.collection('groups').where('inviteCodeNorm','==',norm).limit(1).get();
+            if(!existing.empty){ showError('Код занят'); return; }
+            const gid=db.collection('groups').doc().id;
+            await db.collection('groups').doc(gid).set({ name, inviteCode:code, inviteCodeNorm:norm, ownerId:currentUser.uid, memberIds:[currentUser.uid], createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({ type:'group', groupId:gid, name, inviteCode:code, lastMessage:'', lastMessageTime:firebase.firestore.FieldValue.serverTimestamp(), unreadCount:0 });
+            closeModals();
+            openGroupChat(gid,{name,inviteCode:code});
+        }
+        
+        async function submitJoinGroup(){
+            let code=document.getElementById('joinCodeInput').value.trim();
+            if(!code){ showError('Введите код'); return; }
+            const norm=code.toLowerCase();
+            const snap=await db.collection('groups').where('inviteCodeNorm','==',norm).limit(1).get();
+            if(snap.empty){ showError('Группа не найдена'); return; }
+            const gdoc=snap.docs[0]; const gid=gdoc.id; const data=gdoc.data();
+            if(!data.memberIds?.includes(currentUser.uid)) await db.collection('groups').doc(gid).update({ memberIds:firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+            await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({ type:'group', groupId:gid, name:data.name, inviteCode:data.inviteCode, lastMessage:'', lastMessageTime:firebase.firestore.FieldValue.serverTimestamp(), unreadCount:0 },{merge:true});
+            closeModals();
+            openGroupChat(gid,data);
+        }
+
+        // ========== Edit/Delete ==========
+        window.editMessage=function(id,text){ currentEditingMessage={id,text}; document.getElementById('editMsgText').value=text||''; document.getElementById('modalEditMsg').classList.remove('hidden'); };
+        window.submitEditMessage=async function(){ const newText=document.getElementById('editMsgText').value.trim(); if(!newText) return; try{ if(chatMode==='dm') await db.collection('chats').doc(dmChatId(currentUser.uid,dmPeerId)).collection('messages').doc(currentEditingMessage.id).update({ text:newText, editedAt:firebase.firestore.FieldValue.serverTimestamp(), isEdited:true }); else await db.collection('groups').doc(groupIdOpen).collection('messages').doc(currentEditingMessage.id).update({ text:newText, editedAt:firebase.firestore.FieldValue.serverTimestamp(), isEdited:true }); showSuccess('Отредактировано'); closeModals(); } catch(e){ showError('Ошибка'); } };
+        window.deleteMessage=async function(id){ if(!confirm('Удалить?')) return; try{ if(chatMode==='dm') await db.collection('chats').doc(dmChatId(currentUser.uid,dmPeerId)).collection('messages').doc(id).delete(); else await db.collection('groups').doc(groupIdOpen).collection('messages').doc(id).delete(); showSuccess('Удалено'); } catch(e){ showError('Ошибка'); } };
+
+        // ========== Photo Upload ==========
+        document.getElementById('imageInput').addEventListener('change', async function(){ 
+            const file=this.files[0]; this.value=''; if(!file) return; if(file.size>5*1024*1024){ showError('Файл >5МБ'); return; } 
+            const fd=new FormData(); fd.append('image',file); 
+            try{ const res=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_API_KEY,{method:'POST',body:fd}); const data=await res.json(); 
+            if(data.success){ lastUploadedImage=data.data.url; const preview=document.getElementById('previewImage'); const container=document.getElementById('imagePreviewContainer'); preview.src=data.data.url; container.classList.remove('hidden'); } else showError('imgBB ошибка'); } catch(e){ showError('Ошибка загрузки'); } 
+        });
+
+        // ========== Chat List ==========
         function loadChatsListener() {
             if (unsubscribeChats) unsubscribeChats();
             unsubscribeChats = db.collection('users').doc(currentUser.uid).collection('chats').orderBy('lastMessageTime', 'desc').onSnapshot((snap) => {
-                chats = [];
-                chatsList.innerHTML = '';
-                const userIds = [];
-                snap.forEach((doc) => {
-                    const chatData = { id: doc.id, ...doc.data() };
-                    chats.push(chatData);
-                    if (chatData.type === 'dm' && chatData.userId) userIds.push(chatData.userId);
-                });
+                chats = []; chatsList.innerHTML = ''; const userIds = [];
+                snap.forEach((doc) => { const chatData = { id: doc.id, ...doc.data() }; chats.push(chatData); if (chatData.type === 'dm' && chatData.userId) userIds.push(chatData.userId); });
                 if (userIds.length) subscribeToUserStatuses(userIds);
-                if (snap.empty) {
-                    emptyChats.classList.remove('hidden');
-                    chatsList.innerHTML = '<div class="empty">📭 Нет чатов</div>';
-                    return;
-                }
+                if (snap.empty) { emptyChats.classList.remove('hidden'); chatsList.innerHTML = '<div class="empty">📭 Нет чатов</div>'; return; }
                 emptyChats.classList.add('hidden');
                 chats.forEach(chatData => renderChatRow(chatData));
                 filterChatsLocal();
@@ -848,11 +1050,7 @@
             const listeners = [];
             [...new Set(userIds)].forEach(uid => {
                 const unsub = db.collection('users').doc(uid).onSnapshot((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        userStatuses.set(uid, { online: data?.online === true, lastSeen: data?.lastSeen?.toDate() });
-                        refreshChatsList();
-                    }
+                    if (doc.exists) { const data = doc.data(); userStatuses.set(uid, { online: data?.online === true, lastSeen: data?.lastSeen?.toDate() }); refreshChatsList(); }
                 });
                 listeners.push(unsub);
             });
@@ -881,163 +1079,53 @@
             const when = chat.lastMessageTime?.toDate ? formatTime(chat.lastMessageTime.toDate()) : '';
             const preview = chat.lastMessage || '—';
             let statusHtml = '';
-            if (!isGroup && chat.userId) {
-                const status = userStatuses.get(chat.userId);
-                statusHtml = `<div class="status-dot ${status?.online ? 'online' : ''}"></div>`;
-            }
-            el.innerHTML = `
-                <div class="avatar-wrapper">
-                    <img class="avatar" src="${escapeHtml(avatar)}" alt="">
-                    ${statusHtml}
-                </div>
-                <div class="chat-info">
-                    <div class="chat-name">${escapeHtml(title)}${isGroup ? ' <span class="mono" style="font-size:11px;">👥</span>' : ''}</div>
-                    <div class="chat-preview">${escapeHtml(preview.length > 50 ? preview.substring(0, 50) + '...' : preview)}</div>
-                </div>
-                <div class="chat-meta">
-                    <div>${escapeHtml(when)}</div>
-                    ${unread ? `<div class="badge-unread">${chat.unreadCount}</div>` : ''}
-                </div>
-            `;
+            if (!isGroup && chat.userId) { const status = userStatuses.get(chat.userId); statusHtml = `<div class="status-dot ${status?.online ? 'online' : ''}"></div>`; }
+            el.innerHTML = `<div class="avatar-wrapper"><img class="avatar" src="${escapeHtml(avatar)}" alt="">${statusHtml}</div><div class="chat-info"><div class="chat-name">${escapeHtml(title)}${isGroup ? ' <span class="mono" style="font-size:11px;">👥</span>' : ''}</div><div class="chat-preview">${escapeHtml(preview.length > 50 ? preview.substring(0, 50) + '...' : preview)}</div></div><div class="chat-meta"><div>${escapeHtml(when)}</div>${unread ? `<div class="badge-unread">${chat.unreadCount}</div>` : ''}</div>`;
             const avatarImg = el.querySelector('.avatar');
             if (!isGroup && chat.userId) avatarImg.addEventListener('click', (e) => { e.stopPropagation(); goToUserProfile(chat.userId); });
-            el.addEventListener('click', (e) => {
-                if (e.target === avatarImg) return;
-                if (chat.type === 'group') openGroupChat(chat.groupId || chat.id, chat);
-                else openDMChat(chat.userId || chat.id, { username: chat.username, avatar: chat.peerAvatar, userHandle: chat.userHandle });
-            });
+            el.addEventListener('click', (e) => { if (e.target === avatarImg) return; if (chat.type === 'group') openGroupChat(chat.groupId || chat.id, chat); else openDMChat(chat.userId || chat.id, { username: chat.username, avatar: chat.peerAvatar, userHandle: chat.userHandle }); });
             chatsList.appendChild(el);
         }
 
         function filterChatsLocal() {
             const q = searchInput.value.trim().toLowerCase();
             const items = chatsList.querySelectorAll('.chat-item');
-            items.forEach((node, i) => {
-                const chat = chats[i];
-                if (!chat) return;
-                if (!q) { node.style.display = 'flex'; return; }
-                const title = (chat.type === 'group' ? chat.name : chat.username) || '';
-                node.style.display = title.toLowerCase().includes(q) ? 'flex' : 'none';
-            });
+            items.forEach((node, i) => { const chat = chats[i]; if (!chat) return; if (!q) { node.style.display = 'flex'; return; } const title = (chat.type === 'group' ? chat.name : chat.username) || ''; node.style.display = title.toLowerCase().includes(q) ? 'flex' : 'none'; });
         }
         searchInput.addEventListener('input', () => { userSearchWrap.classList.add('hidden'); filterChatsLocal(); });
 
-        async function runUserSearch() { /* ... как в оригинале, без изменений ... */ 
-            const raw = searchInput.value.trim();
-            if (!raw) { userSearchWrap.classList.add('hidden'); return; }
-            userSearchWrap.innerHTML = '<div class="loading-spinner">🔍 Поиск...</div>';
-            userSearchWrap.classList.remove('hidden');
-            try {
-                if (raw.startsWith('$')) {
-                    const norm = raw.slice(1).toLowerCase();
-                    const hDoc = await db.collection('handles').doc(norm).get();
-                    if (!hDoc.exists) { userSearchWrap.innerHTML = '<div class="empty">🔍 Юз не найден</div>'; return; }
-                    const peerId = hDoc.data().uid;
-                    if (peerId === currentUser.uid) { userSearchWrap.innerHTML = '<div class="empty">👤 Это вы</div>'; return; }
-                    const uDoc = await db.collection('users').doc(peerId).get();
-                    if (!uDoc.exists) { userSearchWrap.innerHTML = '<div class="empty">❌ Не найден</div>'; return; }
-                    renderSearchResult(peerId, uDoc.data());
-                    return;
+        // ========== Init ==========
+        async function loadMyProfile() {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                myUserData = doc.data();
+                myUsername = myUserData.username || currentUser.displayName || 'anon';
+                if (myUserData.username && !myUserData.usernameLower) await doc.ref.update({ usernameLower: myUserData.username.toLowerCase() });
+                if (myUserData.username && !myUserData.userHandle) {
+                    const norm = myUserData.username.toLowerCase();
+                    await doc.ref.update({ userHandle: '$' + norm, userHandleNorm: norm });
+                    await db.collection('handles').doc(norm).set({ uid: currentUser.uid }, { merge: true });
                 }
-                let snap = await db.collection('users').where('usernameLower', '>=', raw.toLowerCase()).where('usernameLower', '<=', raw.toLowerCase() + '\uf8ff').limit(20).get();
-                if (snap.empty) snap = await db.collection('users').where('username', '>=', raw).where('username', '<=', raw + '\uf8ff').limit(20).get();
-                userSearchWrap.innerHTML = '';
-                if (snap.empty) { userSearchWrap.innerHTML = '<div class="empty">🔍 Никого не найдено</div>'; return; }
-                snap.forEach(doc => { if (doc.id !== currentUser.uid) renderSearchResult(doc.id, doc.data()); });
-            } catch(e) { showError('Ошибка поиска'); }
-        }
-        function renderSearchResult(userId, userData) {
-            const row = document.createElement('div'); row.className = 'chat-item';
-            row.innerHTML = `<div class="avatar-wrapper"><img class="avatar" src="${escapeHtml(userData.avatar || `https://ui-avatars.com/api/?name=${userData.username}&background=5c3d8c&color=f5e6ff&size=88`)}" alt=""></div><div class="chat-info"><div class="chat-name">${escapeHtml(userData.username)}</div><div class="chat-preview">${escapeHtml(userData.userHandle || '$'+userData.username)}</div></div><button type="button" class="small" style="background: var(--green);">💬 написать</button>`;
-            const btn = row.querySelector('button');
-            btn.onclick = () => startDMWith(userId, userData);
-            row.onclick = () => startDMWith(userId, userData);
-            userSearchWrap.appendChild(row);
-        }
-        async function startDMWith(peerId, peerProfile) {
-            if (await isUserBlocked(peerId)) { showError('Вы заблокировали этого пользователя'); return; }
-            userSearchWrap.classList.add('hidden');
-            const ts = firebase.firestore.FieldValue.serverTimestamp();
-            const myAvatar = myUserData?.avatar || '';
-            await db.collection('users').doc(currentUser.uid).collection('chats').doc(peerId).set({ type:'dm', userId:peerId, username:peerProfile.username, peerAvatar:peerProfile.avatar||'', userHandle:peerProfile.userHandle, lastMessage:'', lastMessageTime:ts, unreadCount:0, createdAt:ts, updatedAt:ts }, {merge:true});
-            await db.collection('users').doc(peerId).collection('chats').doc(currentUser.uid).set({ type:'dm', userId:currentUser.uid, username:myUserData?.username||myUsername, peerAvatar:myAvatar, userHandle:myUserData?.userHandle, lastMessage:'', lastMessageTime:ts, unreadCount:0, createdAt:ts, updatedAt:ts }, {merge:true});
-            openDMChat(peerId, peerProfile);
+            }
         }
 
-        function openDMChat(userId, userData) {
-            chatMode = 'dm'; dmPeerId = userId; dmPeerProfile = userData; groupIdOpen = null;
-            chatTitle.textContent = userData.username || 'Чат'; chatExtra.textContent = userData.userHandle || '';
-            chatTitle.style.cursor = 'pointer'; chatTitle.onclick = () => goToUserProfile(userId);
-            showChatShell();
-            clearUnreadDM(userId);
-            subscribeMessagesDM(userId);
-            updateBlockButtonsInModal(); // обновляем состояние кнопок блокировки
-        }
-        function openGroupChat(gid, meta) {
-            chatMode = 'group'; groupIdOpen = gid; groupMetaOpen = meta; dmPeerId = null;
-            chatTitle.textContent = meta.name || 'Группа'; chatExtra.textContent = meta.inviteCode ? ('код: ' + meta.inviteCode) : '';
-            chatTitle.style.cursor = 'default'; chatTitle.onclick = null;
-            showChatShell();
-            clearUnreadGroup(gid);
-            subscribeMessagesGroup(gid);
-        }
-        function showChatShell() { listMain.classList.add('hidden'); chatMain.classList.remove('hidden'); screenTitle.textContent = 'YzFi · 💬'; messageInput.value = ''; setTimeout(() => messageInput.focus(), 200); }
-        function backToList() { if (unsubscribeMessages) unsubscribeMessages(); chatMode = null; chatMain.classList.add('hidden'); listMain.classList.remove('hidden'); screenTitle.textContent = 'YzFi'; messagesEl.innerHTML = ''; lastUploadedImage = null; }
-        function dmChatId(a,b) { return [a,b].sort().join('_'); }
-        async function clearUnreadDM(uid) { try { await db.collection('users').doc(currentUser.uid).collection('chats').doc(uid).update({ unreadCount:0 }); } catch(e) {} }
-        async function clearUnreadGroup(gid) { try { await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).update({ unreadCount:0 }); } catch(e) {} }
-        function subscribeMessagesDM(peerId) {
-            if (unsubscribeMessages) unsubscribeMessages();
-            const chatId = dmChatId(currentUser.uid, peerId);
-            unsubscribeMessages = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp','asc').onSnapshot(async (snap) => {
-                messagesEl.innerHTML = '';
-                if (snap.empty) { messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений.</div>'; return; }
-                snap.forEach(doc => renderMessageDoc(doc.data(), doc.id, chatId));
-                await markMessagesAsRead(chatId);
-                scrollBottom();
+        function init() {
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) { window.location.href = 'index.html'; return; }
+                currentUser = user;
+                await loadMyProfile();
+                loadPendingMessages();
+                updateOnlineStatus();
+                setInterval(() => updateOnlineStatus(), 30000);
+                loadChatsListener();
+                messageInput.addEventListener('input', () => { if (messageInput.value.trim()) startTyping(); });
+                if (messageInput) {
+                    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendNow(); } });
+                }
             });
         }
-        function subscribeMessagesGroup(gid) {
-            if (unsubscribeMessages) unsubscribeMessages();
-            unsubscribeMessages = db.collection('groups').doc(gid).collection('messages').orderBy('timestamp','asc').onSnapshot((snap) => {
-                messagesEl.innerHTML = '';
-                if (snap.empty) { messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений.</div>'; return; }
-                snap.forEach(doc => renderMessageDoc(doc.data(), doc.id));
-                scrollBottom();
-            });
-        }
-        async function markMessagesAsRead(chatId) {
-            const unread = await db.collection('chats').doc(chatId).collection('messages').where('userId','!=',currentUser.uid).get();
-            const batch = db.batch();
-            unread.forEach(doc => { if(!doc.data().readBy?.[currentUser.uid]) batch.update(doc.ref, { [`readBy.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp() }); });
-            await batch.commit();
-        }
-        function renderMessageDoc(message, msgId, chatId=null) { /* как в исходнике, без изменений, оставим кратко */
-            const div = document.createElement('div'); div.className='msg';
-            const ts = message.timestamp?.toDate?.() || new Date();
-            const isOwn = message.userId === currentUser.uid;
-            let statusHtml = (chatId && isOwn) ? `<span class="msg-status"><span class="${Object.keys(message.readBy||{}).length?'read':'delivered'}">${Object.keys(message.readBy||{}).length?'✓✓':'✓'}</span></span>` : '';
-            let body = escapeHtml(message.text||'');
-            if(message.imageUrl) body += '<br><img src="'+escapeHtml(message.imageUrl)+'" alt="📷 фото" loading="lazy">';
-            div.innerHTML = `<div class="msg-head"><span class="msg-user" data-user-id="${message.userId}">${escapeHtml(message.username)}${message.isEdited?' <span style="font-size:10px;">(ред.)</span>':''}</span><span class="msg-time">${formatTime(ts)}${statusHtml}</span></div><div class="msg-body">${body||'<i>📎 Вложение</i>'}</div><div class="msg-actions">${isOwn?`<button class="msg-action-btn" onclick="editMessage('${msgId}','${escapeHtml(message.text||'').replace(/'/g,"\\'")}')">✏️</button>`:''}<button class="msg-action-btn" onclick="forwardMessage('${escapeHtml(message.text||'').replace(/'/g,"\\'")}','${message.imageUrl||''}')">📤</button>${isOwn?`<button class="msg-action-btn" onclick="deleteMessage('${msgId}')">🗑️</button>`:''}</div>`;
-            div.querySelector('.msg-user')?.addEventListener('click',()=>goToUserProfile(message.userId));
-            messagesEl.appendChild(div);
-        }
-        async function sendNow() { if(isSending) return; const text=messageInput.value.trim(); if(!text && !lastUploadedImage) return; if(chatMode==='dm' && await isUserBlocked(dmPeerId)){ showError('Вы не можете отправлять сообщения заблокированному пользователю'); return; } isSending=true; const img=lastUploadedImage; const txt=text; messageInput.value=''; lastUploadedImage=null; const ts=firebase.firestore.FieldValue.serverTimestamp(); const uname=myUserData?.username||myUsername; const payload={ userId:currentUser.uid, username:uname, text:txt||'', timestamp:ts, readBy:{}}; if(img) payload.imageUrl=img; const preview=txt||(img?'📷 Фото':''); try{ if(chatMode==='dm'){ const cid=dmChatId(currentUser.uid, dmPeerId); await db.collection('chats').doc(cid).collection('messages').add(payload); await db.collection('users').doc(currentUser.uid).collection('chats').doc(dmPeerId).update({ lastMessage:preview, lastMessageTime:ts, unreadCount:0 }); await db.collection('users').doc(dmPeerId).collection('chats').doc(currentUser.uid).update({ lastMessage:preview, lastMessageTime:ts, unreadCount:firebase.firestore.FieldValue.increment(1) }); } else if(chatMode==='group'){ await db.collection('groups').doc(groupIdOpen).collection('messages').add(payload); await updateGroupPreviews(groupIdOpen, preview); } scrollBottom(); } catch(e){ showError('Ошибка отправки'); if(txt) messageInput.value=txt; if(img) lastUploadedImage=img; } finally{ isSending=false; } }
-        async function updateGroupPreviews(gid, preview) { const gdoc=await db.collection('groups').doc(gid).get(); if(!gdoc.exists) return; const group=gdoc.data(); const ts=firebase.firestore.FieldValue.serverTimestamp(); for(const uid of (group.memberIds||[])){ const update={type:'group',groupId:gid,name:group.name,inviteCode:group.inviteCode,lastMessage:preview,lastMessageTime:ts}; if(uid===currentUser.uid) await db.collection('users').doc(uid).collection('chats').doc(gid).set({...update,unreadCount:0},{merge:true}); else await db.collection('users').doc(uid).collection('chats').doc(gid).set(update,{merge:true}).then(()=>db.collection('users').doc(uid).collection('chats').doc(gid).update({unreadCount:firebase.firestore.FieldValue.increment(1)})); } }
-        function pickImage() { document.getElementById('imageInput').click(); }
-        document.getElementById('imageInput').addEventListener('change',async function(){ const file=this.files[0]; this.value=''; if(!file) return; if(file.size>5*1024*1024){ showError('Файл >5МБ'); return; } const fd=new FormData(); fd.append('image',file); try{ const res=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_API_KEY,{method:'POST',body:fd}); const data=await res.json(); if(data.success){ lastUploadedImage=data.data.url; sendNow(); } else showError('imgBB ошибка'); } catch(e){ showError('Ошибка загрузки'); } });
-        function randomInvite(){ let r=''; const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(let i=0;i<8;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
-        function openCreateGroupModal(){ document.getElementById('newGroupName').value=''; document.getElementById('customGroupCode').value=''; document.querySelector('input[name="codeMode"][value="random"]').checked=true; document.getElementById('customGroupCode').classList.add('hidden'); document.getElementById('modalCreate').classList.remove('hidden'); }
-        function openJoinModal(){ document.getElementById('joinCodeInput').value=''; document.getElementById('modalJoin').classList.remove('hidden'); }
-        function closeModals(){ document.getElementById('modalCreate').classList.add('hidden'); document.getElementById('modalJoin').classList.add('hidden'); document.getElementById('modalEditMsg').classList.add('hidden'); document.getElementById('modalChatSettings').classList.add('hidden'); currentEditingMessage=null; }
-        async function submitCreateGroup(){ const name=document.getElementById('newGroupName').value.trim(); if(!name){ showError('Введите название'); return; } const mode=document.querySelector('input[name="codeMode"]:checked').value; let code=''; if(mode==='random') code=randomInvite(); else{ const raw=document.getElementById('customGroupCode').value.trim(); if(!raw||!/^\$[A-Za-z0-9_]{2,20}$/.test(raw)){ showError('Код должен быть $ник'); return; } code=raw; } const norm=code.toLowerCase(); const existing=await db.collection('groups').where('inviteCodeNorm','==',norm).limit(1).get(); if(!existing.empty){ showError('Код занят'); return; } const gid=db.collection('groups').doc().id; await db.collection('groups').doc(gid).set({ name, inviteCode:code, inviteCodeNorm:norm, ownerId:currentUser.uid, memberIds:[currentUser.uid], createdAt:firebase.firestore.FieldValue.serverTimestamp() }); await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({ type:'group', groupId:gid, name, inviteCode:code, lastMessage:'', lastMessageTime:firebase.firestore.FieldValue.serverTimestamp(), unreadCount:0 }); closeModals(); openGroupChat(gid,{name,inviteCode:code}); }
-        async function submitJoinGroup(){ let code=document.getElementById('joinCodeInput').value.trim(); if(!code){ showError('Введите код'); return; } const norm=code.toLowerCase(); const snap=await db.collection('groups').where('inviteCodeNorm','==',norm).limit(1).get(); if(snap.empty){ showError('Группа не найдена'); return; } const gdoc=snap.docs[0]; const gid=gdoc.id; const data=gdoc.data(); if(!data.memberIds?.includes(currentUser.uid)) await db.collection('groups').doc(gid).update({ memberIds:firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }); await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({ type:'group', groupId:gid, name:data.name, inviteCode:data.inviteCode, lastMessage:'', lastMessageTime:firebase.firestore.FieldValue.serverTimestamp(), unreadCount:0 },{merge:true}); closeModals(); openGroupChat(gid,data); }
-        window.editMessage=function(id,text){ currentEditingMessage={id,text}; document.getElementById('editMsgText').value=text||''; document.getElementById('modalEditMsg').classList.remove('hidden'); };
-        window.submitEditMessage=async function(){ const newText=document.getElementById('editMsgText').value.trim(); if(!newText) return; try{ if(chatMode==='dm') await db.collection('chats').doc(dmChatId(currentUser.uid,dmPeerId)).collection('messages').doc(currentEditingMessage.id).update({ text:newText, editedAt:firebase.firestore.FieldValue.serverTimestamp(), isEdited:true }); else await db.collection('groups').doc(groupIdOpen).collection('messages').doc(currentEditingMessage.id).update({ text:newText, editedAt:firebase.firestore.FieldValue.serverTimestamp(), isEdited:true }); showSuccess('Отредактировано'); closeModals(); } catch(e){ showError('Ошибка'); } };
-        window.forwardMessage=function(txt,img){ messageInput.value=txt||''; if(img) lastUploadedImage=img; messageInput.focus(); showSuccess('Подготовлено к отправке'); };
-        window.deleteMessage=async function(id){ if(!confirm('Удалить?')) return; try{ if(chatMode==='dm') await db.collection('chats').doc(dmChatId(currentUser.uid,dmPeerId)).collection('messages').doc(id).delete(); else await db.collection('groups').doc(groupIdOpen).collection('messages').doc(id).delete(); showSuccess('Удалено'); } catch(e){ showError('Ошибка'); } };
-        window.onload=init;
+
+        window.onload = init;
     </script>
 </body>
 </html>
