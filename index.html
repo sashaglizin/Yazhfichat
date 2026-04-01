@@ -296,13 +296,34 @@
             el.type = el.type === 'password' ? 'text' : 'password';
         }
 
+        // Флаг для предотвращения повторного редиректа
+        let isRedirecting = false;
+
         async function checkAuthState() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     currentUser = user;
-                    // Выполняем миграцию и ждем ее завершения
-                    await migrateUserDoc(user.uid);
-                    window.location.href = 'chat.html';
+                    // Показываем индикатор загрузки
+                    showSuccess('Загрузка профиля...');
+                    
+                    try {
+                        // Ждем полной миграции профиля
+                        await migrateUserDoc(user.uid);
+                        // Даем небольшую задержку для завершения всех операций Firestore
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        if (!isRedirecting) {
+                            isRedirecting = true;
+                            window.location.href = 'chat.html';
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при миграции:', error);
+                        showError('Ошибка загрузки профиля, попробуйте войти снова');
+                        // Выходим из аккаунта при ошибке
+                        await auth.signOut();
+                        showLoginForm();
+                        isRedirecting = false;
+                    }
                 } else {
                     currentUser = null;
                     loginSection.classList.remove('hidden');
@@ -311,6 +332,7 @@
                     showLoginForm();
                     profileButton.classList.add('hidden');
                     chatsButton.classList.add('hidden');
+                    isRedirecting = false;
                 }
             });
         }
@@ -318,7 +340,32 @@
         async function migrateUserDoc(uid) {
             const ref = db.collection('users').doc(uid);
             const doc = await ref.get();
-            if (!doc.exists) return;
+            
+            // Если документа нет, создаем его (на случай если регистрация не завершилась)
+            if (!doc.exists) {
+                console.warn('Документ пользователя не найден, создаем...');
+                const username = auth.currentUser?.displayName || 'Пользователь';
+                const term = username.toLowerCase();
+                await ref.set({
+                    username: username,
+                    usernameLower: term,
+                    userHandle: '$' + term,
+                    userHandleNorm: term,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`
+                });
+                
+                // Пытаемся создать usernames и handles (если правила позволяют)
+                try {
+                    await db.collection('usernames').doc(term).set({ uid });
+                } catch (e) { console.warn('usernames create error:', e); }
+                try {
+                    await db.collection('handles').doc(term).set({ uid });
+                } catch (e) { console.warn('handles create error:', e); }
+                
+                return;
+            }
+            
             const d = doc.data();
             const patch = {};
             
@@ -349,7 +396,7 @@
                 }
             }
 
-            // Публичный юз: $юз по которому ищем пользователя (без хранения пароля)
+            // Публичный юз: $юз по которому ищем пользователя
             try {
                 const normFromUser =
                     (d.userHandleNorm ? String(d.userHandleNorm).toLowerCase() : '') ||
@@ -431,11 +478,16 @@
                 console.warn('Проверка users до входа недоступна — полагаемся на Auth:', e.code || e);
             }
             
+            const submitBtn = document.querySelector('#registerSection button');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Регистрация...';
+            submitBtn.disabled = true;
+            
             try {
                 const cred = await auth.createUserWithEmailAndPassword(`${username}@fichat.com`, password);
                 await cred.user.updateProfile({ displayName: username });
                 
-                // Создаем документ пользователя БЕЗ хранения пароля
+                // Создаем документ пользователя
                 await db.collection('users').doc(cred.user.uid).set({
                     username,
                     usernameLower: term,
@@ -445,20 +497,27 @@
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`
                 });
                 
+                // Пытаемся создать usernames (если правила позволяют)
                 try {
                     await db.collection('usernames').doc(term).set({ uid: cred.user.uid });
                 } catch (e2) {
                     console.warn('Запись usernames (обновите правила в Firebase):', e2.code || e2);
                 }
                 
+                // Пытаемся создать handles
                 try {
                     await db.collection('handles').doc(term).set({ uid: cred.user.uid });
                 } catch (e2) {
                     console.warn('Запись handles (обновите правила в Firebase):', e2.code || e2);
                 }
                 
-                showSuccess('Готово — YzFi ждёт');
-                showDashboard();
+                showSuccess('Регистрация успешна! Перенаправление...');
+                
+                // Ждем завершения всех операций Firestore
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Редирект произойдет в onAuthStateChanged
+                
             } catch (e) {
                 console.error(e);
                 if (e.code === 'auth/email-already-in-use') {
@@ -468,6 +527,8 @@
                 } else {
                     showError('Регистрация: ' + (e.message || e));
                 }
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         }
 
@@ -480,6 +541,11 @@
                 return;
             }
             
+            const submitBtn = document.querySelector('#loginSection button');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Вход...';
+            submitBtn.disabled = true;
+            
             try {
                 await auth.signInWithEmailAndPassword(`${username}@fichat.com`, password);
                 showSuccess('С возвращением');
@@ -490,6 +556,8 @@
                 } else {
                     showError('Вход: ' + (e.message || e));
                 }
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         }
 
