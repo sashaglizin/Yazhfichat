@@ -22,6 +22,8 @@
             --header: #4a2f7a;
             --border: #110822;
             --shadow: rgba(0,0,0,.35);
+            --online: #2ecc71;
+            --offline: #7f8c8d;
         }
         * {
             margin: 0;
@@ -158,8 +160,8 @@
             gap: 10px;
             padding: 12px;
             border-bottom: 1px solid #2a1a45;
-            cursor: pointer;
             transition: background 0.1s ease;
+            cursor: pointer;
         }
         .chat-item:hover { background: var(--panel2); }
         .chat-item.unread {
@@ -167,19 +169,34 @@
             background: #251840;
         }
         .chat-item:last-child { border-bottom: none; }
+        .avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
         .avatar {
             width: 44px;
             height: 44px;
             border-radius: 4px;
             object-fit: cover;
             border: 2px solid var(--border);
-            flex-shrink: 0;
             cursor: pointer;
+        }
+        .status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--offline);
+        }
+        .status-dot.online {
+            background: var(--online);
         }
         .chat-info {
             flex: 1;
             min-width: 0;
-            cursor: pointer;
         }
         .chat-name {
             font-weight: bold;
@@ -187,11 +204,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: color 0.2s ease;
-        }
-        .chat-name:hover {
-            color: #9effaa;
-            text-decoration: underline;
         }
         .chat-preview {
             font-size: 13px;
@@ -328,6 +340,19 @@
             border-radius: 4px;
             margin-top: 6px;
             display: block;
+        }
+        .msg-status {
+            font-size: 11px;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .msg-status .read {
+            color: var(--green);
+        }
+        .msg-status .delivered {
+            color: #b9a0d4;
         }
         .composer {
             flex-shrink: 0;
@@ -502,6 +527,8 @@
         let unsubscribeChats = null;
         let unsubscribeMessages = null;
         let chats = [];
+        let onlineStatusListener = null;
+        let userStatuses = new Map();
 
         let chatMode = null;
         let dmPeerId = null;
@@ -523,7 +550,6 @@
         const chatExtra = document.getElementById('chatExtra');
         const screenTitle = document.getElementById('screenTitle');
 
-        // Утилиты
         function escapeHtml(s) {
             if (s == null) return '';
             const div = document.createElement('div');
@@ -572,7 +598,75 @@
             }
         }
 
-        // Инициализация
+        async function updateOnlineStatus() {
+            if (!currentUser) return;
+            try {
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                    online: true
+                });
+            } catch (e) {
+                console.error('Ошибка обновления статуса:', e);
+            }
+        }
+
+        async function getUserStatus(userId) {
+            if (userStatuses.has(userId)) return userStatuses.get(userId);
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                const data = doc.data();
+                const isOnline = data?.online === true;
+                const lastSeen = data?.lastSeen?.toDate();
+                const status = { online: isOnline, lastSeen };
+                userStatuses.set(userId, status);
+                return status;
+            } catch (e) {
+                return { online: false, lastSeen: null };
+            }
+        }
+
+        function subscribeToUserStatuses(userIds) {
+            if (onlineStatusListener) onlineStatusListener();
+            
+            const uniqueUserIds = [...new Set(userIds)];
+            if (uniqueUserIds.length === 0) return;
+            
+            const listeners = [];
+            uniqueUserIds.forEach(uid => {
+                const unsub = db.collection('users').doc(uid).onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        userStatuses.set(uid, {
+                            online: data?.online === true,
+                            lastSeen: data?.lastSeen?.toDate()
+                        });
+                        refreshChatsList();
+                    }
+                });
+                listeners.push(unsub);
+            });
+            
+            onlineStatusListener = () => {
+                listeners.forEach(unsub => unsub());
+            };
+        }
+
+        function refreshChatsList() {
+            if (!chatsList) return;
+            const items = chatsList.querySelectorAll('.chat-item');
+            items.forEach((item, idx) => {
+                const chat = chats[idx];
+                if (chat && chat.type === 'dm' && chat.userId) {
+                    const status = userStatuses.get(chat.userId);
+                    const dot = item.querySelector('.status-dot');
+                    if (dot && status) {
+                        dot.className = 'status-dot' + (status.online ? ' online' : '');
+                    }
+                }
+            });
+        }
+
         async function init() {
             auth.onAuthStateChanged(async (user) => {
                 if (!user) {
@@ -581,6 +675,8 @@
                 }
                 currentUser = user;
                 await loadMyProfile();
+                updateOnlineStatus();
+                setInterval(() => updateOnlineStatus(), 30000);
                 loadChatsListener();
             });
         }
@@ -618,7 +714,6 @@
             }
         }
 
-        // Загрузка списка чатов
         function loadChatsListener() {
             if (unsubscribeChats) unsubscribeChats();
             
@@ -629,6 +724,19 @@
                     chats = [];
                     chatsList.innerHTML = '';
                     
+                    const userIds = [];
+                    snap.forEach((doc) => {
+                        const chatData = { id: doc.id, ...doc.data() };
+                        chats.push(chatData);
+                        if (chatData.type === 'dm' && chatData.userId) {
+                            userIds.push(chatData.userId);
+                        }
+                    });
+                    
+                    if (userIds.length > 0) {
+                        subscribeToUserStatuses(userIds);
+                    }
+                    
                     if (snap.empty) {
                         emptyChats.classList.remove('hidden');
                         chatsList.innerHTML = '<div class="empty">📭 Нет чатов</div>';
@@ -636,9 +744,8 @@
                     }
                     
                     emptyChats.classList.add('hidden');
-                    snap.forEach((doc) => {
-                        const chatData = { id: doc.id, ...doc.data() };
-                        chats.push(chatData);
+                    // Исправление: используем chatData из массива chats
+                    chats.forEach((chatData) => {
                         renderChatRow(chatData);
                     });
                     
@@ -650,7 +757,7 @@
                 });
         }
 
-        function renderChatRow(chat) {
+        async function renderChatRow(chat) {
             const el = document.createElement('div');
             const unread = (chat.unreadCount || 0) > 0;
             el.className = 'chat-item' + (unread ? ' unread' : '');
@@ -665,9 +772,19 @@
                 : '';
             const preview = chat.lastMessage || '—';
             
+            let statusHtml = '';
+            let status = null;
+            if (!isGroup && chat.userId) {
+                status = userStatuses.get(chat.userId);
+                statusHtml = `<div class="status-dot ${status?.online ? 'online' : ''}"></div>`;
+            }
+            
             el.innerHTML = `
-                <img class="avatar" src="${escapeHtml(avatar)}" alt="">
-                <div class="chat-info">
+                <div class="avatar-wrapper">
+                    <img class="avatar" src="${escapeHtml(avatar)}" alt="" data-user-id="${!isGroup ? chat.userId : ''}">
+                    ${statusHtml}
+                </div>
+                <div class="chat-info" data-user-id="${!isGroup ? chat.userId : ''}">
                     <div class="chat-name">${escapeHtml(title)}${isGroup ? ' <span class="mono" style="font-size:11px;">👥</span>' : ''}</div>
                     <div class="chat-preview">${escapeHtml(preview.length > 50 ? preview.substring(0, 50) + '...' : preview)}</div>
                 </div>
@@ -677,26 +794,21 @@
                 </div>
             `;
             
-            // Добавляем переход на профиль для DM чатов
             const avatarImg = el.querySelector('.avatar');
-            const chatInfo = el.querySelector('.chat-info');
             
+            // Клик по аватару -> переход в профиль
             if (!isGroup && chat.userId) {
-                avatarImg.style.cursor = 'pointer';
-                chatInfo.style.cursor = 'pointer';
-                
-                avatarImg.onclick = (e) => {
+                avatarImg.addEventListener('click', (e) => {
                     e.stopPropagation();
                     goToUserProfile(chat.userId);
-                };
-                
-                chatInfo.onclick = (e) => {
-                    e.stopPropagation();
-                    goToUserProfile(chat.userId);
-                };
+                });
             }
             
-            el.onclick = () => {
+            // Клик по всей строке -> открытие чата (но не если кликнули по аватару)
+            el.addEventListener('click', (e) => {
+                if (e.target === avatarImg || avatarImg.contains(e.target)) {
+                    return;
+                }
                 if (chat.type === 'group') {
                     openGroupChat(chat.groupId || chat.id, chat);
                 } else {
@@ -706,7 +818,7 @@
                         userHandle: chat.userHandle 
                     });
                 }
-            };
+            });
             
             chatsList.appendChild(el);
         }
@@ -732,7 +844,6 @@
             filterChatsLocal();
         });
 
-        // Поиск пользователей
         async function runUserSearch() {
             const raw = searchInput.value.trim();
             if (!raw) {
@@ -821,7 +932,9 @@
             const row = document.createElement('div');
             row.className = 'chat-item';
             row.innerHTML = `
-                <img class="avatar" src="${escapeHtml(avatar)}" alt="">
+                <div class="avatar-wrapper">
+                    <img class="avatar" src="${escapeHtml(avatar)}" alt="">
+                </div>
                 <div class="chat-info">
                     <div class="chat-name">${escapeHtml(name)}</div>
                     <div class="chat-preview">${escapeHtml(handle)}</div>
@@ -832,18 +945,15 @@
             const avatarImg = row.querySelector('.avatar');
             const chatInfo = row.querySelector('.chat-info');
             
-            avatarImg.style.cursor = 'pointer';
-            chatInfo.style.cursor = 'pointer';
-            
-            avatarImg.onclick = (e) => {
+            avatarImg.addEventListener('click', (e) => {
                 e.stopPropagation();
                 goToUserProfile(userId);
-            };
+            });
             
-            chatInfo.onclick = (e) => {
+            chatInfo.addEventListener('click', (e) => {
                 e.stopPropagation();
                 goToUserProfile(userId);
-            };
+            });
             
             const btn = row.querySelector('button');
             btn.onclick = (e) => {
@@ -854,7 +964,6 @@
             userSearchWrap.appendChild(row);
         }
 
-        // Создание DM чата
         async function startDMWith(peerId, peerProfile) {
             userSearchWrap.classList.add('hidden');
             searchInput.value = '';
@@ -921,7 +1030,6 @@
             chatTitle.textContent = userData.username || 'Чат';
             chatExtra.textContent = userData.userHandle || '';
             
-            // Добавляем возможность перехода на профиль по клику на имя в чате
             chatTitle.style.cursor = 'pointer';
             chatTitle.onclick = () => {
                 goToUserProfile(userId);
@@ -943,6 +1051,28 @@
             return [a, b].sort().join('_');
         }
 
+        async function markMessagesAsRead(chatId) {
+            try {
+                const messagesRef = db.collection('chats').doc(chatId).collection('messages');
+                const unreadMessages = await messagesRef
+                    .where('userId', '!=', currentUser.uid)
+                    .get();
+                
+                const batch = db.batch();
+                unreadMessages.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.readBy || !data.readBy[currentUser.uid]) {
+                        batch.update(doc.ref, {
+                            [`readBy.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+                await batch.commit();
+            } catch (e) {
+                console.error('Ошибка отметки прочитанных:', e);
+            }
+        }
+
         function subscribeMessagesDM(peerId) {
             if (unsubscribeMessages) unsubscribeMessages();
             const chatId = dmChatId(currentUser.uid, peerId);
@@ -950,13 +1080,18 @@
             
             unsubscribeMessages = db.collection('chats').doc(chatId).collection('messages')
                 .orderBy('timestamp', 'asc')
-                .onSnapshot((snap) => {
+                .onSnapshot(async (snap) => {
                     messagesEl.innerHTML = '';
                     if (snap.empty) {
                         messagesEl.innerHTML = '<div class="empty">💭 Нет сообщений. Напишите первое!</div>';
                         return;
                     }
-                    snap.forEach((doc) => renderMessageDoc(doc.data()));
+                    
+                    snap.forEach((doc) => {
+                        renderMessageDoc(doc.data(), doc.id, chatId);
+                    });
+                    
+                    await markMessagesAsRead(chatId);
                     scrollBottom();
                 }, (e) => {
                     console.error('Ошибка загрузки сообщений:', e);
@@ -999,7 +1134,7 @@
                         messagesEl.innerHTML = '<div class="empty">💭 Пока нет сообщений. Напишите первое!</div>';
                         return;
                     }
-                    snap.forEach((doc) => renderMessageDoc(doc.data()));
+                    snap.forEach((doc) => renderMessageDoc(doc.data(), doc.id));
                     scrollBottom();
                 }, (e) => {
                     console.error('Ошибка загрузки сообщений группы:', e);
@@ -1008,12 +1143,20 @@
                 });
         }
 
-        function renderMessageDoc(message) {
+        function renderMessageDoc(message, msgId, chatId = null) {
             const div = document.createElement('div');
             div.className = 'msg';
             const ts = message.timestamp && message.timestamp.toDate ? message.timestamp.toDate() : new Date();
             const uname = escapeHtml(message.username || 'anon');
             const userId = message.userId;
+            const isOwn = userId === currentUser.uid;
+            
+            let statusHtml = '';
+            if (chatId && isOwn) {
+                const readBy = message.readBy || {};
+                const isRead = Object.keys(readBy).length > 0;
+                statusHtml = `<span class="msg-status"><span class="${isRead ? 'read' : 'delivered'}">${isRead ? '✓✓' : '✓'}</span></span>`;
+            }
             
             let body = escapeHtml(message.text || '');
             if (message.imageUrl) {
@@ -1023,19 +1166,13 @@
             div.innerHTML = `
                 <div class="msg-head">
                     <span class="msg-user" data-user-id="${userId || ''}">${uname}</span>
-                    <span class="msg-time">${formatTime(ts)}</span>
+                    <span class="msg-time">${formatTime(ts)}${statusHtml}</span>
                 </div>
                 <div class="msg-body">${body || '<i>📎 Вложение</i>'}</div>
             `;
             
-            // Добавляем возможность перехода на профиль по клику на имя пользователя в сообщении
             const msgUserSpan = div.querySelector('.msg-user');
-            if (msgUserSpan && userId && userId !== currentUser.uid) {
-                msgUserSpan.style.cursor = 'pointer';
-                msgUserSpan.onclick = () => {
-                    goToUserProfile(userId);
-                };
-            } else if (msgUserSpan && userId === currentUser.uid) {
+            if (msgUserSpan && userId) {
                 msgUserSpan.style.cursor = 'pointer';
                 msgUserSpan.onclick = () => {
                     goToUserProfile(userId);
@@ -1094,7 +1231,8 @@
                 userId: currentUser.uid,
                 username: currentUsername,
                 text: textToSend || '',
-                timestamp: ts
+                timestamp: ts,
+                readBy: {}
             };
             
             if (imageToSend) {
@@ -1403,7 +1541,6 @@
             }
         }
 
-        // Экспорт глобальных функций
         window.goProfile = goProfile;
         window.goToLenta = goToLenta;
         window.goToUserProfile = goToUserProfile;

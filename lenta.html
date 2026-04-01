@@ -35,7 +35,6 @@
             flex-direction: column;
         }
 
-        /* Хедер */
         .header {
             background: linear-gradient(180deg, #4a2f7a, #2d1b4e);
             border: 2px solid #110822;
@@ -92,7 +91,11 @@
             font-size: 13px;
         }
 
-        /* Лента */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .feed {
             flex: 1;
             overflow-y: auto;
@@ -102,7 +105,6 @@
             gap: 16px;
         }
 
-        /* Карточка поста */
         .post-card {
             background: #2d1b4e;
             border: 2px solid #110822;
@@ -171,9 +173,10 @@
         .post-image {
             width: 100%;
             max-height: 480px;
-            object-fit: cover;
+            object-fit: contain;
             background: #12081f;
             border-bottom: 1px solid #3d2666;
+            cursor: pointer;
         }
 
         .post-text {
@@ -201,6 +204,7 @@
             gap: 6px;
             font-size: 14px;
             color: #e8d5f2;
+            cursor: pointer;
         }
 
         .action-btn:active {
@@ -231,6 +235,7 @@
             gap: 8px;
             margin-bottom: 8px;
             font-size: 13px;
+            align-items: flex-start;
         }
 
         .comment-name {
@@ -271,6 +276,7 @@
             border-radius: 4px;
             background: #f5e6ff;
             font-size: 14px;
+            font-family: inherit;
         }
 
         .add-comment button {
@@ -290,7 +296,6 @@
             margin-bottom: 8px;
         }
 
-        /* Модалка создания поста */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -386,7 +391,6 @@
             color: #b47aff;
         }
 
-        /* Стили для кликабельных элементов */
         .clickable {
             cursor: pointer;
         }
@@ -408,7 +412,6 @@
         </div>
     </div>
 
-    <!-- Модалка создания поста -->
     <div id="createPostModal" class="modal-overlay hidden" onclick="if(event.target===this) closeCreatePostModal()">
         <div class="modal" onclick="event.stopPropagation()">
             <h3>✨ Новый пост</h3>
@@ -416,7 +419,7 @@
             <input type="file" id="postImageInput" accept="image/*" style="margin-bottom: 12px;">
             <div id="imagePreviewContainer" class="hidden"></div>
             <div class="modal-actions">
-                <button onclick="submitPost()">📤 Опубликовать</button>
+                <button onclick="submitPost()" id="submitPostBtn">📤 Опубликовать</button>
                 <button class="secondary" onclick="closeCreatePostModal()">Отмена</button>
             </div>
         </div>
@@ -440,18 +443,15 @@
         let currentUser = null;
         let userProfile = null;
         let unsubscribeFeed = null;
-        
-        // Хранилище для отслеживания просмотренных постов (в этой сессии)
+        let commentListeners = new Map();
         let viewedPosts = new Set();
 
-        // Элементы
         const feedContainer = document.getElementById('feedContainer');
         const createPostModal = document.getElementById('createPostModal');
         const postText = document.getElementById('postText');
         const postImageInput = document.getElementById('postImageInput');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
 
-        // Утилиты
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
             toast.className = 'toast' + (isError ? ' error' : '');
@@ -484,7 +484,6 @@
             return num.toString();
         }
 
-        // Навигация
         function goToChats() {
             window.location.href = 'chat.html';
         }
@@ -501,7 +500,6 @@
             }
         }
 
-        // Инициализация
         async function init() {
             auth.onAuthStateChanged(async (user) => {
                 if (!user) {
@@ -519,23 +517,17 @@
                 const doc = await db.collection('users').doc(currentUser.uid).get();
                 if (doc.exists) {
                     userProfile = doc.data();
-                    if (!userProfile.username) {
-                        userProfile.username = currentUser.displayName || 'Пользователь';
-                    }
                 } else {
                     userProfile = { username: currentUser.displayName || 'Пользователь' };
                 }
             } catch (e) {
                 console.error('Ошибка загрузки профиля:', e);
+                userProfile = { username: 'Пользователь' };
             }
         }
 
-        // Функция для регистрации просмотра
         async function registerView(postId, authorId) {
-            // Не учитываем просмотр автором своего поста
             if (authorId === currentUser.uid) return;
-            
-            // Проверяем, не смотрели ли уже этот пост в текущей сессии
             if (viewedPosts.has(postId)) return;
             
             viewedPosts.add(postId);
@@ -543,7 +535,6 @@
             try {
                 const postRef = db.collection('posts').doc(postId);
                 await postRef.update({
-                    [`views.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp(),
                     viewsCount: firebase.firestore.FieldValue.increment(1)
                 });
             } catch (e) {
@@ -551,7 +542,6 @@
             }
         }
 
-        // Загрузка ленты (посты в реальном времени)
         function loadFeed() {
             if (unsubscribeFeed) unsubscribeFeed();
 
@@ -579,21 +569,20 @@
                 }, (error) => {
                     console.error('Ошибка загрузки ленты:', error);
                     feedContainer.innerHTML = '<div class="empty-feed">⚠️ Не удалось загрузить ленту</div>';
+                    showToast('Ошибка загрузки ленты', true);
                 });
         }
 
-        // Рендер одного поста
         async function renderPost(post) {
             const postDiv = document.createElement('div');
             postDiv.className = 'post-card';
-            postDiv.id = `post-${post.id}`;
+            postDiv.dataset.postId = post.id;
 
-            // Информация об авторе
             let authorName = post.authorName || 'Пользователь';
             let authorHandle = post.authorHandle || '';
             let authorAvatar = post.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=5c3d8c&color=f5e6ff&size=88`;
 
-            if (post.authorId) {
+            if (post.authorId && (!post.authorName || !post.authorHandle)) {
                 try {
                     const userDoc = await db.collection('users').doc(post.authorId).get();
                     if (userDoc.exists) {
@@ -608,21 +597,12 @@
             const timestamp = post.timestamp?.toDate ? post.timestamp.toDate() : new Date();
             const timeStr = formatTime(timestamp);
 
-            const isLiked = post.likes && post.likes[currentUser.uid] === true;
-            const likesCount = post.likes ? Object.keys(post.likes).length : 0;
+            const likes = post.likes || {};
+            const isLiked = likes[currentUser?.uid] === true;
+            const likesCount = Object.keys(likes).length;
             const viewsCount = post.viewsCount || 0;
-            
-            // Регистрируем просмотр (если пост виден в ленте)
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        registerView(post.id, post.authorId);
-                        observer.disconnect();
-                    }
-                });
-            }, { threshold: 0.5 });
-            
-            // HTML карточки
+            const commentCount = post.commentCount || 0;
+
             postDiv.innerHTML = `
                 <div class="post-header">
                     <img class="post-avatar" src="${escapeHtml(authorAvatar)}" alt="аватар" loading="lazy">
@@ -635,94 +615,91 @@
                 ${post.imageUrl ? `<img class="post-image" src="${escapeHtml(post.imageUrl)}" alt="пост" loading="lazy">` : ''}
                 ${post.text ? `<div class="post-text">${escapeHtml(post.text).replace(/\n/g, '<br>')}</div>` : ''}
                 <div class="post-actions">
-                    <button class="action-btn ${isLiked ? 'liked' : ''}" data-action="like" data-post-id="${post.id}">
+                    <button class="action-btn like-btn ${isLiked ? 'liked' : ''}" data-post-id="${post.id}">
                         ❤️ <span class="likes-count">${formatNumber(likesCount)}</span>
                     </button>
-                    <button class="action-btn" data-action="comment" data-post-id="${post.id}">
-                        💬 <span class="comments-count">${post.commentCount || 0}</span>
+                    <button class="action-btn comment-toggle" data-post-id="${post.id}">
+                        💬 <span class="comments-count">${formatNumber(commentCount)}</span>
                     </button>
                     <div class="action-stats">
                         👁️ ${formatNumber(viewsCount)}
                     </div>
                 </div>
-                <div class="comments-section" id="comments-${post.id}">
+                <div class="comments-section hidden" id="comments-${post.id}">
                     <div class="comments-list"></div>
                     <div class="add-comment">
                         <input type="text" placeholder="Написать комментарий..." maxlength="300" id="comment-input-${post.id}">
-                        <button class="small" data-action="add-comment" data-post-id="${post.id}">→</button>
+                        <button class="small add-comment-btn" data-post-id="${post.id}">→</button>
                     </div>
                 </div>
             `;
 
-            // Добавляем обработчики для перехода на профиль
             const avatarImg = postDiv.querySelector('.post-avatar');
             const authorDiv = postDiv.querySelector('.post-author');
-            const postName = postDiv.querySelector('.post-name');
-            const postHandle = postDiv.querySelector('.post-handle');
             
-            const goToProfileHandler = () => goToUserProfile(post.authorId);
-            
-            avatarImg.addEventListener('click', goToProfileHandler);
-            authorDiv.addEventListener('click', goToProfileHandler);
-            postName.addEventListener('click', goToProfileHandler);
-            postHandle.addEventListener('click', goToProfileHandler);
-            
-            // Добавляем стили курсора для всех кликабельных элементов
-            avatarImg.style.cursor = 'pointer';
-            authorDiv.style.cursor = 'pointer';
-            postName.style.cursor = 'pointer';
-            postHandle.style.cursor = 'pointer';
+            avatarImg.addEventListener('click', () => goToUserProfile(post.authorId));
+            authorDiv.addEventListener('click', () => goToUserProfile(post.authorId));
 
-            // Подключаем Intersection Observer для регистрации просмотра
-            observer.observe(postDiv);
+            const likeBtn = postDiv.querySelector('.like-btn');
+            likeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleLike(post.id);
+            });
 
-            // Обработчики событий
-            const likeBtn = postDiv.querySelector(`[data-action="like"]`);
-            if (likeBtn) {
-                likeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleLike(post.id, post);
-                });
-            }
+            const commentToggle = postDiv.querySelector('.comment-toggle');
+            const commentsSection = postDiv.querySelector(`#comments-${post.id}`);
+            commentToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (commentsSection.classList.contains('hidden')) {
+                    commentsSection.classList.remove('hidden');
+                    loadComments(post.id, commentsSection.querySelector('.comments-list'));
+                } else {
+                    commentsSection.classList.add('hidden');
+                }
+            });
 
-            const addCommentBtn = postDiv.querySelector(`[data-action="add-comment"]`);
-            if (addCommentBtn) {
-                addCommentBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const input = postDiv.querySelector(`#comment-input-${post.id}`);
-                    if (input && input.value.trim()) {
-                        addComment(post.id, input.value.trim());
-                        input.value = '';
-                    }
-                });
-            }
-            
-            // Добавляем возможность отправки комментария по Enter
+            const addCommentBtn = postDiv.querySelector('.add-comment-btn');
             const commentInput = postDiv.querySelector(`#comment-input-${post.id}`);
-            if (commentInput) {
-                commentInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (commentInput.value.trim()) {
-                            addComment(post.id, commentInput.value.trim());
-                            commentInput.value = '';
-                        }
+            addCommentBtn.addEventListener('click', () => {
+                const text = commentInput.value.trim();
+                if (text) {
+                    addComment(post.id, text);
+                    commentInput.value = '';
+                }
+            });
+            
+            commentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const text = commentInput.value.trim();
+                    if (text) {
+                        addComment(post.id, text);
+                        commentInput.value = '';
+                    }
+                }
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        registerView(post.id, post.authorId);
+                        observer.disconnect();
                     }
                 });
-            }
-
-            // Подписываемся на комментарии к этому посту
-            subscribeComments(post.id, postDiv);
-
+            }, { threshold: 0.3 });
+            
+            observer.observe(postDiv);
             feedContainer.appendChild(postDiv);
         }
 
-        // Лайк / анлайк
-        async function toggleLike(postId, post) {
+        async function toggleLike(postId) {
             if (!currentUser) return;
 
             const postRef = db.collection('posts').doc(postId);
-            const isLiked = post.likes && post.likes[currentUser.uid] === true;
+            const postDoc = await postRef.get();
+            const post = postDoc.data();
+            const likes = post?.likes || {};
+            const isLiked = likes[currentUser.uid] === true;
 
             try {
                 if (isLiked) {
@@ -734,45 +711,33 @@
                         [`likes.${currentUser.uid}`]: true
                     });
                 }
-                // Обновляем счетчик в UI сразу (оптимистично)
-                const likesSpan = document.querySelector(`#post-${postId} .likes-count`);
-                if (likesSpan) {
-                    const currentText = likesSpan.textContent;
-                    let currentCount = 0;
-                    if (currentText.includes('k')) {
-                        currentCount = parseFloat(currentText) * 1000;
-                    } else {
-                        currentCount = parseInt(currentText) || 0;
-                    }
-                    const newCount = isLiked ? currentCount - 1 : currentCount + 1;
-                    likesSpan.textContent = formatNumber(newCount);
-                }
-                const likeBtn = document.querySelector(`#post-${postId} [data-action="like"]`);
-                if (likeBtn) {
-                    if (isLiked) likeBtn.classList.remove('liked');
-                    else likeBtn.classList.add('liked');
-                }
             } catch (e) {
                 console.error('Ошибка лайка:', e);
                 showToast('Не удалось поставить лайк', true);
             }
         }
 
-        // Подписка на комментарии
-        function subscribeComments(postId, postDiv) {
-            const commentsList = postDiv.querySelector('.comments-list');
+        async function loadComments(postId, commentsList) {
             if (!commentsList) return;
+            
+            if (commentListeners.has(postId)) {
+                commentListeners.get(postId)();
+                commentListeners.delete(postId);
+            }
+
+            commentsList.innerHTML = '<div class="loading" style="padding: 10px;">Загрузка комментариев...</div>';
 
             const unsubscribe = db.collection('posts').doc(postId)
                 .collection('comments')
                 .orderBy('timestamp', 'asc')
-                .limit(10)
+                .limit(20)
                 .onSnapshot((snapshot) => {
                     if (!commentsList) return;
+                    
                     commentsList.innerHTML = '';
                     
                     if (snapshot.empty) {
-                        commentsList.innerHTML = '<div style="color:#8a739e; font-size:12px; padding:4px 0;">💬 Нет комментариев. Будьте первым!</div>';
+                        commentsList.innerHTML = '<div style="color:#8a739e; font-size:12px; padding:8px 0;">💬 Нет комментариев. Будьте первым!</div>';
                         return;
                     }
 
@@ -782,12 +747,11 @@
                         const commentDiv = document.createElement('div');
                         commentDiv.className = 'comment';
                         
-                        // Добавляем возможность перехода в профиль по имени комментатора
-                        const authorNameSpan = document.createElement('span');
-                        authorNameSpan.className = 'comment-name';
-                        authorNameSpan.textContent = comment.authorName || 'anon';
-                        authorNameSpan.style.cursor = 'pointer';
-                        authorNameSpan.onclick = () => {
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'comment-name';
+                        nameSpan.textContent = comment.authorName || 'anon';
+                        nameSpan.style.cursor = 'pointer';
+                        nameSpan.onclick = () => {
                             if (comment.authorId) {
                                 goToUserProfile(comment.authorId);
                             }
@@ -801,26 +765,29 @@
                         timeSpan.className = 'comment-time';
                         timeSpan.textContent = formatTime(commentTime);
                         
-                        commentDiv.appendChild(authorNameSpan);
+                        commentDiv.appendChild(nameSpan);
                         commentDiv.appendChild(textSpan);
                         commentDiv.appendChild(timeSpan);
                         commentsList.appendChild(commentDiv);
                     });
                     
-                    // Обновляем счетчик комментариев в посте
-                    const commentsSpan = document.querySelector(`#post-${postId} .comments-count`);
-                    if (commentsSpan) {
-                        commentsSpan.textContent = snapshot.size;
+                    const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+                    if (postCard) {
+                        const commentsCountSpan = postCard.querySelector('.comments-count');
+                        if (commentsCountSpan) {
+                            commentsCountSpan.textContent = formatNumber(snapshot.size);
+                        }
                     }
                 }, (error) => {
                     console.error('Ошибка загрузки комментариев:', error);
+                    if (commentsList) {
+                        commentsList.innerHTML = '<div style="color:#ff6b6b; padding: 8px 0;">⚠️ Ошибка загрузки комментариев</div>';
+                    }
                 });
 
-            // Сохраняем отписку
-            postDiv._unsubscribeComments = unsubscribe;
+            commentListeners.set(postId, unsubscribe);
         }
 
-        // Добавление комментария
         async function addComment(postId, text) {
             if (!currentUser || !userProfile) {
                 showToast('Ошибка авторизации', true);
@@ -842,7 +809,6 @@
                 
                 await db.collection('posts').doc(postId).collection('comments').add(commentData);
                 
-                // Обновляем счетчик комментариев в посте
                 const postRef = db.collection('posts').doc(postId);
                 await postRef.update({
                     commentCount: firebase.firestore.FieldValue.increment(1)
@@ -855,7 +821,6 @@
             }
         }
 
-        // Создание поста
         async function submitPost() {
             const text = postText.value.trim();
             const imageFile = postImageInput.files[0];
@@ -875,8 +840,7 @@
                 return;
             }
 
-            // Показываем лоадер на кнопке
-            const submitBtn = document.querySelector('#createPostModal button:first-child');
+            const submitBtn = document.getElementById('submitPostBtn');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = '⏳ Публикация...';
             submitBtn.disabled = true;
@@ -907,7 +871,6 @@
                     imageUrl: imageUrl,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     likes: {},
-                    views: {},
                     viewsCount: 0,
                     commentCount: 0
                 };
@@ -930,7 +893,6 @@
             }
         }
 
-        // Превью изображения
         postImageInput.addEventListener('change', () => {
             const file = postImageInput.files[0];
             if (!file) {
@@ -958,7 +920,6 @@
             createPostModal.classList.add('hidden');
         }
 
-        // Глобальные функции
         window.goToChats = goToChats;
         window.goToProfile = goToProfile;
         window.goToUserProfile = goToUserProfile;
