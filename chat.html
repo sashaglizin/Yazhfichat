@@ -107,6 +107,10 @@
             background: #c44;
             color: #fff;
         }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .main {
             flex: 1;
             display: flex;
@@ -170,14 +174,24 @@
             object-fit: cover;
             border: 2px solid var(--border);
             flex-shrink: 0;
+            cursor: pointer;
         }
-        .chat-info { flex: 1; min-width: 0; }
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
         .chat-name {
             font-weight: bold;
             color: var(--green);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: color 0.2s ease;
+        }
+        .chat-name:hover {
+            color: #9effaa;
+            text-decoration: underline;
         }
         .chat-preview {
             font-size: 13px;
@@ -247,7 +261,6 @@
             font-size: 14px;
             box-shadow: 4px 4px 0 var(--border);
         }
-        /* chat view */
         .chat-view .chat-header {
             display: flex;
             align-items: center;
@@ -260,6 +273,12 @@
             font-weight: bold;
             color: var(--cream);
             font-size: 15px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .chat-view .chat-header .title:hover {
+            color: #b47aff;
+            text-decoration: underline;
         }
         .messages {
             flex: 1;
@@ -289,7 +308,16 @@
             font-size: 13px;
             margin-bottom: 6px;
         }
-        .msg-user { color: var(--green); font-weight: bold; }
+        .msg-user {
+            color: var(--green);
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .msg-user:hover {
+            color: #9effaa;
+            text-decoration: underline;
+        }
         .msg-time { color: #8a739e; flex-shrink: 0; }
         .msg-body { color: var(--text); }
         .msg-body img {
@@ -367,6 +395,7 @@
         <header class="header">
             <div class="header-title" id="screenTitle">YzFi</div>
             <div class="header-actions">
+                <button type="button" class="small secondary" id="btnLenta" onclick="goToLenta()">📸 лента</button>
                 <button type="button" class="small secondary" id="btnProfile" onclick="goProfile()">👤 я</button>
             </div>
         </header>
@@ -480,6 +509,7 @@
         let groupIdOpen = null;
         let groupMetaOpen = null;
         let lastUploadedImage = null;
+        let isSending = false;
 
         const listMain = document.getElementById('listMain');
         const chatMain = document.getElementById('chatMain');
@@ -530,6 +560,18 @@
             window.location.href = 'profil.html'; 
         }
 
+        function goToLenta() {
+            window.location.href = 'lenta.html';
+        }
+
+        function goToUserProfile(userId) {
+            if (userId === currentUser?.uid) {
+                window.location.href = 'profil.html';
+            } else {
+                window.location.href = `users_profil.html?userId=${userId}`;
+            }
+        }
+
         // Инициализация
         async function init() {
             auth.onAuthStateChanged(async (user) => {
@@ -550,14 +592,12 @@
                     myUserData = doc.data();
                     myUsername = myUserData.username || currentUser.displayName || 'anon';
                     
-                    // Миграция для юзернейма
                     if (myUserData.username && !myUserData.usernameLower) {
                         await doc.ref.update({
                             usernameLower: myUserData.username.toLowerCase()
                         });
                     }
                     
-                    // Миграция для хэндла
                     if (myUserData.username && !myUserData.userHandle) {
                         const norm = myUserData.username.toLowerCase();
                         const wantHandle = '$' + norm;
@@ -567,6 +607,8 @@
                         });
                         await db.collection('handles').doc(norm).set({ uid: currentUser.uid }, { merge: true });
                     }
+                    
+                    myUsername = myUserData.username || currentUser.displayName || 'anon';
                 } else {
                     showError('Профиль не найден');
                 }
@@ -634,6 +676,25 @@
                     ${unread ? `<div class="badge-unread">${chat.unreadCount}</div>` : ''}
                 </div>
             `;
+            
+            // Добавляем переход на профиль для DM чатов
+            const avatarImg = el.querySelector('.avatar');
+            const chatInfo = el.querySelector('.chat-info');
+            
+            if (!isGroup && chat.userId) {
+                avatarImg.style.cursor = 'pointer';
+                chatInfo.style.cursor = 'pointer';
+                
+                avatarImg.onclick = (e) => {
+                    e.stopPropagation();
+                    goToUserProfile(chat.userId);
+                };
+                
+                chatInfo.onclick = (e) => {
+                    e.stopPropagation();
+                    goToUserProfile(chat.userId);
+                };
+            }
             
             el.onclick = () => {
                 if (chat.type === 'group') {
@@ -714,7 +775,6 @@
                     return;
                 }
                 
-                // Поиск по имени
                 let snap = await db.collection('users')
                     .where('usernameLower', '>=', raw.toLowerCase())
                     .where('usernameLower', '<=', raw.toLowerCase() + '\uf8ff')
@@ -768,6 +828,23 @@
                 </div>
                 <button type="button" class="small" style="background: var(--green);">💬 написать</button>
             `;
+            
+            const avatarImg = row.querySelector('.avatar');
+            const chatInfo = row.querySelector('.chat-info');
+            
+            avatarImg.style.cursor = 'pointer';
+            chatInfo.style.cursor = 'pointer';
+            
+            avatarImg.onclick = (e) => {
+                e.stopPropagation();
+                goToUserProfile(userId);
+            };
+            
+            chatInfo.onclick = (e) => {
+                e.stopPropagation();
+                goToUserProfile(userId);
+            };
+            
             const btn = row.querySelector('button');
             btn.onclick = (e) => {
                 e.stopPropagation();
@@ -784,12 +861,11 @@
             
             const username = peerProfile.username || 'Пользователь';
             const peerAvatar = peerProfile.avatar || '';
-            const userHandle = peerProfile.userHandle || '';
+            const userHandle = peerProfile.userHandle || ('$' + (peerProfile.usernameLower || username.toLowerCase()));
             
             const ts = firebase.firestore.FieldValue.serverTimestamp();
             
             try {
-                // Получаем свой аватар
                 let myAvatar = '';
                 if (myUserData && myUserData.avatar) {
                     myAvatar = myUserData.avatar;
@@ -798,7 +874,6 @@
                     myAvatar = myDoc.data()?.avatar || '';
                 }
                 
-                // Данные для моего чата
                 const myChatData = {
                     type: 'dm',
                     userId: peerId,
@@ -812,13 +887,12 @@
                     updatedAt: ts
                 };
                 
-                // Данные для чата собеседника
                 const peerChatData = {
                     type: 'dm',
                     userId: currentUser.uid,
-                    username: myUsername,
+                    username: myUserData?.username || myUsername,
                     peerAvatar: myAvatar,
-                    userHandle: myUserData?.userHandle || ('$' + myUsername.toLowerCase()),
+                    userHandle: myUserData?.userHandle || ('$' + (myUserData?.usernameLower || myUsername.toLowerCase())),
                     lastMessage: '',
                     lastMessageTime: ts,
                     unreadCount: 0,
@@ -826,7 +900,6 @@
                     updatedAt: ts
                 };
                 
-                // Сохраняем оба чата
                 await db.collection('users').doc(currentUser.uid).collection('chats').doc(peerId).set(myChatData);
                 await db.collection('users').doc(peerId).collection('chats').doc(currentUser.uid).set(peerChatData);
                 
@@ -847,6 +920,13 @@
             groupMetaOpen = null;
             chatTitle.textContent = userData.username || 'Чат';
             chatExtra.textContent = userData.userHandle || '';
+            
+            // Добавляем возможность перехода на профиль по клику на имя в чате
+            chatTitle.style.cursor = 'pointer';
+            chatTitle.onclick = () => {
+                goToUserProfile(userId);
+            };
+            
             showChatShell();
             clearUnreadDM(userId);
             subscribeMessagesDM(userId);
@@ -893,6 +973,8 @@
             dmPeerProfile = null;
             chatTitle.textContent = meta.name || 'Группа';
             chatExtra.textContent = meta.inviteCode ? ('код: ' + meta.inviteCode) : '';
+            chatTitle.style.cursor = 'default';
+            chatTitle.onclick = null;
             showChatShell();
             clearUnreadGroup(gid);
             subscribeMessagesGroup(gid);
@@ -931,17 +1013,35 @@
             div.className = 'msg';
             const ts = message.timestamp && message.timestamp.toDate ? message.timestamp.toDate() : new Date();
             const uname = escapeHtml(message.username || 'anon');
+            const userId = message.userId;
+            
             let body = escapeHtml(message.text || '');
             if (message.imageUrl) {
                 body += '<br><img src="' + escapeHtml(message.imageUrl) + '" alt="📷 фото" loading="lazy" style="max-width:100%;border-radius:4px;">';
             }
+            
             div.innerHTML = `
                 <div class="msg-head">
-                    <span class="msg-user">${uname}</span>
+                    <span class="msg-user" data-user-id="${userId || ''}">${uname}</span>
                     <span class="msg-time">${formatTime(ts)}</span>
                 </div>
                 <div class="msg-body">${body || '<i>📎 Вложение</i>'}</div>
             `;
+            
+            // Добавляем возможность перехода на профиль по клику на имя пользователя в сообщении
+            const msgUserSpan = div.querySelector('.msg-user');
+            if (msgUserSpan && userId && userId !== currentUser.uid) {
+                msgUserSpan.style.cursor = 'pointer';
+                msgUserSpan.onclick = () => {
+                    goToUserProfile(userId);
+                };
+            } else if (msgUserSpan && userId === currentUser.uid) {
+                msgUserSpan.style.cursor = 'pointer';
+                msgUserSpan.onclick = () => {
+                    goToUserProfile(userId);
+                };
+            }
+            
             messagesEl.appendChild(div);
         }
 
@@ -950,7 +1050,6 @@
             chatMain.classList.remove('hidden');
             screenTitle.textContent = 'YzFi · 💬';
             messageInput.value = '';
-            lastUploadedImage = null;
             setTimeout(() => messageInput.focus(), 200);
         }
 
@@ -966,6 +1065,7 @@
             listMain.classList.remove('hidden');
             screenTitle.textContent = 'YzFi';
             messagesEl.innerHTML = '';
+            lastUploadedImage = null;
         }
 
         messageInput.addEventListener('keydown', (e) => {
@@ -976,23 +1076,32 @@
         });
 
         async function sendNow() {
+            if (isSending) return;
+            
             const text = messageInput.value.trim();
             if (!text && !lastUploadedImage) return;
 
+            isSending = true;
+            const imageToSend = lastUploadedImage;
+            const textToSend = text;
+            messageInput.value = '';
+            lastUploadedImage = null;
+
             const ts = firebase.firestore.FieldValue.serverTimestamp();
+            const currentUsername = myUserData?.username || myUsername || currentUser.displayName || 'anon';
+            
             const payload = {
                 userId: currentUser.uid,
-                username: myUsername,
-                text: text || '',
+                username: currentUsername,
+                text: textToSend || '',
                 timestamp: ts
             };
             
-            if (lastUploadedImage) {
-                payload.imageUrl = lastUploadedImage;
-                lastUploadedImage = null;
+            if (imageToSend) {
+                payload.imageUrl = imageToSend;
             }
 
-            const preview = text || '📷 Фото';
+            const preview = textToSend || (imageToSend ? '📷 Фото' : '');
 
             try {
                 if (chatMode === 'dm') {
@@ -1016,12 +1125,19 @@
                     await updateGroupPreviews(groupIdOpen, preview);
                 }
                 
-                messageInput.value = '';
                 scrollBottom();
                 
             } catch (e) {
                 console.error('Ошибка отправки:', e);
                 showError('Не удалось отправить: ' + e.message);
+                if (textToSend) {
+                    messageInput.value = textToSend;
+                }
+                if (imageToSend) {
+                    lastUploadedImage = imageToSend;
+                }
+            } finally {
+                isSending = false;
             }
         }
 
@@ -1060,10 +1176,17 @@
             document.getElementById('imageInput').click();
         }
 
+        let isUploading = false;
+
         document.getElementById('imageInput').addEventListener('change', async function () {
             const file = this.files && this.files[0];
             this.value = '';
             if (!file) return;
+            
+            if (isUploading) {
+                showError('Подождите, предыдущее фото загружается');
+                return;
+            }
             
             if (file.size > 5 * 1024 * 1024) {
                 showError('Файл больше 5 МБ');
@@ -1075,6 +1198,7 @@
                 return;
             }
             
+            isUploading = true;
             showSuccess('Загрузка фото...');
             
             const fd = new FormData();
@@ -1095,6 +1219,8 @@
             } catch (e) {
                 console.error('Ошибка загрузки фото:', e);
                 showError('Не удалось загрузить фото');
+            } finally {
+                isUploading = false;
             }
         });
 
@@ -1161,7 +1287,6 @@
             const ts = firebase.firestore.FieldValue.serverTimestamp();
             
             try {
-                // Проверка уникальности кода
                 const existing = await db.collection('groups')
                     .where('inviteCodeNorm', '==', norm)
                     .limit(1)
@@ -1175,7 +1300,6 @@
                 const groupRef = db.collection('groups').doc();
                 const gid = groupRef.id;
                 
-                // Создаем группу
                 await groupRef.set({
                     name: name,
                     inviteCode: inviteCode,
@@ -1186,7 +1310,6 @@
                     updatedAt: ts
                 });
                 
-                // Добавляем чат для создателя
                 await db.collection('users').doc(currentUser.uid).collection('chats').doc(gid).set({
                     type: 'group',
                     groupId: gid,
@@ -1240,7 +1363,6 @@
                 const gid = groupDoc.id;
                 const groupData = groupDoc.data();
                 
-                // Проверяем, не в группе ли уже
                 const isMember = groupData.memberIds && groupData.memberIds.includes(currentUser.uid);
                 
                 if (!isMember) {
@@ -1283,6 +1405,8 @@
 
         // Экспорт глобальных функций
         window.goProfile = goProfile;
+        window.goToLenta = goToLenta;
+        window.goToUserProfile = goToUserProfile;
         window.runUserSearch = runUserSearch;
         window.openCreateGroupModal = openCreateGroupModal;
         window.openJoinModal = openJoinModal;
@@ -1293,7 +1417,6 @@
         window.sendNow = sendNow;
         window.pickImage = pickImage;
 
-        // Запуск
         window.onload = init;
     </script>
 </body>

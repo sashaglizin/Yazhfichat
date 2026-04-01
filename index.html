@@ -296,12 +296,12 @@
             el.type = el.type === 'password' ? 'text' : 'password';
         }
 
-        function checkAuthState() {
+        async function checkAuthState() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     currentUser = user;
+                    // Выполняем миграцию и ждем ее завершения
                     await migrateUserDoc(user.uid);
-                    // Главная страница после входа — список чатов.
                     window.location.href = 'chat.html';
                 } else {
                     currentUser = null;
@@ -321,27 +321,41 @@
             if (!doc.exists) return;
             const d = doc.data();
             const patch = {};
-            if (d.username && !d.usernameLower) patch.usernameLower = String(d.username).toLowerCase();
-            if (Object.keys(patch).length) await ref.update(patch);
-            if (d.username && auth.currentUser && auth.currentUser.displayName !== d.username) {
-                try { await auth.currentUser.updateProfile({ displayName: d.username }); } catch (e) { console.warn(e); }
+            
+            if (d.username && !d.usernameLower) {
+                patch.usernameLower = String(d.username).toLowerCase();
             }
+            
+            if (Object.keys(patch).length) {
+                await ref.update(patch);
+            }
+            
+            if (d.username && auth.currentUser && auth.currentUser.displayName !== d.username) {
+                try { 
+                    await auth.currentUser.updateProfile({ displayName: d.username }); 
+                } catch (e) { 
+                    console.warn(e); 
+                }
+            }
+            
             if (d.username) {
                 const tl = String(d.username).toLowerCase();
                 try {
                     const uref = db.collection('usernames').doc(tl);
                     const us = await uref.get();
                     if (!us.exists) await uref.set({ uid });
-                } catch (e) { console.warn('usernames migrate', e); }
+                } catch (e) { 
+                    console.warn('usernames migrate', e); 
+                }
             }
 
-            // Публичный юз: $юз по которому ищем пользователя.
-            // Если у пользователя его нет — ставим дефолт $<usernameLower>.
+            // Публичный юз: $юз по которому ищем пользователя (без хранения пароля)
             try {
                 const normFromUser =
                     (d.userHandleNorm ? String(d.userHandleNorm).toLowerCase() : '') ||
                     (d.usernameLower ? String(d.usernameLower).toLowerCase() : '') ||
                     (d.username ? String(d.username).toLowerCase() : '');
+                    
                 if (normFromUser) {
                     const want = '$' + normFromUser;
                     const needUpdate = !d.userHandle || !d.userHandleNorm || d.userHandle !== want || String(d.userHandleNorm).toLowerCase() !== normFromUser;
@@ -385,6 +399,7 @@
         async function registerUser() {
             const username = document.getElementById('usernameInput').value.trim();
             const password = document.getElementById('passwordInput').value.trim();
+            
             if (!username || !password) {
                 showError('Заполните поля');
                 return;
@@ -393,7 +408,9 @@
                 showError('Пароль от 6 символов');
                 return;
             }
+            
             const term = username.toLowerCase();
+            
             try {
                 const nameLock = await db.collection('usernames').doc(term).get();
                 if (nameLock.exists) {
@@ -403,86 +420,76 @@
             } catch (e) {
                 console.warn('Проверка usernames:', e.code || e);
             }
+            
             try {
                 const taken = await db.collection('users').where('usernameLower', '==', term).limit(1).get();
-                const takenLegacy = await db.collection('users').where('username', '==', username).limit(1).get();
-                if (!taken.empty || !takenLegacy.empty) {
+                if (!taken.empty) {
                     showError('Ник занят');
                     return;
                 }
             } catch (e) {
-                console.warn('Проверка users до входа недоступна (правила Firestore) — полагаемся на Auth:', e.code || e);
+                console.warn('Проверка users до входа недоступна — полагаемся на Auth:', e.code || e);
             }
+            
             try {
                 const cred = await auth.createUserWithEmailAndPassword(`${username}@fichat.com`, password);
                 await cred.user.updateProfile({ displayName: username });
+                
+                // Создаем документ пользователя БЕЗ хранения пароля
                 await db.collection('users').doc(cred.user.uid).set({
                     username,
                     usernameLower: term,
                     userHandle: '$' + term,
                     userHandleNorm: term,
-                    password,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=128`
                 });
+                
                 try {
                     await db.collection('usernames').doc(term).set({ uid: cred.user.uid });
                 } catch (e2) {
                     console.warn('Запись usernames (обновите правила в Firebase):', e2.code || e2);
                 }
+                
                 try {
                     await db.collection('handles').doc(term).set({ uid: cred.user.uid });
                 } catch (e2) {
                     console.warn('Запись handles (обновите правила в Firebase):', e2.code || e2);
                 }
+                
                 showSuccess('Готово — YzFi ждёт');
                 showDashboard();
             } catch (e) {
                 console.error(e);
-                if (e.code === 'auth/email-already-in-use') showError('Аккаунт с этим ником уже есть — войди');
-                else if (e.code === 'permission-denied') showError('Нет доступа к базе — проверьте правила Firestore в консоли');
-                else showError('Регистрация: ' + (e.message || e));
+                if (e.code === 'auth/email-already-in-use') {
+                    showError('Аккаунт с этим ником уже есть — войди');
+                } else if (e.code === 'permission-denied') {
+                    showError('Нет доступа к базе — проверьте правила Firestore в консоли');
+                } else {
+                    showError('Регистрация: ' + (e.message || e));
+                }
             }
         }
 
         async function loginUser() {
             const username = document.getElementById('loginUsernameInput').value.trim();
             const password = document.getElementById('loginPasswordInput').value.trim();
+            
             if (!username || !password) {
                 showError('Ник и пароль');
                 return;
             }
+            
             try {
                 await auth.signInWithEmailAndPassword(`${username}@fichat.com`, password);
                 showSuccess('С возвращением');
+                // Редирект произойдет в onAuthStateChanged
             } catch (e) {
                 if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
-                    try {
-                        await legacyLogin(username, password);
-                    } catch (e2) {
-                        showError('Неверный логин или пароль');
-                    }
-                } else showError('Вход: ' + (e.message || e));
-            }
-        }
-
-        async function legacyLogin(username, password) {
-            const snap = await db.collection('users').where('username', '==', username).limit(1).get();
-            if (snap.empty) throw new Error('no user');
-            const data = snap.docs[0].data();
-            if (data.password !== password) throw new Error('bad pass');
-            try {
-                await auth.signInWithEmailAndPassword(`${username}@fichat.com`, password);
-            } catch (e) {
-                if (e.code === 'auth/user-not-found') {
-                    const cred = await auth.createUserWithEmailAndPassword(`${username}@fichat.com`, password);
-                    const uid = cred.user.uid;
-                    const existingUid = snap.docs[0].id;
-                    if (uid !== existingUid) {
-                        console.warn('Auth UID mismatch with Firestore doc — используйте тот же способ регистрации');
-                    }
-                    await cred.user.updateProfile({ displayName: username });
-                } else throw e;
+                    showError('Неверный логин или пароль');
+                } else {
+                    showError('Вход: ' + (e.message || e));
+                }
             }
         }
 
@@ -516,9 +523,13 @@
                 el.textContent = '';
                 return;
             }
-            if (Notification.permission === 'granted') el.textContent = '✅ уведомления ок';
-            else if (Notification.permission === 'denied') el.textContent = '⛔ заблокированы';
-            else el.textContent = 'можно включить кнопкой выше';
+            if (Notification.permission === 'granted') {
+                el.textContent = '✅ уведомления ок';
+            } else if (Notification.permission === 'denied') {
+                el.textContent = '⛔ заблокированы';
+            } else {
+                el.textContent = 'можно включить кнопкой выше';
+            }
             el.style.color = Notification.permission === 'granted' ? 'var(--green)' : 'var(--cream)';
         }
 
@@ -540,8 +551,13 @@
             setTimeout(() => n.remove(), 2200);
         }
 
-        function goToChats() { window.location.href = 'chat.html'; }
-        function goToProfile() { window.location.href = 'profil.html'; }
+        function goToChats() { 
+            window.location.href = 'chat.html'; 
+        }
+        
+        function goToProfile() { 
+            window.location.href = 'profil.html'; 
+        }
 
         window.showLoginForm = showLoginForm;
         window.showRegisterForm = showRegisterForm;

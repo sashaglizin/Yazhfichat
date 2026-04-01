@@ -330,7 +330,6 @@
     </div>
 
     <script>
-        // Firebase конфигурация
         const firebaseConfig = {
             apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
             authDomain: "hlypalka.firebaseapp.com",
@@ -341,15 +340,12 @@
             measurementId: "G-T5N77WGWYP"
         };
 
-        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Ключ API для imgBB
         const IMGBB_API_KEY = '532c1a46efe25420841b8296f7eeed3f';
 
-        // DOM элементы
         const profileScreen = document.getElementById('profileScreen');
         const loadingScreen = document.getElementById('loadingScreen');
         const avatarImage = document.getElementById('avatarImage');
@@ -363,11 +359,10 @@
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
 
-        // Текущий пользователь
         let currentUser = null;
         let userProfile = null;
+        let isUploadingAvatar = false;
 
-        // Функции для блокировки кнопок
         function setButtonLoading(buttonId, isLoading, originalText) {
             const btn = document.getElementById(buttonId);
             if (!btn) return;
@@ -398,12 +393,10 @@
             }, 4000);
         }
 
-        // Инициализация
         function init() {
             checkAuthState();
         }
 
-        // Проверка состояния аутентификации
         function checkAuthState() {
             auth.onAuthStateChanged((user) => {
                 if (user) {
@@ -415,7 +408,6 @@
             });
         }
 
-        // Загрузка профиля пользователя
         async function loadUserProfile(uid) {
             try {
                 const userDoc = await db.collection('users').doc(uid).get();
@@ -423,7 +415,6 @@
                 if (userDoc.exists) {
                     userProfile = userDoc.data();
                     
-                    // Миграция данных
                     const updates = {};
                     if (userProfile.username && !userProfile.usernameLower) {
                         updates.usernameLower = userProfile.username.toLowerCase();
@@ -432,7 +423,6 @@
                         const norm = userProfile.username.toLowerCase();
                         updates.userHandle = '$' + norm;
                         updates.userHandleNorm = norm;
-                        // Создаем запись в handles
                         await db.collection('handles').doc(norm).set({ uid: currentUser.uid }, { merge: true });
                     }
                     if (Object.keys(updates).length > 0) {
@@ -455,23 +445,18 @@
             }
         }
 
-        // Отображение профиля
         function displayProfile(profile) {
-            // Аватар
             const avatarUrl = profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username)}&background=5c3d8c&color=f5e6ff&size=150&bold=true`;
             avatarImage.src = avatarUrl;
             
-            // Имя и handle
             userName.textContent = profile.username || 'Пользователь';
             const handleText = profile.userHandle || ('$' + (profile.usernameLower || profile.username?.toLowerCase() || 'user'));
             userHandle.textContent = handleText;
             userEmail.textContent = currentUser.email || 'email@example.com';
             
-            // Поля формы
             usernameInput.value = profile.username || '';
             handleInput.value = profile.userHandle || ('$' + (profile.usernameLower || ''));
             
-            // Статистика
             if (profile.createdAt) {
                 const date = profile.createdAt.toDate ? profile.createdAt.toDate() : new Date(profile.createdAt);
                 joinDate.textContent = date.toLocaleDateString('ru-RU', {
@@ -486,27 +471,30 @@
             userId.textContent = currentUser.uid.substring(0, 8) + '...' + currentUser.uid.substring(currentUser.uid.length - 4);
         }
 
-        // Загрузка аватара
         async function uploadAvatar() {
             const fileInput = document.getElementById('avatarInput');
             const file = fileInput.files[0];
             
             if (!file) return;
             
-            // Проверка размера файла
+            if (isUploadingAvatar) {
+                showError('Подождите, аватар уже загружается');
+                return;
+            }
+            
             if (file.size > 5 * 1024 * 1024) {
                 showError('Размер изображения не должен превышать 5MB');
                 fileInput.value = '';
                 return;
             }
             
-            // Проверка типа файла
             if (!file.type.startsWith('image/')) {
                 showError('Пожалуйста, выберите изображение');
                 fileInput.value = '';
                 return;
             }
             
+            isUploadingAvatar = true;
             showSuccess('⏳ Загрузка аватара...');
             
             try {
@@ -521,16 +509,12 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Сохраняем URL аватара в профиль
                     await db.collection('users').doc(currentUser.uid).update({
                         avatar: data.data.url,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
-                    // Обновляем аватар на странице
                     avatarImage.src = data.data.url;
-                    
-                    // Обновляем локальный профиль
                     userProfile.avatar = data.data.url;
                     
                     showSuccess('Аватар успешно обновлен! 🎉');
@@ -542,11 +526,11 @@
                 console.error('Ошибка загрузки аватара:', error);
                 showError('Ошибка загрузки аватара: ' + error.message);
             } finally {
+                isUploadingAvatar = false;
                 fileInput.value = '';
             }
         }
 
-        // Обновление имени пользователя
         async function updateUsername() {
             const newUsername = usernameInput.value.trim();
             
@@ -570,7 +554,6 @@
             try {
                 const newLower = newUsername.toLowerCase();
                 
-                // Проверка уникальности имени
                 const existingUser = await db.collection('users')
                     .where('usernameLower', '==', newLower)
                     .limit(1)
@@ -583,14 +566,12 @@
                 
                 const userRef = db.collection('users').doc(currentUser.uid);
                 
-                // Обновляем имя
                 await userRef.update({
                     username: newUsername,
                     usernameLower: newLower,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Обновляем usernames коллекцию
                 const oldLower = (userProfile.username || '').toLowerCase();
                 if (oldLower && oldLower !== newLower) {
                     const oldRef = db.collection('usernames').doc(oldLower);
@@ -601,10 +582,8 @@
                 }
                 await db.collection('usernames').doc(newLower).set({ uid: currentUser.uid });
                 
-                // Обновляем displayName в Auth
                 await currentUser.updateProfile({ displayName: newUsername });
                 
-                // Обновляем локальные данные
                 userProfile.username = newUsername;
                 userProfile.usernameLower = newLower;
                 userName.textContent = newUsername;
@@ -619,7 +598,6 @@
             }
         }
 
-        // Обновление публичного юза ($юз)
         async function updateHandle() {
             const raw = (handleInput.value || '').trim();
 
@@ -644,7 +622,6 @@
             setButtonLoading('updateHandleBtn', true, '🏷️ Изменить юз');
 
             try {
-                // Проверяем уникальность юза
                 const newHandleDoc = await db.collection('handles').doc(norm).get();
                 if (newHandleDoc.exists && newHandleDoc.data().uid !== currentUser.uid) {
                     showError('Этот юз уже занят');
@@ -653,14 +630,12 @@
 
                 const userRef = db.collection('users').doc(currentUser.uid);
                 
-                // Обновляем профиль
                 await userRef.update({
                     userHandle: raw,
                     userHandleNorm: norm,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Удаляем старую запись
                 if (oldNorm && oldNorm !== norm) {
                     const oldHandleDoc = await db.collection('handles').doc(oldNorm).get();
                     if (oldHandleDoc.exists && oldHandleDoc.data().uid === currentUser.uid) {
@@ -668,10 +643,8 @@
                     }
                 }
 
-                // Создаем новую запись
                 await db.collection('handles').doc(norm).set({ uid: currentUser.uid });
 
-                // Обновляем локальные данные
                 userProfile.userHandle = raw;
                 userProfile.userHandleNorm = norm;
                 userHandle.textContent = raw;
@@ -686,7 +659,6 @@
             }
         }
 
-        // Обновление пароля
         async function updatePassword() {
             const currentPass = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
@@ -710,24 +682,16 @@
             setButtonLoading('updatePassBtn', true, '🔒 Изменить пароль');
             
             try {
-                // Реаутентификация пользователя
                 const credential = firebase.auth.EmailAuthProvider.credential(
                     currentUser.email,
                     currentPass
                 );
                 
                 await currentUser.reauthenticateWithCredential(credential);
-                
-                // Обновление пароля
                 await currentUser.updatePassword(newPass);
                 
-                // Обновляем пароль в Firestore (для legacy логина)
-                await db.collection('users').doc(currentUser.uid).update({
-                    password: newPass,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                // НЕ сохраняем пароль в Firestore!
                 
-                // Очищаем поля паролей
                 document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
@@ -751,7 +715,6 @@
             }
         }
 
-        // Выход из аккаунта
         async function logout() {
             if (confirm('Вы уверены, что хотите выйти?')) {
                 setButtonLoading('logoutBtn', true, '🚪 Выход...');
@@ -766,7 +729,6 @@
             }
         }
 
-        // Вспомогательные функции
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
@@ -780,10 +742,8 @@
             window.location.href = 'chat.html';
         }
 
-        // Обработчик загрузки аватара
         document.getElementById('avatarInput').addEventListener('change', uploadAvatar);
 
-        // Экспорт глобальных функций
         window.updateUsername = updateUsername;
         window.updateHandle = updateHandle;
         window.updatePassword = updatePassword;
@@ -791,7 +751,6 @@
         window.togglePassword = togglePassword;
         window.goToChat = goToChat;
 
-        // Инициализация
         window.onload = init;
     </script>
 </body>
