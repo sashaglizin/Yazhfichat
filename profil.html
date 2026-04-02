@@ -93,9 +93,53 @@
         .user-name { font-size: 1.35rem; font-weight: bold; color: #7fdb8a; margin-bottom: 5px; }
         .user-handle { color: #b47aff; font-size: 0.85rem; font-family: monospace; margin-bottom: 5px; }
         .user-email { color: #b9a0d4; font-size: 0.9rem; }
+        
+        /* Блок описания */
+        .bio-section {
+            background: #12081f;
+            border: 2px dashed #4a2f7a;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 16px 0;
+            text-align: left;
+        }
+        .bio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #b9a0d4;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .bio-text {
+            color: #e8d5f2;
+            font-size: 14px;
+            line-height: 1.4;
+            word-break: break-word;
+            white-space: pre-wrap;
+            padding: 4px 0;
+        }
+        .bio-text.empty {
+            color: #8a739e;
+            font-style: italic;
+        }
+        .bio-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .bio-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 0;
+            width: auto;
+        }
+        
         .input-group { margin-bottom: 18px; }
         .input-group label { display: block; margin-bottom: 6px; font-weight: bold; color: #f5e6ff; }
-        input[type="text"], input[type="password"], input[type="email"] {
+        input[type="text"], input[type="password"], input[type="email"], textarea {
             background: #f5e6ff;
             border: 2px solid #110822;
             padding: 12px 14px;
@@ -104,6 +148,11 @@
             border-radius: 4px;
             margin-bottom: 10px;
             color: #1a0f2e;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
         }
         input:disabled {
             opacity: 0.6;
@@ -155,6 +204,7 @@
         .btn-primary { background: #5c9e6a; color: #102018; }
         .btn-secondary { background: #4a3d7a; color: #f5e6ff; }
         .btn-danger { background: #a33; color: #fff; }
+        .btn-small { background: #3d2666; color: #f5e6ff; padding: 6px 12px; font-size: 12px; margin: 0; width: auto; }
         .hidden { display: none !important; }
         .loading {
             text-align: center;
@@ -236,6 +286,49 @@
             border-color: #4a2f7a;
             margin: 15px 0;
         }
+        /* Модальное окно для редактирования описания */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-shadow: 6px 6px 0 #110822;
+        }
+        .modal h3 {
+            color: #f5e6ff;
+            margin-bottom: 16px;
+        }
+        .modal textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #110822;
+            border-radius: 4px;
+            background: #f5e6ff;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 12px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .modal-actions button {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -262,6 +355,15 @@
                     <div id="userHandle" class="user-handle"></div>
                     <div id="userEmail" class="user-email"></div>
                 </div>
+            </div>
+
+            <!-- Блок описания (био) -->
+            <div class="bio-section" id="bioSection">
+                <div class="bio-header">
+                    <span>📝 О себе</span>
+                    <button class="btn-small" id="editBioBtn" onclick="openBioModal()">✏️ редактировать</button>
+                </div>
+                <div id="bioText" class="bio-text empty">Напишите пару слов о себе...</div>
             </div>
 
             <div id="errorMessage" class="error hidden"></div>
@@ -329,6 +431,21 @@
         </div>
     </div>
 
+    <!-- Модальное окно для редактирования описания -->
+    <div id="bioModal" class="modal-overlay hidden" onclick="if(event.target===this) closeBioModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>✏️ Редактировать описание</h3>
+            <textarea id="bioTextarea" rows="4" maxlength="300" placeholder="Расскажите о себе... (до 300 символов)"></textarea>
+            <div class="modal-actions">
+                <button onclick="saveBio()" id="saveBioBtn">💾 Сохранить</button>
+                <button class="secondary" onclick="closeBioModal()">Отмена</button>
+            </div>
+            <div style="margin-top: 12px;">
+                <button class="btn-danger" style="width: 100%; background: #a33;" onclick="deleteBio()">🗑️ Удалить описание</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
@@ -358,6 +475,8 @@
         const userId = document.getElementById('userId');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
+        const bioTextSpan = document.getElementById('bioText');
+        const bioTextarea = document.getElementById('bioTextarea');
 
         let currentUser = null;
         let userProfile = null;
@@ -391,6 +510,80 @@
             setTimeout(() => {
                 successMessage.classList.add('hidden');
             }, 4000);
+        }
+
+        // ========== Управление описанием (bio) ==========
+        function displayBio(bio) {
+            if (bio && bio.trim()) {
+                bioTextSpan.textContent = bio;
+                bioTextSpan.classList.remove('empty');
+            } else {
+                bioTextSpan.textContent = 'Напишите пару слов о себе...';
+                bioTextSpan.classList.add('empty');
+            }
+        }
+
+        function openBioModal() {
+            if (!userProfile) return;
+            const currentBio = userProfile.bio || '';
+            bioTextarea.value = currentBio;
+            document.getElementById('bioModal').classList.remove('hidden');
+        }
+
+        function closeBioModal() {
+            document.getElementById('bioModal').classList.add('hidden');
+        }
+
+        async function saveBio() {
+            if (!currentUser) return;
+            const newBio = bioTextarea.value.trim();
+            if (newBio.length > 300) {
+                showError('Описание не может быть длиннее 300 символов');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveBioBtn');
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Сохранение...';
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update({
+                    bio: newBio || '',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                userProfile.bio = newBio || '';
+                displayBio(userProfile.bio);
+                showSuccess('Описание обновлено!');
+                closeBioModal();
+            } catch (error) {
+                console.error('Ошибка сохранения описания:', error);
+                showError('Не удалось сохранить описание: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+
+        async function deleteBio() {
+            if (!currentUser) return;
+            if (!confirm('Удалить описание?')) return;
+            
+            try {
+                await db.collection('users').doc(currentUser.uid).update({
+                    bio: '',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                userProfile.bio = '';
+                displayBio('');
+                showSuccess('Описание удалено');
+                closeBioModal();
+            } catch (error) {
+                console.error('Ошибка удаления описания:', error);
+                showError('Не удалось удалить описание');
+            }
         }
 
         function init() {
@@ -456,6 +649,9 @@
             
             usernameInput.value = profile.username || '';
             handleInput.value = profile.userHandle || ('$' + (profile.usernameLower || ''));
+            
+            // Отображаем описание
+            displayBio(profile.bio || '');
             
             if (profile.createdAt) {
                 const date = profile.createdAt.toDate ? profile.createdAt.toDate() : new Date(profile.createdAt);
@@ -690,8 +886,6 @@
                 await currentUser.reauthenticateWithCredential(credential);
                 await currentUser.updatePassword(newPass);
                 
-                // НЕ сохраняем пароль в Firestore!
-                
                 document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
@@ -750,6 +944,10 @@
         window.logout = logout;
         window.togglePassword = togglePassword;
         window.goToChat = goToChat;
+        window.openBioModal = openBioModal;
+        window.closeBioModal = closeBioModal;
+        window.saveBio = saveBio;
+        window.deleteBio = deleteBio;
 
         window.onload = init;
     </script>
