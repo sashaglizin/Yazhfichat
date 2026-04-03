@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2d1b4e">
+    <title>YzFi — Магазин</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="premium.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Courier New', 'MS Sans Serif', Tahoma, Arial, monospace;
+            background: #1a0f2e;
+            color: #e8d5f2;
+            font-size: 14px;
+            line-height: 1.4;
+            min-height: 100dvh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 12px 20px;
+        }
+
+        .header {
+            background: #2d1b4e;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 2px solid #110822;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e8d5f2;
+            text-shadow: 1px 1px 0 #110822;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        button, .btn {
+            font-family: inherit;
+            background: #3d2666;
+            border: 2px solid #110822;
+            padding: 8px 14px;
+            border-radius: 0;
+            font-weight: bold;
+            font-size: 13px;
+            color: #e8d5f2;
+            cursor: pointer;
+            transition: all 0.05s linear;
+            box-shadow: 2px 2px 0 #110822;
+        }
+
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 #110822;
+        }
+
+        .btn-gold {
+            background: #6b4ca0;
+            color: #e8d5f2;
+        }
+
+        .btn-secondary {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+        }
+
+        .balance-card {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 0 #110822;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #b47aff;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .balance-label {
+            font-size: 0.7rem;
+            color: #8a739e;
+            letter-spacing: 1px;
+        }
+
+        .premium-badge {
+            display: inline-block;
+            background: #b47aff;
+            color: #1a0f2e;
+            padding: 2px 8px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            margin-left: 8px;
+            border: 1px solid #110822;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 20px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #b47aff;
+            padding-left: 10px;
+        }
+
+        .section-title span {
+            font-size: 1.1rem;
+        }
+
+        .products-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .product-card {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.05s linear;
+            box-shadow: 2px 2px 0 #110822;
+        }
+
+        .product-card:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 #110822;
+        }
+
+        .product-icon {
+            font-size: 2rem;
+            min-width: 48px;
+            text-align: center;
+        }
+
+        .product-icon img {
+            width: 32px;
+            height: 32px;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: pixelated;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-title {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #b47aff;
+            margin-bottom: 4px;
+        }
+
+        .product-desc {
+            font-size: 0.65rem;
+            color: #8a739e;
+        }
+
+        .product-price {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #b47aff;
+        }
+
+        .buy-btn, .gift-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .gift-card {
+            background: #251840;
+        }
+
+        .premium-card {
+            background: #35235a;
+        }
+
+        .premium-features {
+            background: #1a0f2e;
+            border: 2px solid #110822;
+            padding: 12px;
+            margin-top: 20px;
+        }
+
+        .premium-features h4 {
+            color: #b47aff;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 6px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: #b9a0d4;
+            padding: 4px 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            width: 100%;
+            max-width: 360px;
+            padding: 16px;
+            box-shadow: 4px 4px 0 #110822;
+        }
+
+        .modal h3 {
+            color: #b47aff;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 8px 10px;
+            background: #1a0f2e;
+            border: 2px solid #110822;
+            color: #e8d5f2;
+            margin-bottom: 12px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            left: 12px;
+            right: 12px;
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            color: #e8d5f2;
+            padding: 10px;
+            text-align: center;
+            z-index: 1100;
+            font-size: 13px;
+            box-shadow: 3px 3px 0 #110822;
+        }
+
+        .toast.error {
+            background: #5a1a1a;
+            color: #ffcccc;
+        }
+
+        .hidden { display: none !important; }
+        .loading { text-align: center; padding: 40px; color: #8a739e; }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #b47aff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪙 YzFi Маркет</h1>
+            <div class="header-buttons">
+                <button class="btn-secondary" onclick="перейтиВПрофиль()">👤 Профиль</button>
+                <button class="btn-secondary" onclick="перейтиВЧаты()">💬 Чаты</button>
+            </div>
+        </div>
+
+        <div class="balance-card">
+            <div class="balance-label">💰 Твой баланс</div>
+            <div class="balance-amount" id="balanceAmount">0</div>
+            <div class="balance-label">YzFiCoin (YFC)</div>
+            <div id="premiumStatus" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="section-title">
+            <span>🪙</span> Пополнить YzFiCoin
+        </div>
+        <div class="products-grid" id="coinsProducts"></div>
+
+        <div class="section-title">
+            <span>🎮</span> Пиксель-подарки
+        </div>
+        <div class="products-grid" id="giftsProducts"></div>
+
+        <div class="section-title">
+            <span>👑</span> Премиум
+        </div>
+        <div class="products-grid" id="premiumProducts"></div>
+
+        <div class="section-title">
+            <span>🎁👑</span> Премиум в подарок
+        </div>
+        <div class="products-grid" id="premiumGiftProducts"></div>
+
+        <div class="premium-features">
+            <h4>👑 Что даёт Премиум:</h4>
+            <div class="feature-list">
+                <div class="feature-item">🕵️ Читать удалённые сообщения</div>
+                <div class="feature-item">👁️ Видеть кто смотрел профиль</div>
+                <div class="feature-item">🕒 Точное время последнего визита</div>
+                <div class="feature-item">📌 Закрепить до 10 постов</div>
+                <div class="feature-item">🎨 Цветной ник в чатах</div>
+                <div class="feature-item">📎 Отправка файлов до 50 МБ</div>
+                <div class="feature-item">🎵 Эксклюзивные звуки</div>
+                <div class="feature-item">✨ Премиум-значок в профиле</div>
+                <div class="feature-item">💬 Группы до 500 участников</div>
+                <div class="feature-item">🖼️ Качество без сжатия</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 16px; text-align: center; font-size: 0.6rem; color: #6a5080;">
+            💳 Тестовый режим — списание мгновенное
+        </div>
+    </div>
+
+    <div id="giftModal" class="modal-overlay hidden" onclick="if(event.target===this) закрытьМодалку()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>🎁 Отправить подарок</h3>
+            <input type="text" id="giftToUser" placeholder="Кому отправить (ник или $юз)">
+            <textarea id="giftMessage" rows="2" placeholder="Поздравление (необязательно)"></textarea>
+            <div id="premiumGiftOptions" class="hidden">
+                <select id="premiumGiftMonths">
+                    <option value="1">1 месяц</option>
+                    <option value="3">3 месяца</option>
+                    <option value="12">12 месяцев</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-gold" onclick="отправитьПодарок()">🎁 Отправить</button>
+                <button class="btn-secondary" onclick="закрытьМодалку()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let текущийПользователь = null;
+        let данныеПользователя = null;
+        let выбранныйПодарок = null;
+        let выбранныйПремиумПодарок = null;
+
+        // Настоящие пиксельные 32x32 иконки (base64 PNG)
+        const ПОЛУЧИТЬ_ПИКСЕЛЬНУЮ_ИКОНКУ = (тип) => {
+            const иконки = {
+                '🍰': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABdSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMPwHrw9psQkJZqZBegAAAABJRU5ErkJggg==',
+                '🌹': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABcSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMPwHrw9psQkJZqZBegAAAABJRU5ErkJggg==',
+                '💖': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABeSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '⭐': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABdSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '🌈': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABfSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '👑': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABdSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '💎': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABeSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '🦄': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABfSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC',
+                '🌌': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABgSURBVHgB7cwhDoAgFEDRLyQ2LmJxA9g4iMUVXCFCim+CSZ62j0mTvizAMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzDMAzD8B+8Pqb0CQlmpkF6AAAAAElFTkSuQmCC'
+            };
+            return иконки[тип] || '';
+        };
+
+        const товарыМонеты = [
+            { id: 'coins_100', монет: 100, цена: 50, название: '100 YzFiCoin', описание: 'Стартовый набор' },
+            { id: 'coins_500', монет: 500, цена: 200, название: '500 YzFiCoin', описание: 'Популярный выбор', популярный: true },
+            { id: 'coins_1000', монет: 1000, цена: 350, название: '1000 YzFiCoin', описание: 'Оптимальный' },
+            { id: 'coins_5000', монет: 5000, цена: 1500, название: '5000 YzFiCoin', описание: 'Для фанатов' }
+        ];
+
+        const товарыПодарки = [
+            { id: 'gift_cake', название: 'Пиксельный Торт', описание: 'Сладкий 8-битный торт', цена: 50, иконка: '🍰', редкость: 'обычный' },
+            { id: 'gift_rose', название: 'Пиксельная Роза', описание: '8-битная роза', цена: 30, иконка: '🌹', редкость: 'обычный' },
+            { id: 'gift_heart', название: 'Пиксельное Сердце', описание: '8-битное сердечко', цена: 40, иконка: '💖', редкость: 'обычный' },
+            { id: 'gift_star', название: 'Пиксельная Звезда', описание: '8-битная звезда', цена: 80, иконка: '⭐', редкость: 'редкий' },
+            { id: 'gift_rainbow', название: 'Пиксельная Радуга', описание: '8-битная радуга', цена: 150, иконка: '🌈', редкость: 'редкий' },
+            { id: 'gift_crown', название: 'Пиксельная Корона', описание: '8-битная корона', цена: 200, иконка: '👑', редкость: 'редкий', популярный: true },
+            { id: 'gift_diamond', название: 'Пиксельный Алмаз', описание: '8-битный алмаз', цена: 300, иконка: '💎', редкость: 'легендарный' },
+            { id: 'gift_unicorn', название: 'Пиксельный Единорог', описание: '8-битный единорог', цена: 500, иконка: '🦄', редкость: 'легендарный', популярный: true },
+            { id: 'gift_galaxy', название: 'Пиксельная Галактика', описание: '8-битная галактика', цена: 1000, иконка: '🌌', редкость: 'мифический' }
+        ];
+
+        const товарыПремиум = [
+            { id: 'premium_1m', месяцев: 1, цена: 180, название: 'Премиум 1 мес', описание: 'Доступ ко всем функциям на 30 дней' },
+            { id: 'premium_3m', месяцев: 3, цена: 499, название: 'Премиум 3 мес', описание: 'Экономия 15%', популярный: true },
+            { id: 'premium_12m', месяцев: 12, цена: 800, название: 'Премиум 12 мес', описание: 'Максимальная выгода -45%' }
+        ];
+
+        const товарыПремиумПодарки = [
+            { id: 'premium_gift_1m', месяцев: 1, цена: 200, название: 'Премиум 1 мес в подарок', описание: 'Подарите премиум на 30 дней' },
+            { id: 'premium_gift_3m', месяцев: 3, цена: 550, название: 'Премиум 3 мес в подарок', описание: 'Подарите премиум на 3 месяца', популярный: true },
+            { id: 'premium_gift_12m', месяцев: 12, цена: 900, название: 'Премиум 12 мес в подарок', описание: 'Подарите премиум на год' }
+        ];
+
+        function показатьУведомление(сообщение, ошибка = false) {
+            const уведомление = document.createElement('div');
+            уведомление.className = 'toast' + (ошибка ? ' error' : '');
+            уведомление.textContent = (ошибка ? '❌ ' : '✅ ') + сообщение;
+            document.body.appendChild(уведомление);
+            setTimeout(() => уведомление.remove(), 3000);
+        }
+
+        function перейтиВПрофиль() { window.location.href = 'profil.html'; }
+        function перейтиВЧаты() { window.location.href = 'chat.html'; }
+
+        async function загрузитьДанные() {
+            const документ = await db.collection('users').doc(текущийПользователь.uid).get();
+            if (документ.exists) {
+                данныеПользователя = документ.data();
+                if (данныеПользователя.yjCoins === undefined) данныеПользователя.yjCoins = 0;
+                if (!данныеПользователя.premiumUntil) данныеПользователя.premiumUntil = null;
+                обновитьИнтерфейс();
+            }
+        }
+
+        async function обновитьИнтерфейс() {
+            document.getElementById('balanceAmount').innerText = данныеПользователя?.yjCoins || 0;
+            
+            const датаОкончания = данныеПользователя?.premiumUntil?.toDate ? данныеПользователя.premiumUntil.toDate() : null;
+            const статусПремиум = document.getElementById('premiumStatus');
+            
+            if (датаОкончания && датаОкончания > new Date()) {
+                const днейОсталось = Math.ceil((датаОкончания - new Date()) / (1000 * 60 * 60 * 24));
+                статусПремиум.innerHTML = `
+                    <span class="premium-badge">👑 ПРЕМИУМ</span>
+                    <span style="font-size: 0.65rem; margin-left: 6px;">осталось ${днейОсталось} дн.</span>
+                `;
+            } else {
+                статусПремиум.innerHTML = `<span style="font-size: 0.65rem;">✨ Нет премиума</span>`;
+            }
+        }
+
+        async function купитьМонеты(товар) {
+            if (!текущийПользователь) return;
+            const подтверждение = window.confirm(`💎 Покупка ${товар.название}\n💰 Стоимость: ${товар.цена} ₽\n🎁 Вы получите: ${товар.монет} YzFiCoin`);
+            if (!подтверждение) return;
+            try {
+                await db.collection('users').doc(текущийПользователь.uid).update({ yjCoins: firebase.firestore.FieldValue.increment(товар.монет) });
+                await db.collection('users').doc(текущийПользователь.uid).collection('транзакции').add({
+                    тип: 'покупка_монет', товарId: товар.id, монет: товар.монет, цена: товар.цена, валюта: 'RUB', дата: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                данныеПользователя.yjCoins += товар.монет;
+                обновитьИнтерфейс();
+                показатьУведомление(`🎉 +${товар.монет} YzFiCoin! Баланс: ${данныеПользователя.yjCoins}`);
+            } catch (ошибка) { показатьУведомление('Ошибка при покупке', true); }
+        }
+
+        function открытьПодарок(подарок) {
+            выбранныйПодарок = подарок;
+            выбранныйПремиумПодарок = null;
+            document.getElementById('giftToUser').value = '';
+            document.getElementById('giftMessage').value = '';
+            document.getElementById('premiumGiftOptions').classList.add('hidden');
+            document.getElementById('giftModal').classList.remove('hidden');
+        }
+
+        function открытьПремиумПодарок(подарок) {
+            выбранныйПремиумПодарок = подарок;
+            выбранныйПодарок = null;
+            document.getElementById('giftToUser').value = '';
+            document.getElementById('giftMessage').value = '';
+            document.getElementById('premiumGiftOptions').classList.remove('hidden');
+            document.getElementById('giftModal').classList.remove('hidden');
+        }
+
+        function закрытьМодалку() {
+            document.getElementById('giftModal').classList.add('hidden');
+            выбранныйПодарок = null;
+            выбранныйПремиумПодарок = null;
+        }
+
+        async function отправитьПодарок() {
+            if (!текущийПользователь) return;
+            const кому = document.getElementById('giftToUser').value.trim();
+            const сообщение = document.getElementById('giftMessage').value.trim();
+            if (!кому) { показатьУведомление('Укажите кому отправить', true); return; }
+            
+            let получательId = null;
+            if (кому.startsWith('$')) {
+                const норм = кому.slice(1).toLowerCase();
+                const хэндлДок = await db.collection('handles').doc(норм).get();
+                if (хэндлДок.exists) получательId = хэндлДок.data().uid;
+            } else {
+                const юзеры = await db.collection('users').where('usernameLower', '==', кому.toLowerCase()).get();
+                if (!юзеры.empty) получательId = юзеры.docs[0].id;
+            }
+            if (!получательId) { показатьУведомление('Пользователь не найден', true); return; }
+            if (получательId === текущийПользователь.uid) { показатьУведомление('Нельзя отправить самому себе', true); return; }
+            
+            let цена = 0, данныеПодарка = {};
+            if (выбранныйПодарок) {
+                цена = выбранныйПодарок.цена;
+                данныеПодарка = { тип: 'пиксель', подарокId: выбранныйПодарок.id, подарокНазвание: выбранныйПодарок.название, подарокИконка: выбранныйПодарок.иконка, подарокРедкость: выбранныйПодарок.редкость };
+            } else if (выбранныйПремиумПодарок) {
+                цена = выбранныйПремиумПодарок.цена;
+                данныеПодарка = { тип: 'премиум', месяцев: выбранныйПремиумПодарок.месяцев, подарокНазвание: `Премиум на ${выбранныйПремиумПодарок.месяцев} мес`, подарокИконка: '👑' };
+            }
+            if (данныеПользователя.yjCoins < цена) { показатьУведомление(`Не хватает YzFiCoin! Нужно ${цена}`, true); return; }
+            
+            try {
+                await db.collection('users').doc(текущийПользователь.uid).update({ yjCoins: firebase.firestore.FieldValue.increment(-цена) });
+                const получательДок = await db.collection('users').doc(получательId).get();
+                const получательДанные = получательДок.data();
+                if (выбранныйПремиумПодарок) {
+                    const текущаяДата = получательДанные?.premiumUntil?.toDate ? new Date(получательДанные.premiumUntil.toDate()) : new Date();
+                    const новаяДата = new Date(текущаяДата);
+                    новаяДата.setMonth(новаяДата.getMonth() + выбранныйПремиумПодарок.месяцев);
+                    if (новаяДата < new Date()) новаяДата.setMonth(new Date().getMonth() + выбранныйПремиумПодарок.месяцев);
+                    await db.collection('users').doc(получательId).update({ premiumUntil: новаяДата, естьПремиум: true });
+                }
+                await db.collection('users').doc(получательId).collection('подарки').add({
+                    отКогоId: текущийПользователь.uid, отКогоИмя: данныеПользователя.username || текущийПользователь.displayName,
+                    ...данныеПодарка, сообщение: сообщение || '', дата: firebase.firestore.FieldValue.serverTimestamp(), прочитано: false
+                });
+                await db.collection('users').doc(текущийПользователь.uid).collection('транзакции').add({
+                    тип: выбранныйПремиумПодарок ? 'отправка_премиум_подарка' : 'отправка_подарка',
+                    ...данныеПодарка, получательId: получательId, получательИмя: получательДанные?.username || 'Пользователь', цена: цена, дата: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                данныеПользователя.yjCoins -= цена;
+                обновитьИнтерфейс();
+                показатьУведомление(`🎁 Подарок отправлен пользователю ${получательДанные?.username || получательId}!`);
+                закрытьМодалку();
+            } catch (ошибка) { показатьУведомление('Ошибка при отправке', true); }
+        }
+
+        async function купитьПремиум(товар) {
+            if (!текущийПользователь) return;
+            if ((данныеПользователя?.yjCoins || 0) < товар.цена) {
+                показатьУведомление(`❌ Не хватает YzFiCoin! Нужно ${товар.цена}`, true);
+                return;
+            }
+            if (!confirm(`👑 Активация ${товар.название}\n💰 Стоимость: ${товар.цена} YzFiCoin\n🎁 Премиум на ${товар.месяцев} мес.`)) return;
+            try {
+                await db.collection('users').doc(текущийПользователь.uid).update({ yjCoins: firebase.firestore.FieldValue.increment(-товар.цена) });
+                const текущаяДата = данныеПользователя?.premiumUntil?.toDate ? new Date(данныеПользователя.premiumUntil.toDate()) : new Date();
+                const новаяДата = new Date(текущаяДата);
+                новаяДата.setMonth(новаяДата.getMonth() + товар.месяцев);
+                if (новаяДата < new Date()) новаяДата.setMonth(new Date().getMonth() + товар.месяцев);
+                await db.collection('users').doc(текущийПользователь.uid).update({ premiumUntil: новаяДата, естьПремиум: true });
+                await db.collection('users').doc(текущийПользователь.uid).collection('транзакции').add({
+                    тип: 'покупка_премиума', товарId: товар.id, месяцев: товар.месяцев, цена: товар.цена, дата: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                данныеПользователя.yjCoins -= товар.цена;
+                данныеПользователя.premiumUntil = новаяДата;
+                обновитьИнтерфейс();
+                показатьУведомление(`👑 Премиум активирован на ${товар.месяцев} мес.!`);
+            } catch (ошибка) { показатьУведомление('Ошибка при покупке', true); }
+        }
+
+        function цветРедкости(редкость) {
+            switch(редкость) {
+                case 'обычный': return '#8a739e';
+                case 'редкий': return '#6b4ca0';
+                case 'легендарный': return '#b47aff';
+                case 'мифический': return '#d4a5ff';
+                default: return '#8a739e';
+            }
+        }
+
+        function показатьТовары() {
+            document.getElementById('coinsProducts').innerHTML = товарыМонеты.map(т => `
+                <div class="product-card">
+                    <div class="product-icon">🪙</div>
+                    <div class="product-info"><div class="product-title">${т.название} ${т.популярный ? '🔥' : ''}</div><div class="product-desc">${т.описание}</div></div>
+                    <div class="product-price">${т.цена} ₽</div>
+                    <button class="buy-btn" onclick="купитьМонеты(${JSON.stringify(т).replace(/"/g, '&quot;')})">Купить</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('giftsProducts').innerHTML = товарыПодарки.map(п => `
+                <div class="product-card gift-card">
+                    <div class="product-icon"><img src="${ПОЛУЧИТЬ_ПИКСЕЛЬНУЮ_ИКОНКУ(п.иконка)}" style="width:32px;height:32px;image-rendering:pixelated;"></div>
+                    <div class="product-info"><div class="product-title">${п.название} ${п.популярный ? '🔥' : ''}</div><div class="product-desc" style="color: ${цветРедкости(п.редкость)};">${п.описание} • ${п.редкость}</div></div>
+                    <div class="product-price">${п.цена} YFC</div>
+                    <button class="gift-btn" onclick="открытьПодарок(${JSON.stringify(п).replace(/"/g, '&quot;')})">🎁 Подарить</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('premiumProducts').innerHTML = товарыПремиум.map(т => `
+                <div class="product-card premium-card">
+                    <div class="product-icon">👑</div>
+                    <div class="product-info"><div class="product-title">${т.название} ${т.популярный ? '🔥' : ''}</div><div class="product-desc">${т.описание}</div></div>
+                    <div class="product-price">${т.цена} YFC</div>
+                    <button class="buy-btn" onclick="купитьПремиум(${JSON.stringify(т).replace(/"/g, '&quot;')})">Активировать</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('premiumGiftProducts').innerHTML = товарыПремиумПодарки.map(т => `
+                <div class="product-card premium-card">
+                    <div class="product-icon">🎁👑</div>
+                    <div class="product-info"><div class="product-title">${т.название} ${т.популярный ? '🔥' : ''}</div><div class="product-desc">${т.описание}</div></div>
+                    <div class="product-price">${т.цена} YFC</div>
+                    <button class="gift-btn" onclick="открытьПремиумПодарок(${JSON.stringify(т).replace(/"/g, '&quot;')})">🎁 Подарить</button>
+                </div>
+            `).join('');
+        }
+
+        async function init() {
+            auth.onAuthStateChanged(async (пользователь) => {
+                if (!пользователь) { window.location.href = 'index.html'; return; }
+                текущийПользователь = пользователь;
+                await загрузитьДанные();
+                показатьТовары();
+            });
+        }
+
+        window.купитьМонеты = купитьМонеты;
+        window.купитьПремиум = купитьПремиум;
+        window.открытьПодарок = открытьПодарок;
+        window.открытьПремиумПодарок = открытьПремиумПодарок;
+        window.отправитьПодарок = отправитьПодарок;
+        window.закрытьМодалку = закрытьМодалку;
+        window.перейтиВПрофиль = перейтиВПрофиль;
+        window.перейтиВЧаты = перейтиВЧаты;
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

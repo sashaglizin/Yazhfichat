@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="premium.js"></script>
     <style>
         * {
             margin: 0;
@@ -32,6 +33,7 @@
             padding: 10px;
         }
 
+        /* Хедер */
         .header {
             background: linear-gradient(180deg, #4a2f7a, #2d1b4e);
             padding: 12px;
@@ -59,6 +61,7 @@
             gap: 8px;
         }
 
+        /* Основной контент */
         .profile-screen {
             background: #2d1b4e;
             border: 2px solid #110822;
@@ -116,6 +119,7 @@
             word-break: break-word;
         }
 
+        /* Кнопки действий */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -160,6 +164,7 @@
             color: #fff;
         }
 
+        /* Статистика */
         .stats {
             background: #12081f;
             border: 2px dashed #4a2f7a;
@@ -190,6 +195,7 @@
             font-weight: bold;
         }
 
+        /* Посты пользователя */
         .user-posts {
             margin-top: 20px;
         }
@@ -249,6 +255,12 @@
             color: #8a739e;
         }
 
+        .post-preview-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .empty-posts {
             text-align: center;
             padding: 32px;
@@ -298,6 +310,7 @@
             }
         }
 
+        /* Модалка для просмотра полного поста */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -328,6 +341,12 @@
             margin: 10px 0;
         }
 
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
         hr {
             border-color: #4a2f7a;
             margin: 15px 0;
@@ -351,10 +370,11 @@
         </div>
     </div>
 
+    <!-- Модалка для просмотра поста -->
     <div id="postModal" class="modal-overlay hidden" onclick="if(event.target===this) closePostModal()">
         <div class="modal" onclick="event.stopPropagation()">
             <div id="modalPostContent"></div>
-            <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+            <div class="modal-actions">
                 <button class="secondary" onclick="closePostModal()">Закрыть</button>
             </div>
         </div>
@@ -378,6 +398,7 @@
         let targetUserData = null;
         let unsubscribePosts = null;
 
+        // Утилиты
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
             toast.className = 'toast' + (isError ? ' error' : '');
@@ -410,6 +431,7 @@
             return num.toString();
         }
 
+        // Навигация
         function goBack() {
             window.history.back();
         }
@@ -422,6 +444,7 @@
             window.location.href = 'lenta.html';
         }
 
+        // Инициализация
         async function init() {
             auth.onAuthStateChanged(async (user) => {
                 if (!user) {
@@ -433,9 +456,6 @@
                 // Получаем userId из URL параметров
                 const urlParams = new URLSearchParams(window.location.search);
                 targetUserId = urlParams.get('userId');
-                
-                console.log('Target userId:', targetUserId);
-                console.log('Current user:', currentUser.uid);
                 
                 if (!targetUserId) {
                     showToast('Пользователь не указан', true);
@@ -457,15 +477,13 @@
             });
         }
 
+        // Загрузка профиля пользователя
         async function loadUserProfile() {
             const profileContent = document.getElementById('profileContent');
             profileContent.innerHTML = '<div class="loading">⏳ Загрузка профиля...</div>';
             
             try {
-                console.log('Загружаем профиль пользователя:', targetUserId);
                 const userDoc = await db.collection('users').doc(targetUserId).get();
-                
-                console.log('Документ существует:', userDoc.exists);
                 
                 if (!userDoc.exists) {
                     profileContent.innerHTML = `
@@ -476,37 +494,37 @@
                 }
                 
                 targetUserData = userDoc.data();
-                console.log('Данные пользователя:', targetUserData);
                 
                 // Подсчет статистики
-                const postsSnap = await db.collection('posts').where('authorId', '==', targetUserId).get();
-                const postsCount = postsSnap.size;
+                const [postsCount, followersCount, followingCount] = await Promise.all([
+                    db.collection('posts').where('authorId', '==', targetUserId).get().then(snap => snap.size),
+                    db.collection('followers').doc(targetUserId).collection('followers').get().then(snap => snap.size),
+                    db.collection('followers').doc(targetUserId).collection('following').get().then(snap => snap.size)
+                ]);
                 
-                // Проверяем подписку (если есть коллекция followers)
+                // Проверяем, подписан ли текущий пользователь
                 let isFollowing = false;
-                try {
+                if (currentUser) {
                     const followDoc = await db.collection('followers').doc(targetUserId)
                         .collection('followers').doc(currentUser.uid).get();
                     isFollowing = followDoc.exists;
-                } catch(e) {
-                    console.warn('Followers collection not exists:', e);
                 }
                 
-                renderProfile(targetUserData, postsCount, isFollowing);
+                renderProfile(targetUserData, postsCount, followersCount, followingCount, isFollowing);
                 
             } catch (error) {
                 console.error('Ошибка загрузки профиля:', error);
                 profileContent.innerHTML = `
-                    <div class="loading">❌ Ошибка загрузки профиля: ${error.message}</div>
+                    <div class="loading">❌ Ошибка загрузки профиля</div>
                     <button onclick="goBack()" style="margin-top: 20px;">← Вернуться</button>
                 `;
                 showToast('Не удалось загрузить профиль', true);
             }
         }
         
-        function renderProfile(userData, postsCount, isFollowing) {
+        function renderProfile(userData, postsCount, followersCount, followingCount, isFollowing) {
+            const avatarUrl = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || 'User')}&background=5c3d8c&color=f5e6ff&size=150&bold=true`;
             const username = userData.username || 'Пользователь';
-            const avatarUrl = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=5c3d8c&color=f5e6ff&size=150&bold=true`;
             const userHandle = userData.userHandle || ('$' + (userData.usernameLower || username.toLowerCase()));
             const bio = userData.bio || '✨ Пользователь YzFi';
             const joinDate = userData.createdAt ? formatDate(userData.createdAt) : 'Недавно';
@@ -536,6 +554,14 @@
                         <span class="stat-value">${postsCount}</span>
                     </div>
                     <div class="stat-item">
+                        <span class="stat-label">👥 Подписчиков:</span>
+                        <span class="stat-value">${followersCount}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">🔗 Подписок:</span>
+                        <span class="stat-value">${followingCount}</span>
+                    </div>
+                    <div class="stat-item">
                         <span class="stat-label">📅 В YzFi с:</span>
                         <span class="stat-value">${joinDate}</span>
                     </div>
@@ -552,13 +578,12 @@
             document.getElementById('profileContent').innerHTML = profileHTML;
         }
         
+        // Загрузка постов пользователя
         function loadUserPosts() {
             if (unsubscribePosts) unsubscribePosts();
             
             const postsContainer = document.getElementById('postsContainer');
             if (!postsContainer) return;
-            
-            console.log('Загружаем посты пользователя:', targetUserId);
             
             unsubscribePosts = db.collection('posts')
                 .where('authorId', '==', targetUserId)
@@ -566,8 +591,6 @@
                 .limit(20)
                 .onSnapshot((snapshot) => {
                     if (!postsContainer) return;
-                    
-                    console.log('Постов найдено:', snapshot.size);
                     
                     if (snapshot.empty) {
                         postsContainer.innerHTML = '<div class="empty-posts">📭 Пользователь ещё не создал ни одного поста</div>';
@@ -661,17 +684,74 @@
             document.getElementById('postModal').classList.add('hidden');
         }
         
+        // Подписка/отписка
         async function toggleFollow() {
-            showToast('Функция подписок в разработке');
+            if (!currentUser || !targetUserId) return;
+            
+            const followBtn = document.getElementById('followBtn');
+            const isFollowing = followBtn.textContent.includes('Подписан');
+            const originalText = followBtn.textContent;
+            
+            followBtn.disabled = true;
+            followBtn.textContent = '⏳ ...';
+            
+            try {
+                if (isFollowing) {
+                    // Отписаться
+                    await db.collection('followers').doc(targetUserId)
+                        .collection('followers').doc(currentUser.uid).delete();
+                    await db.collection('followers').doc(currentUser.uid)
+                        .collection('following').doc(targetUserId).delete();
+                    
+                    showToast('Вы отписались от пользователя');
+                    followBtn.textContent = '+ Подписаться';
+                    followBtn.classList.remove('secondary');
+                    followBtn.classList.add('primary');
+                } else {
+                    // Подписаться
+                    await db.collection('followers').doc(targetUserId)
+                        .collection('followers').doc(currentUser.uid).set({
+                            uid: currentUser.uid,
+                            username: currentUser.displayName,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    await db.collection('followers').doc(currentUser.uid)
+                        .collection('following').doc(targetUserId).set({
+                            uid: targetUserId,
+                            username: targetUserData?.username,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    
+                    showToast('Вы подписались на пользователя');
+                    followBtn.textContent = '✓ Подписан';
+                    followBtn.classList.remove('primary');
+                    followBtn.classList.add('secondary');
+                }
+                
+                // Обновляем счетчики в статистике
+                const followersCount = await db.collection('followers').doc(targetUserId)
+                    .collection('followers').get().then(snap => snap.size);
+                const statsSpan = document.querySelector('.stats .stat-item:first-child + .stat-item .stat-value');
+                if (statsSpan) {
+                    statsSpan.textContent = followersCount;
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при подписке:', error);
+                showToast('Не удалось выполнить действие', true);
+                followBtn.textContent = originalText;
+            } finally {
+                followBtn.disabled = false;
+            }
         }
         
+        // Создание чата
         async function startChat() {
             if (!currentUser || !targetUserId || !targetUserData) return;
             
             showToast('Создание чата...');
             
             try {
-                // Получаем данные текущего пользователя
                 const myUserDoc = await db.collection('users').doc(currentUser.uid).get();
                 const myData = myUserDoc.data();
                 
@@ -719,15 +799,17 @@
                 
             } catch (error) {
                 console.error('Ошибка создания чата:', error);
-                showToast('Не удалось создать чат: ' + error.message, true);
+                showToast('Не удалось создать чат', true);
             }
         }
         
+        // Глобальные функции
         window.goBack = goBack;
         window.goToChats = goToChats;
         window.goToLenta = goToLenta;
         window.startChat = startChat;
         window.toggleFollow = toggleFollow;
+        window.showFullPost = showFullPost;
         window.closePostModal = closePostModal;
         
         window.onload = init;

@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2d1b4e">
+    <title>YzFi — Настройки</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="premium.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Courier New', 'MS Sans Serif', Tahoma, Arial, monospace;
+            background: #1a0f2e;
+            color: #e8d5f2;
+            font-size: 14px;
+            line-height: 1.4;
+            min-height: 100dvh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            transition: background 0.2s;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 12px 20px;
+        }
+
+        .header {
+            background: #2d1b4e;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 2px solid #110822;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e8d5f2;
+            text-shadow: 1px 1px 0 #110822;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        button, .btn {
+            font-family: inherit;
+            background: #3d2666;
+            border: 2px solid #110822;
+            padding: 8px 14px;
+            font-weight: bold;
+            font-size: 13px;
+            color: #e8d5f2;
+            cursor: pointer;
+            transition: all 0.05s linear;
+            box-shadow: 2px 2px 0 #110822;
+        }
+
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 #110822;
+        }
+
+        .btn-secondary {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+        }
+
+        .btn-save {
+            background: #6b4ca0;
+        }
+
+        .settings-card {
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 3px 3px 0 #110822;
+            transition: background 0.2s;
+        }
+
+        .settings-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #b47aff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #b47aff;
+            padding-left: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #3d2666;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .setting-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #e8d5f2;
+            margin-bottom: 4px;
+        }
+
+        .setting-desc {
+            font-size: 0.65rem;
+            color: #8a739e;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .slider-label {
+            font-size: 0.7rem;
+            color: #b9a0d4;
+            width: 60px;
+        }
+
+        .slider-label-left {
+            text-align: right;
+        }
+
+        .slider-label-right {
+            text-align: left;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 180px;
+            height: 8px;
+            background: #1a0f2e;
+            border: 1px solid #110822;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #b47aff;
+            border: 2px solid #110822;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 1px 1px 0 #110822;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .style-value {
+            font-size: 0.7rem;
+            background: #1a0f2e;
+            padding: 4px 8px;
+            border: 1px solid #110822;
+            font-family: monospace;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .preview-section {
+            background: #1a0f2e;
+            border: 2px solid #110822;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .preview-title {
+            font-size: 0.7rem;
+            color: #8a739e;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .preview-example {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .preview-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preview-avatar {
+            width: 48px;
+            height: 48px;
+            background: #3d2666;
+            border: 2px solid #110822;
+            transition: border-radius 0.1s ease;
+        }
+
+        .preview-message {
+            flex: 1;
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            padding: 8px;
+            font-size: 0.7rem;
+            color: #e8d5f2;
+            transition: border-radius 0.1s ease;
+        }
+
+        .preview-button {
+            background: #3d2666;
+            border: 2px solid #110822;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            color: #e8d5f2;
+            text-align: center;
+            transition: border-radius 0.1s ease;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            left: 12px;
+            right: 12px;
+            background: #2d1b4e;
+            border: 2px solid #110822;
+            color: #e8d5f2;
+            padding: 10px;
+            text-align: center;
+            z-index: 1100;
+            font-size: 13px;
+            box-shadow: 3px 3px 0 #110822;
+        }
+
+        .toast.error {
+            background: #5a1a1a;
+            color: #ffcccc;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8a739e;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #b47aff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        
+                /* ===== ТЕМЫ ИНТЕРФЕЙСА ===== */
+        
+        /* Тёмная тема (по умолчанию) */
+        body.theme-dark {
+            --bg: #1a0f2e;
+            --panel: #2d1b4e;
+            --panel2: #3d2666;
+            --text: #e8d5f2;
+            --border: #110822;
+            --accent: #b47aff;
+            --cream: #f5e6ff;
+        }
+        
+        /* Светлая тема */
+        body.theme-light {
+            --bg: #f0eaf8;
+            --panel: #ffffff;
+            --panel2: #f5f0ff;
+            --text: #1a0f2e;
+            --border: #cbb8e8;
+            --accent: #8b5cf6;
+            --cream: #2d1b4e;
+        }
+        
+        body.theme-light .header {
+            background: linear-gradient(180deg, #e9defa, #ffffff);
+        }
+        
+        body.theme-light .settings-card {
+            background: #ffffff;
+        }
+        
+        
+        
+        /* ===== ЗВЁЗДНАЯ ТЕМА ===== */
+        body.theme-stars {
+            --bg: #0a0a2a;
+            --panel: rgba(15, 15, 50, 0.92);
+            --panel2: rgba(25, 25, 70, 0.92);
+            --text: #ffe8cc;
+            --border: #2a2a6e;
+            --accent: #ffcc44;
+            --cream: #ffffdd;
+        }
+        
+        body.theme-stars {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" opacity="0.25"><polygon points="20,5 25,18 40,18 28,26 32,40 20,32 8,40 12,26 0,18 15,18" fill="%23ffdd66"/><polygon points="80,15 83,24 92,24 85,30 87,39 80,34 73,39 75,30 68,24 77,24" fill="%23ffcc33"/><polygon points="50,60 54,72 66,72 56,79 60,91 50,84 40,91 44,79 34,72 46,72" fill="%23ffee88"/><polygon points="95,70 97,77 105,77 99,82 101,90 95,85 89,90 91,82 85,77 93,77" fill="%23ffdd55"/><circle cx="30" cy="70" r="2" fill="%23ffffff"/><circle cx="90" cy="45" r="1.5" fill="%23ffffff"/><circle cx="60" cy="20" r="1.5" fill="%23ffffff"/><circle cx="100" cy="100" r="2" fill="%23ffffff"/></svg>');
+            background-repeat: repeat;
+            background-size: 80px;
+            background-attachment: fixed;
+        }
+        
+        body.theme-stars .settings-card,
+        body.theme-stars .header {
+            backdrop-filter: blur(8px);
+            background: rgba(15, 15, 50, 0.85);
+            border-color: #4444aa;
+        }
+        
+        body.theme-stars button {
+            background: #2a2a7a;
+            border-color: #4444aa;
+            color: #ffdd88;
+        }
+        
+        body.theme-stars button:active {
+            background: #4444aa;
+        }
+        
+        body.theme-stars .settings-title {
+            color: #ffcc44;
+        }
+        
+        /* Применяем переменные */
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .header {
+            background: linear-gradient(180deg, var(--accent), var(--panel));
+            border-color: var(--border);
+        }
+        
+        button, .btn {
+            background: var(--panel2);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        
+        .btn-save {
+            background: var(--accent);
+            color: #1a0f2e;
+        }
+        
+        .settings-card {
+            background: var(--panel);
+            border-color: var(--border);
+        }
+
+        /* ===== ФИОЛЕТОВЫЕ ЕЖИКИ (эмодзи на весь экран) ===== */
+        body.theme-hedgehogs {
+            --bg: #1a0a2e;
+            --panel: rgba(45, 20, 70, 0.92);
+            --panel2: rgba(61, 30, 90, 0.92);
+            --text: #f0e0ff;
+            --border: #3a1a6e;
+            --accent: #c87aff;
+            --cream: #f5e6ff;
+            position: relative;
+        }
+        
+        /* Ёжики на весь экран */
+        body.theme-hedgehogs::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.2"><text x="15" y="30" font-size="20" fill="%23cc99ff">🦔</text><text x="55" y="55" font-size="24" fill="%23aa77ff">🦔</text><text x="25" y="75" font-size="18" fill="%23bb88ff">🦔</text><text x="70" y="20" font-size="22" fill="%239966ff">🦔</text><text x="45" y="90" font-size="26" fill="%23aa77ff">🦔</text><text x="80" y="70" font-size="20" fill="%23cc99ff">🦔</text><text x="10" y="50" font-size="16" fill="%239966ff">🦔</text><text x="60" y="10" font-size="28" fill="%23bb88ff">🦔</text><text x="90" y="45" font-size="18" fill="%23aa77ff">🦔</text><text x="40" y="15" font-size="22" fill="%23cc99ff">🦔</text><text x="5" y="95" font-size="20" fill="%239966ff">🦔</text><text x="50" y="40" font-size="30" fill="%23aa77ff" opacity="0.5">🦔</text></svg>');
+            background-repeat: repeat;
+            background-size: 100px 100px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Контент поверх ёжиков */
+        body.theme-hedgehogs .container,
+        body.theme-hedgehogs .header,
+        body.theme-hedgehogs .settings-card,
+        body.theme-hedgehogs .chat-area,
+        body.theme-hedgehogs .message-bubble,
+        body.theme-hedgehogs button,
+        body.theme-hedgehogs .dashboard-card {
+            position: relative;
+            z-index: 1;
+        }
+        
+        body.theme-hedgehogs .settings-card,
+        body.theme-hedgehogs .header,
+        body.theme-hedgehogs .dashboard-card {
+            backdrop-filter: blur(8px);
+            background: rgba(45, 20, 70, 0.85);
+            border-color: #7a44cc;
+        }
+        
+        body.theme-hedgehogs button {
+            background: #5c2daa;
+            border-color: #7a44cc;
+        }
+        
+        body.theme-hedgehogs button:active {
+            background: #7a44cc;
+        }
+
+        
+
+        /* ===== ГЛОБАЛЬНОЕ СКРУГЛЕНИЕ — ВСЕ ЭЛЕМЕНТЫ ===== */
+        :root {
+            --yzfi-radius: 8px;
+            --yzfi-radius-sm: 4px;
+        }
+        
+        /* Переопределяем ВСЕ border-radius на переменные */
+        * {
+            /* Базовое правило для всех элементов */
+            --apply-radius: var(--yzfi-radius);
+        }
+        
+        /* Контейнеры и карточки */
+        .container, .header, .setup-screen, .settings-card, .post-card,
+        .dashboard-card, .custom-notification, .pwa-promo, .ios-steps,
+        .modal, .preview-section, .tabs-container, .search-bar,
+        .trending-panel, .chats-list, .user-search-list, .messages,
+        .panel, .chat-item, .comment, .modal .modal-content {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Кнопки всех типов */
+        button, .btn, .action-btn, .tab-btn, .auth-tab, .toggle-password,
+        .msg-action-btn, .remove-image-btn, .big-cta, .ghost, .danger,
+        .secondary, .small, .btn-save, .btn-secondary, .settings-btn {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Поля ввода */
+        input, textarea, select, .search-bar input, .add-comment input,
+        #messageInput, #searchInput, #chatSearchInput {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Аватары и изображения */
+        .avatar, .post-avatar, .preview-avatar, .chat-avatar,
+        .avatar-wrapper .avatar, img.avatar {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Сообщения */
+        .msg, .message-bubble, .preview-message {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Карточки и блоки внутри */
+        .post-header, .post-text, .post-actions, .comments-section,
+        .poll-options, .poll-option, .setting-item, .settings-title {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Галерея и изображения */
+        .gallery img, .post-image, .preview-avatar, .image-preview-img {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Уведомления и тосты */
+        .toast, .error-toast, .success-toast {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Ползунки */
+        input[type="range"] {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Вкладки и группы */
+        .group-actions, .composer, .composer-row, .chat-header {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Список чатов */
+        .chat-item, .chat-info, .chat-meta {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Обложка модальных окон */
+        .modal-overlay .modal {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Для треугольного режима — отключаем скругление */
+        body.triangle-mode * {
+            border-radius: 0 !important;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Настройки</h1>
+            <div class="header-buttons">
+                <button class="btn-secondary" onclick="перейтиВПрофиль()">👤 Профиль</button>
+                <button class="btn-secondary" onclick="перейтиВЧаты()">💬 Чаты</button>
+            </div>
+        </div>
+
+        <div id="settingsContent">
+            <div class="loading"><div class="spinner"></div> Загрузка настроек...</div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
+            authDomain: "hlypalka.firebaseapp.com",
+            projectId: "hlypalka",
+            storageBucket: "hlypalka.firebasestorage.app",
+            messagingSenderId: "41063525028",
+            appId: "1:41063525028:web:253e10e09ec8ff4cf75431"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let текущийПользователь = null;
+        let данныеПользователя = null;
+        let текущийРадиус = 0;
+
+        // ========== ТЕМЫ ИНТЕРФЕЙСА ==========
+        function применитьТему(тема) {
+            localStorage.setItem('yzfi_theme', тема);
+            document.body.classList.remove('theme-dark', 'theme-light', 'theme-hedgehogs', 'theme-stars');
+            document.body.classList.add(`theme-${тема}`);
+            
+            // Обновляем активную кнопку
+            const darkBtn = document.getElementById('themeDarkBtn');
+            const lightBtn = document.getElementById('themeLightBtn');
+            const hedgehogsBtn = document.getElementById('themeHedgehogsBtn');
+            const starsBtn = document.getElementById('themeStarsBtn');
+            
+            if (darkBtn) {
+                darkBtn.className = тема === 'dark' ? 'btn-save' : 'btn-secondary';
+                lightBtn.className = тема === 'light' ? 'btn-save' : 'btn-secondary';
+                hedgehogsBtn.className = тема === 'hedgehogs' ? 'btn-save' : 'btn-secondary';
+                starsBtn.className = тема === 'stars' ? 'btn-save' : 'btn-secondary';
+            }
+            
+            показатьУведомление(`Тема: ${названиеТемы(тема)}`);
+        }
+        
+        function названиеТемы(тема) {
+            const названия = {
+                'dark': 'Тёмная',
+                'light': 'Светлая',
+                'hedgehogs': 'Ёжики 🦔',
+                'stars': 'Звёздная ⭐'
+            };
+            return названия[тема] || тема;
+        }
+
+        function загрузитьТему() {
+            const сохранённая = localStorage.getItem('yzfi_theme') || 'dark';
+            применитьТему(сохранённая);
+        }
+
+        // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
+        function показатьУведомление(сообщение, ошибка = false) {
+            const уведомление = document.createElement('div');
+            уведомление.className = 'toast' + (ошибка ? ' error' : '');
+            уведомление.textContent = (ошибка ? '❌ ' : '✅ ') + сообщение;
+            document.body.appendChild(уведомление);
+            setTimeout(() => уведомление.remove(), 3000);
+        }
+
+        function перейтиВПрофиль() { window.location.href = 'profil.html'; }
+        function перейтиВЧаты() { window.location.href = 'chat.html'; }
+        function перейтиВМагазин() { window.location.href = 'shop.html'; }
+
+        async function загрузитьНастройки() {
+            const документ = await db.collection('users').doc(текущийПользователь.uid).get();
+            if (документ.exists) {
+                данныеПользователя = документ.data();
+                текущийРадиус = данныеПользователя?.uiRadius !== undefined ? данныеПользователя.uiRadius : 0;
+            }
+            отрисоватьНастройки();
+        }
+
+        async function сохранитьРадиус(значение) {
+            текущийРадиус = parseInt(значение);
+            try {
+                await db.collection('users').doc(текущийПользователь.uid).update({
+                    uiRadius: текущийРадиус,
+                    настройкиОбновлены: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                данныеПользователя.uiRadius = текущийРадиус;
+                localStorage.setItem('yzfi_ui_radius', текущийРадиус);
+                обновитьПредпросмотр(текущийРадиус);
+                показатьУведомление(`Радиус скругления: ${текущийРадиус}px`);
+            } catch (ошибка) {
+                показатьУведомление('Ошибка сохранения', true);
+            }
+        }
+
+        function обновитьПредпросмотр(радиус) {
+            const previewSection = document.querySelector('.preview-section');
+            if (!previewSection) return;
+            
+            const avatar = previewSection.querySelector('.preview-avatar');
+            const message = previewSection.querySelector('.preview-message');
+            const button = previewSection.querySelector('.preview-button');
+            
+            if (avatar) avatar.style.borderRadius = `${радиус}px`;
+            if (message) message.style.borderRadius = `${радиус}px`;
+            if (button) button.style.borderRadius = `${радиус}px`;
+        }
+
+        function получитьНазваниеСтиля(радиус) {
+            if (радиус === 0) return 'Квадратный';
+            if (радиус <= 6) return 'Скруглённый';
+            if (радиус <= 14) return 'Овальный';
+            return 'Круглый';
+        }
+
+        function отрисоватьНастройки() {
+
+            const контейнер = document.getElementById('settingsContent');
+            const названиеСтиля = получитьНазваниеСтиля(текущийРадиус);
+            const премиумАктивен = данныеПользователя?.premiumUntil?.toDate && new Date(данныеПользователя.premiumUntil.toDate()) > new Date();
+            
+            const html = `
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🎨</span> Внешний вид
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Скругление углов</div>
+                            <div class="setting-desc">Ползунок: от квадратных (0px) до круглых (20px)</div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="slider-container">
+                            <span class="slider-label slider-label-left">◻️ Квадрат</span>
+                            <input type="range" id="radiusSlider" min="0" max="20" step="1" value="${текущийРадиус}">
+                            <span class="slider-label slider-label-right">⬤ Круг</span>
+                        </div>
+                        <div class="style-value" id="radiusValue">${текущийРадиус}px — ${названиеСтиля}</div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🎨</span> Тема интерфейса
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Цветовая схема</div>
+                            <div class="setting-desc">Выберите оформление</div>
+                        </div>
+                        <div class="slider-container" style="flex-wrap: wrap; gap: 8px;">
+                            <button id="themeDarkBtn" class="btn-secondary" style="min-width: 70px;">🌙 Тёмная</button>
+                            <button id="themeLightBtn" class="btn-secondary" style="min-width: 70px;">☀️ Светлая</button>
+                            <button id="themeHedgehogsBtn" class="btn-secondary" style="min-width: 70px;">🦔 Фиол. ежики</button>
+                            <button id="themeStarsBtn" class="btn-secondary" style="min-width: 70px;">⭐ Звёздная</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">📱 Предпросмотр (применяется сразу)</div>
+                    <div class="preview-example">
+                        <div class="preview-row">
+                            <div class="preview-avatar"></div>
+                            <div class="preview-message">
+                                <strong style="color:#b47aff;">Аватар</strong><br>
+                                Форма зависит от ползунка
+                            </div>
+                        </div>
+                        <div class="preview-row">
+                            <div class="preview-message">💬 Сообщение с динамическим скруглением</div>
+                            <div class="preview-button">Кнопка</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>ℹ️</span> О программе
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">YzFi Мессенджер</div>
+                            <div class="setting-desc">Версия 2.1.0 — с ползунком стиля</div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">👑 Премиум статус</div>
+                            <div class="setting-desc">${премиумАктивен ? '✅ Активен' : '❌ Не активен'}</div>
+                        </div>
+                        <button class="btn-secondary" onclick="перейтиВМагазин()">⭐ Магазин</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">🎁 Полученные подарки</div>
+                            <div class="setting-desc">Посмотреть все подарки от друзей</div>
+                        </div>
+                        <button class="btn-secondary" onclick="показатьПодарки()">📦 Открыть</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🔐</span> Безопасность
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Выйти из аккаунта</div>
+                            <div class="setting-desc">Завершить текущую сессию</div>
+                        </div>
+                        <button class="btn-secondary" onclick="выйтиИзАккаунта()">🚪 Выйти</button>
+                    </div>
+                </div>
+            `;
+            
+            контейнер.innerHTML = html;
+            
+
+            
+            // Навешиваем обработчик на ползунок
+            const slider = document.getElementById('radiusSlider');
+            const radiusSpan = document.getElementById('radiusValue');
+            
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    const стиль = получитьНазваниеСтиля(val);
+                    radiusSpan.textContent = `${val}px — ${стиль}`;
+                    обновитьПредпросмотр(val);
+                });
+                
+                slider.addEventListener('change', (e) => {
+                    сохранитьРадиус(e.target.value);
+                });
+            }
+            
+            // Навешиваем обработчики на кнопки тем
+            const themeDarkBtn = document.getElementById('themeDarkBtn');
+            const themeLightBtn = document.getElementById('themeLightBtn');
+            const themeHedgehogsBtn = document.getElementById('themeHedgehogsBtn');
+            const themeStarsBtn = document.getElementById('themeStarsBtn');
+            
+            if (themeDarkBtn) {
+                themeDarkBtn.onclick = () => применитьТему('dark');
+                themeLightBtn.onclick = () => применитьТему('light');
+                themeHedgehogsBtn.onclick = () => применитьТему('hedgehogs');
+                themeStarsBtn.onclick = () => применитьТему('stars');
+            }
+            
+            // Обновляем активную кнопку темы
+            const текущаяТема = localStorage.getItem('yzfi_theme') || 'dark';
+            if (themeDarkBtn) {
+                themeDarkBtn.className = текущаяТема === 'dark' ? 'btn-save' : 'btn-secondary';
+                themeLightBtn.className = текущаяТема === 'light' ? 'btn-save' : 'btn-secondary';
+                themeHedgehogsBtn.className = текущаяТема === 'hedgehogs' ? 'btn-save' : 'btn-secondary';
+                themeStarsBtn.className = текущаяТема === 'stars' ? 'btn-save' : 'btn-secondary';
+            }
+            
+            // Применяем радиус к предпросмотру
+            обновитьПредпросмотр(текущийРадиус);
+        }
+
+        async function показатьПодарки() {
+            try {
+                const подаркиSnap = await db.collection('users').doc(текущийПользователь.uid)
+                    .collection('подарки')
+                    .orderBy('дата', 'desc')
+                    .limit(30)
+                    .get();
+                
+                if (подаркиSnap.empty) {
+                    показатьУведомление('У вас пока нет подарков 😢');
+                    return;
+                }
+                
+                let сообщение = '🎁 Ваши подарки:\n\n';
+                for (const doc of подаркиSnap.docs) {
+                    const п = doc.data();
+                    const дата = п.дата?.toDate ? п.дата.toDate().toLocaleDateString() : 'недавно';
+                    сообщение += `${п.подарокИконка || '🎁'} ${п.подарокНазвание || 'Подарок'}\n`;
+                    сообщение += `   От: ${п.отКогоИмя || 'Кто-то'}\n`;
+                    сообщение += `   Дата: ${дата}\n`;
+                    if (п.сообщение) сообщение += `   💬 "${п.сообщение}"\n`;
+                    сообщение += `————————————\n`;
+                }
+                alert(сообщение);
+            } catch(e) {
+                показатьУведомление('Ошибка загрузки подарков', true);
+            }
+        }
+
+        async function выйтиИзАккаунта() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                await auth.signOut();
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function init() {
+            // Сначала загружаем тему (чтобы не было вспышки)
+            загрузитьТему();
+            
+            auth.onAuthStateChanged(async (пользователь) => {
+                if (!пользователь) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                текущийПользователь = пользователь;
+                await загрузитьНастройки();
+            });
+        }
+
+        // Глобальные функции
+        window.перейтиВПрофиль = перейтиВПрофиль;
+        window.перейтиВЧаты = перейтиВЧаты;
+        window.перейтиВМагазин = перейтиВМагазин;
+        window.показатьПодарки = показатьПодарки;
+        window.выйтиИзАккаунта = выйтиИзАккаунта;
+        
+        window.onload = init;
+
+        // ========== ЗАГРУЗКА СКРУГЛЕНИЯ ==========
+        function loadRadius() {
+            const radius = localStorage.getItem('yzfi_ui_radius') || '8';
+            document.documentElement.style.setProperty('--yzfi-radius', `${radius}px`);
+            document.documentElement.style.setProperty('--yzfi-radius-sm', `${Math.max(2, radius / 2)}px`);
+            document.documentElement.style.setProperty('--yzfi-radius-lg', `${Math.min(radius * 1.5, 24)}px`);
+        }
+        
+        loadRadius();
+        
+        // Слушаем изменения в localStorage (если настройки меняются на другой вкладке)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'yzfi_ui_radius') {
+                loadRadius();
+            }
+        });
+
+    </script>
+</body>
+</html>

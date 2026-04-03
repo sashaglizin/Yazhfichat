@@ -175,6 +175,274 @@
             animation: slideIn 0.25s ease;
             box-shadow: 4px 4px 0 var(--border);
         }
+        
+        /* ТРЕУГОЛЬНЫЙ РЕЖИМ — ДОБАВИТЬ */
+        .triangle-mode .container,
+        .triangle-mode .setup-screen,
+        .triangle-mode .dashboard-card,
+        .triangle-mode .header,
+        .triangle-mode button,
+        .triangle-mode .pwa-promo,
+        .triangle-mode .custom-notification,
+        .triangle-mode .auth-tabs,
+        .triangle-mode input {
+            clip-path: polygon(0% 0%, 100% 0%, 95% 100%, 0% 100%);
+            border-radius: 0 !important;
+        }
+        
+        .triangle-mode .message-bubble {
+            clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 80% 100%, 0% 100%);
+        }
+        
+        .triangle-mode .message-bubble.outgoing {
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 20% 100%, 0% 80%);
+        }
+        
+        .triangle-mode .avatar {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+
+
+        
+        /* Общие стили для всех тем */
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .header {
+            background: linear-gradient(180deg, var(--accent), var(--panel));
+            border-color: var(--border);
+        }
+        
+        button, .btn {
+            background: var(--panel2);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        
+        button.btn-save, .btn-save {
+            background: var(--accent);
+            color: #1a0f2e;
+        }
+        
+        .settings-card {
+            background: var(--panel);
+            border-color: var(--border);
+        }
+        
+        input, textarea {
+            background: var(--cream);
+            color: #1a0f2e;
+            border-color: var(--border);
+        }
+
+
+
+        /* ===== ТЕМЫ ИНТЕРФЕЙСА ===== */
+        body.theme-dark {
+            --bg: #1a0f2e;
+            --panel: #2d1b4e;
+            --panel2: #3d2666;
+            --text: #e8d5f2;
+            --border: #110822;
+            --accent: #b47aff;
+            --cream: #f5e6ff;
+        }
+        body.theme-light {
+            --bg: #f0eaf8;
+            --panel: #ffffff;
+            --panel2: #f5f0ff;
+            --text: #1a0f2e;
+            --border: #cbb8e8;
+            --accent: #8b5cf6;
+            --cream: #2d1b4e;
+        }
+        body.theme-light .header {
+            background: linear-gradient(180deg, #e9defa, #ffffff);
+        }
+        body.theme-light .setup-screen {
+            background: #ffffff;
+        }
+        body.theme-stars {
+            --bg: #0a0a2a;
+            --panel: rgba(15, 15, 50, 0.92);
+            --panel2: rgba(25, 25, 70, 0.92);
+            --text: #ffe8cc;
+            --border: #2a2a6e;
+            --accent: #ffcc44;
+            --cream: #ffffdd;
+        }
+        body.theme-stars {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" opacity="0.25"><polygon points="20,5 25,18 40,18 28,26 32,40 20,32 8,40 12,26 0,18 15,18" fill="%23ffdd66"/><polygon points="80,15 83,24 92,24 85,30 87,39 80,34 73,39 75,30 68,24 77,24" fill="%23ffcc33"/><polygon points="50,60 54,72 66,72 56,79 60,91 50,84 40,91 44,79 34,72 46,72" fill="%23ffee88"/><polygon points="95,70 97,77 105,77 99,82 101,90 95,85 89,90 91,82 85,77 93,77" fill="%23ffdd55"/><circle cx="30" cy="70" r="2" fill="%23ffffff"/><circle cx="90" cy="45" r="1.5" fill="%23ffffff"/><circle cx="60" cy="20" r="1.5" fill="%23ffffff"/><circle cx="100" cy="100" r="2" fill="%23ffffff"/></svg>');
+            background-repeat: repeat;
+            background-size: 80px;
+            background-attachment: fixed;
+        }
+        body.theme-stars .header,
+        body.theme-stars .setup-screen {
+            backdrop-filter: blur(8px);
+            background: rgba(15, 15, 50, 0.85);
+            border-color: #4444aa;
+        }
+        body.theme-stars button {
+            background: #2a2a7a;
+            border-color: #4444aa;
+            color: #ffdd88;
+        }
+        body.theme-hedgehogs {
+            --bg: #1a0a2e;
+            --panel: rgba(45, 20, 70, 0.92);
+            --panel2: rgba(61, 30, 90, 0.92);
+            --text: #f0e0ff;
+            --border: #3a1a6e;
+            --accent: #c87aff;
+            --cream: #f5e6ff;
+            position: relative;
+        }
+        body.theme-hedgehogs::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.25"><text x="15" y="30" font-size="28" fill="%23cc99ff">🦔</text><text x="55" y="55" font-size="32" fill="%23aa77ff">🦔</text><text x="25" y="75" font-size="24" fill="%23bb88ff">🦔</text><text x="70" y="20" font-size="30" fill="%239966ff">🦔</text><text x="45" y="90" font-size="35" fill="%23aa77ff">🦔</text><text x="80" y="70" font-size="28" fill="%23cc99ff">🦔</text><text x="10" y="50" font-size="22" fill="%239966ff">🦔</text><text x="60" y="10" font-size="36" fill="%23bb88ff">🦔</text><text x="90" y="45" font-size="26" fill="%23aa77ff">🦔</text><text x="40" y="15" font-size="30" fill="%23cc99ff">🦔</text><text x="5" y="95" font-size="28" fill="%239966ff">🦔</text><text x="50" y="40" font-size="40" fill="%23aa77ff" opacity="0.4">🦔</text></svg>');
+            background-repeat: repeat;
+            background-size: 100px 100px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body.theme-hedgehogs .header,
+        body.theme-hedgehogs .setup-screen {
+            backdrop-filter: blur(8px);
+            background: rgba(45, 20, 70, 0.85);
+            border-color: #7a44cc;
+            position: relative;
+            z-index: 1;
+        }
+        body.theme-hedgehogs button {
+            background: #5c2daa;
+            border-color: #7a44cc;
+            position: relative;
+            z-index: 1;
+        }
+        body.theme-hedgehogs .container {
+            position: relative;
+            z-index: 1;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        .header {
+            background: linear-gradient(180deg, var(--accent), var(--panel));
+            border-color: var(--border);
+        }
+        .setup-screen {
+            background: var(--panel);
+            border-color: var(--border);
+        }
+        button, .btn {
+            background: var(--panel2);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+
+        /* ===== ГЛОБАЛЬНОЕ СКРУГЛЕНИЕ — ВСЕ ЭЛЕМЕНТЫ ===== */
+        :root {
+            --yzfi-radius: 8px;
+            --yzfi-radius-sm: 4px;
+        }
+        
+        /* Переопределяем ВСЕ border-radius на переменные */
+        * {
+            /* Базовое правило для всех элементов */
+            --apply-radius: var(--yzfi-radius);
+        }
+        
+        /* Контейнеры и карточки */
+        .container, .header, .setup-screen, .settings-card, .post-card,
+        .dashboard-card, .custom-notification, .pwa-promo, .ios-steps,
+        .modal, .preview-section, .tabs-container, .search-bar,
+        .trending-panel, .chats-list, .user-search-list, .messages,
+        .panel, .chat-item, .comment, .modal .modal-content {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Кнопки всех типов */
+        button, .btn, .action-btn, .tab-btn, .auth-tab, .toggle-password,
+        .msg-action-btn, .remove-image-btn, .big-cta, .ghost, .danger,
+        .secondary, .small, .btn-save, .btn-secondary, .settings-btn {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Поля ввода */
+        input, textarea, select, .search-bar input, .add-comment input,
+        #messageInput, #searchInput, #chatSearchInput {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Аватары и изображения */
+        .avatar, .post-avatar, .preview-avatar, .chat-avatar,
+        .avatar-wrapper .avatar, img.avatar {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Сообщения */
+        .msg, .message-bubble, .preview-message {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Карточки и блоки внутри */
+        .post-header, .post-text, .post-actions, .comments-section,
+        .poll-options, .poll-option, .setting-item, .settings-title {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Галерея и изображения */
+        .gallery img, .post-image, .preview-avatar, .image-preview-img {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Уведомления и тосты */
+        .toast, .error-toast, .success-toast {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Ползунки */
+        input[type="range"] {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Вкладки и группы */
+        .group-actions, .composer, .composer-row, .chat-header {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Список чатов */
+        .chat-item, .chat-info, .chat-meta {
+            border-radius: var(--yzfi-radius-sm) !important;
+        }
+        
+        /* Обложка модальных окон */
+        .modal-overlay .modal {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Для треугольного режима — отключаем скругление */
+        body.triangle-mode * {
+            border-radius: 0 !important;
+        } 
+
+
     </style>
 </head>
 <body>
@@ -271,6 +539,14 @@
             checkAuthState();
             checkPWAHints();
         }
+
+                // Загрузка темы интерфейса
+        function загрузитьТему() {
+            const тема = localStorage.getItem('yzfi_theme') || 'dark';
+            document.body.classList.add(`theme-${тема}`);
+        }
+        загрузитьТему();
+
 
         function showLoginForm() {
             loginSection.classList.remove('hidden');
@@ -639,6 +915,45 @@
         window.goToProfile = goToProfile;
 
         window.onload = init;
+
+                // ========== ТРЕУГОЛЬНЫЙ РЕЖИМ ==========
+        function setTriangleMode(enabled) {
+            if (enabled) {
+                document.body.classList.add('triangle-mode');
+                localStorage.setItem('yzfi_triangle_mode', 'true');
+            } else {
+                document.body.classList.remove('triangle-mode');
+                localStorage.setItem('yzfi_triangle_mode', 'false');
+            }
+        }
+        
+        function loadTriangleMode() {
+            const saved = localStorage.getItem('yzfi_triangle_mode');
+            if (saved === 'true') {
+                document.body.classList.add('triangle-mode');
+            }
+        }
+        
+        // Загружаем режим при старте
+        loadTriangleMode();
+
+        // ========== ЗАГРУЗКА СКРУГЛЕНИЯ ==========
+        function loadRadius() {
+            const radius = localStorage.getItem('yzfi_ui_radius') || '8';
+            document.documentElement.style.setProperty('--yzfi-radius', `${radius}px`);
+            document.documentElement.style.setProperty('--yzfi-radius-sm', `${Math.max(2, radius / 2)}px`);
+            document.documentElement.style.setProperty('--yzfi-radius-lg', `${Math.min(radius * 1.5, 24)}px`);
+        }
+        
+        loadRadius();
+        
+        // Слушаем изменения в localStorage (если настройки меняются на другой вкладке)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'yzfi_ui_radius') {
+                loadRadius();
+            }
+        });
+
     </script>
 </body>
 </html>
