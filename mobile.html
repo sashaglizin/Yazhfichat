@@ -486,6 +486,291 @@
         .hidden { display: none !important; }
         .online-status { font-size: 10px; color: var(--success-color); }
         .offline-status { font-size: 10px; color: var(--text-secondary); }
+    
+        /* ===== ДОРАБОТКА СВЕТЛОЙ ТЕМЫ ===== */
+        body.theme-light {
+            --bg: #f5f0ff;
+            --panel: #ffffff;
+            --panel2: #f0eaff;
+            --text: #2d1b4e;
+            --border: #d4c4e8;
+            --accent: #8b5cf6;
+            --cream: #faf5ff;
+        }
+        
+        body.theme-light .header,
+        body.theme-light .profile-header,
+        body.theme-light .settings-card,
+        body.theme-light .post-card,
+        body.theme-light .chat-item,
+        body.theme-light .panel,
+        body.theme-light .modal-content,
+        body.theme-light .product-card,
+        body.theme-light .premium-card {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .header {
+            background: linear-gradient(180deg, #e0d5f0, #ffffff);
+        }
+        
+        body.theme-light button,
+        body.theme-light .btn,
+        body.theme-light .btn-secondary,
+        body.theme-light .action-btn,
+        body.theme-light .tab-btn,
+        body.theme-light .buy-btn,
+        body.theme-light .profile-btn,
+        body.theme-light .send-btn {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light button:active,
+        body.theme-light .btn:active {
+            background: #ddd0f0;
+            transform: translate(1px, 1px);
+        }
+        
+        body.theme-light .btn-save,
+        body.theme-light .btn-primary,
+        body.theme-light .primary {
+            background: #8b5cf6;
+            color: #ffffff;
+            border-color: #7a4ce0;
+        }
+        
+        body.theme-light .btn-danger {
+            background: #d55 !important;
+            color: #fff !important;
+            border-color: #c44 !important;
+        }
+        
+        body.theme-light input,
+        body.theme-light textarea,
+        body.theme-light select,
+        body.theme-light .search-box input,
+        body.theme-light .input-wrapper input {
+            background: #ffffff;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .messages,
+        body.theme-light .chats-list,
+        body.theme-light .user-search-list,
+        body.theme-light .comments-section {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .msg {
+            background: #ffffff;
+        }
+        
+        body.theme-light .msg:hover {
+            background: #f0eaff;
+        }
+        
+        body.theme-light .msg-user {
+            color: #8b5cf6;
+        }
+        
+        body.theme-light .message-bubble {
+            background: #e8e0f8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .outgoing .message-bubble {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .post-avatar,
+        body.theme-light .chat-avatar,
+        body.theme-light .avatar-large {
+            background: linear-gradient(135deg, #8b5cf6, #a070ff);
+            color: #ffffff;
+        }
+        
+        body.theme-light .post-name {
+            color: #5a3d8c;
+        }
+        
+        body.theme-light .post-handle,
+        body.theme-light .chat-handle {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .post-time,
+        body.theme-light .chat-time {
+            color: #9a8abe;
+        }
+        
+        body.theme-light .post-stats {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .action-btn {
+            color: #6a5a8e;
+        }
+        
+        body.theme-light .action-btn.liked {
+            color: #e55;
+        }
+        
+        body.theme-light .comment-name {
+            color: #8b5cf6;
+        }
+        
+        body.theme-light .comment-text {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .preview-section {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .preview-avatar,
+        body.theme-light .preview-message,
+        body.theme-light .preview-button {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .slider-label {
+            color: #6a5a8e;
+        }
+        
+        body.theme-light input[type="range"] {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+        }
+        
+        body.theme-light .style-value {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .settings-title {
+            color: #8b5cf6;
+            border-left-color: #8b5cf6;
+        }
+        
+        body.theme-light .setting-name {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .setting-desc {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .toast,
+        body.theme-light .error-toast,
+        body.theme-light .success-toast {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .toast.error,
+        body.theme-light .error-toast {
+            background: #ffe0e0;
+            color: #c44;
+        }
+        
+        body.theme-light .toast.success,
+        body.theme-light .success-toast {
+            background: #e0ffe0;
+            color: #2a6a2a;
+        }
+        
+        body.theme-light hr {
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .tab-btn {
+            background: #e8e0f8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .tab-btn.active {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .search-box {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .trending-panel {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .trending-tag {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .trending-tag:hover {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .modal {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .modal h3 {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .close-modal {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .product-card {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .product-title {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .product-desc {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .product-price {
+            color: #8b5cf6;
+        }
+        
+        /* ===== ЕДИНЫЙ СТИЛЬ КНОПОК ДЛЯ ВСЕХ ТЕМ ===== */
+        button, .btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover, .btn:hover {
+            opacity: 0.85;
+        }
+        
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+        }
+    
+    
     </style>
 </head>
 <body>
@@ -615,6 +900,7 @@
         </div>
 
         <!-- Нижняя навигация (6 вкладок) -->
+        <!-- Нижняя навигация -->
         <div class="bottom-nav">
             <div class="nav-item active" data-page="chats" onclick="switchPage('chats')"><span class="material-icons">chat_bubble</span><span>Чаты</span></div>
             <div class="nav-item" data-page="groups" onclick="switchPage('groups')"><span class="material-icons">group</span><span>Группы</span></div>
@@ -622,9 +908,9 @@
             <div class="nav-item" data-page="feed" onclick="switchPage('feed')"><span class="material-icons">explore</span><span>Лента</span></div>
             <div class="nav-item" data-page="shop" onclick="switchPage('shop')"><span class="material-icons">store</span><span>Магазин</span></div>
             <div class="nav-item" data-page="profile" onclick="switchPage('profile')"><span class="material-icons">person</span><span>Профиль</span></div>
+            <div class="nav-item" data-page="saved" onclick="switchPage('saved')"><span class="material-icons">bookmark</span><span>Сохр.</span></div>
             <div class="nav-item" data-page="settings" onclick="switchPage('settings')"><span class="material-icons">settings</span><span>Настройки</span></div>
         </div>
-    </div>
 
     <!-- Модалка создания поста -->
     <div id="createPostModal" class="modal">
@@ -812,6 +1098,7 @@
             document.getElementById('chatName').innerHTML = currentChat.name + (currentChat.isPremium ? ' 👑' : '') + (currentChat.isGroup ? ' 👥' : '');
             document.getElementById('chatStatus').innerHTML = currentChat.isGroup ? '👥 Группа' : (currentChat.online ? '<span class="online-status">● онлайн</span>' : '<span class="offline-status">○ был(а) недавно</span>');
             showMessages();
+            setupInfiniteScroll();
         }
 
         function closeChat() { document.querySelector('.chats-container').style.display = 'flex'; document.getElementById('chatView').style.display = 'none'; currentChat = null; }
@@ -825,11 +1112,18 @@
                     <div class="message-bubble ${msg.isPremium ? 'premium-sticker' : ''}">
                         <div class="message-text">${escapeHtml(msg.text)}</div>
                         ${msg.imageUrl ? `<img src="${msg.imageUrl}" style="max-width:100%; max-height:200px; margin-top:8px; border-radius:8px;">` : ''}
-                        <div class="message-time">${formatTime(msg.time)} ${msg.type === 'outgoing' ? (msg.status === 'read' ? '✓✓' : '✓') : ''} ${msg.edited ? '✎' : ''}</div>
+                        <div class="message-time">
+                            ${formatTime(msg.time)} 
+                            ${msg.type === 'outgoing' ? 
+                                (msg.status === 'read' ? '✓✓' : (msg.status === 'delivered' ? '✓✓' : '✓')) : 
+                                ''} 
+                            ${msg.edited ? '✎' : ''}
+                        </div>
                         <div class="message-actions">
                             <button class="msg-action" onclick="editMessage('${msg.id}')">✏️</button>
                             <button class="msg-action" onclick="deleteMessage('${msg.id}')">🗑️</button>
                             <button class="msg-action" onclick="replyToMessage('${msg.id}')">💬</button>
+                            <button class="msg-action" onclick="forwardMessage('${msg.id}')">📤</button>
                         </div>
                     </div>
                 </div>
@@ -848,7 +1142,8 @@
                 type: 'outgoing', 
                 status: 'sent', 
                 isPremium: isPremium,
-                imageUrl: lastUploadedImage
+                imageUrl: lastUploadedImage,
+                readBy: [currentUser.id]
             };
             if (!messagesHistory[currentChat.id]) messagesHistory[currentChat.id] = [];
             messagesHistory[currentChat.id].push(msg);
@@ -861,18 +1156,33 @@
             lastUploadedImage = null;
             scrollToBottom();
             
+            // Имитация получения ответа с обновлением статуса
             setTimeout(() => {
                 const replies = ['👍', '😊', '🔥', 'Круто!', 'Отлично!'];
                 const reply = replies[Math.floor(Math.random() * replies.length)];
-                const replyMsg = { id: Date.now(), text: reply, time: new Date().toISOString(), type: 'incoming', status: 'delivered' };
+                const replyMsg = { 
+                    id: Date.now(), 
+                    text: reply, 
+                    time: new Date().toISOString(), 
+                    type: 'incoming', 
+                    status: 'delivered',
+                    readBy: []
+                };
                 messagesHistory[currentChat.id].push(replyMsg);
                 currentChat.lastMessage = reply;
                 currentChat.lastMessageTime = new Date().toISOString();
                 saveChats();
                 showMessages();
                 renderChatsList();
+                
+                // Отмечаем отправленное сообщение как прочитанное
                 const lastOut = messagesHistory[currentChat.id].filter(m => m.type === 'outgoing').pop();
-                if (lastOut) { lastOut.status = 'read'; saveChats(); showMessages(); }
+                if (lastOut) { 
+                    lastOut.status = 'read'; 
+                    lastOut.readBy = [...(lastOut.readBy || []), currentChat.userId || 'peer'];
+                    saveChats(); 
+                    showMessages(); 
+                }
             }, 1500);
         }
 
@@ -903,6 +1213,90 @@
             const msg = messagesHistory[currentChat.id].find(m => m.id == msgId);
             if (msg) document.getElementById('messageInput').placeholder = `Ответ: ${msg.text.substring(0, 30)}...`;
         }
+        
+        // ========== ПЕРЕСЫЛКА СООБЩЕНИЙ ==========
+        let forwardMessageData = null;
+        
+        function forwardMessage(msgId) {
+            const msg = messagesHistory[currentChat.id].find(m => m.id == msgId);
+            if (!msg) return;
+            forwardMessageData = msg;
+            showForwardModal();
+        }
+        
+        function showForwardModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>📤 Переслать сообщение</h3>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div style="margin-bottom: 12px; padding: 8px; background: var(--bg-tertiary); border-radius: var(--yzfi-radius-sm);">
+                        "${escapeHtml(forwardMessageData.text?.substring(0, 50) || '📷 Фото')}"
+                    </div>
+                    <div id="forwardChatsList" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div class="modal-actions" style="margin-top: 12px;">
+                        <button class="secondary" onclick="this.closest('.modal').remove()">Отмена</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            const list = modal.querySelector('#forwardChatsList');
+            list.innerHTML = '<div class="loading">Загрузка чатов...</div>';
+            
+            const chatsToForward = allChats.filter(c => c.id !== currentChat.id);
+            if (chatsToForward.length === 0) {
+                list.innerHTML = '<div class="empty-feed">Нет других чатов для пересылки</div>';
+            } else {
+                list.innerHTML = chatsToForward.map(chat => `
+                    <div class="chat-item" onclick="sendForwardToChat(${chat.id}, this.closest('.modal'))">
+                        <div class="chat-avatar">${chat.avatar}</div>
+                        <div class="chat-info">
+                            <div class="chat-name">${escapeHtml(chat.name)}</div>
+                            <div class="chat-preview">${chat.isGroup ? '👥 Группа' : '💬 Личный чат'}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function sendForwardToChat(chatId, modal) {
+            const targetChat = allChats.find(c => c.id === chatId);
+            if (!targetChat) return;
+            
+            const forwardedMsg = {
+                id: Date.now(),
+                text: forwardMessageData.text || '',
+                imageUrl: forwardMessageData.imageUrl,
+                time: new Date().toISOString(),
+                type: 'outgoing',
+                status: 'sent',
+                isForwarded: true,
+                originalFrom: currentChat.name
+            };
+            
+            if (!messagesHistory[targetChat.id]) messagesHistory[targetChat.id] = [];
+            messagesHistory[targetChat.id].push(forwardedMsg);
+            targetChat.lastMessage = `📎 Переслано: ${forwardedMsg.text || 'Фото'}`;
+            targetChat.lastMessageTime = new Date().toISOString();
+            saveChats();
+            
+            modal.remove();
+            showToast(`✅ Переслано в чат ${targetChat.name}`);
+            
+            if (currentChat && currentChat.id === targetChat.id) {
+                showMessages();
+            }
+            renderChatsList();
+            forwardMessageData = null;
+        }
+
+
+
         
         function clearChatHistory() {
             if (confirm('Очистить историю чата?')) { messagesHistory[currentChat.id] = []; saveChats(); showMessages(); closeChatSettingsModal(); showToast('📭 История очищена'); }
@@ -1113,6 +1507,8 @@
             showToast(`💬 Чат с ${userData.username} создан`);
         }
 
+
+
         // ========== ЛЕНТА ==========
         async function loadFeed() {
             const container = document.getElementById('feedContainer');
@@ -1126,6 +1522,53 @@
             }
         }
 
+        // ========== СОХРАНЕНИЕ ПОСТОВ ==========
+        let savedPosts = new Set();
+        
+        async function loadSavedPosts() {
+            const saved = localStorage.getItem('yzfi_saved_posts');
+            if (saved) {
+                savedPosts = new Set(JSON.parse(saved));
+            }
+        }
+        
+        function saveSavedPosts() {
+            localStorage.setItem('yzfi_saved_posts', JSON.stringify([...savedPosts]));
+        }
+        
+        async function savePost(postId) {
+            if (savedPosts.has(postId)) {
+                savedPosts.delete(postId);
+                showToast('🔖 Удалено из сохранённых');
+            } else {
+                savedPosts.add(postId);
+                showToast('✅ Добавлено в сохранённые');
+            }
+            saveSavedPosts();
+        }
+        
+        async function loadSavedPostsFeed() {
+            if (savedPosts.size === 0) {
+                document.getElementById('feedContainer').innerHTML = '<div class="empty-feed"><strong>🔖 Нет сохранённых постов</strong></div>';
+                return;
+            }
+            document.getElementById('feedContainer').innerHTML = '<div class="loading">Загрузка...</div>';
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = '';
+            for (const postId of savedPosts) {
+                const postDoc = await db.collection('posts').doc(postId).get();
+                if (postDoc.exists) {
+                    await renderPost({ id: postDoc.id, ...postDoc.data() });
+                }
+            }
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div class="empty-feed"><strong>🔖 Нет сохранённых постов</strong></div>';
+            }
+        }
+
+
+
+
         async function renderPost(post) {
             const div = document.createElement('div'); div.className = 'post-card';
             let authorName = post.authorName || 'Пользователь';
@@ -1134,6 +1577,33 @@
             const likes = post.likes || {};
             const isLiked = likes[currentUser?.id] === true;
             const hashtaggedText = post.text ? post.text.replace(/#(\w+)/g, '<span class="hashtag" onclick="searchByHashtag(\'$1\')">#$1</span>') : '';
+            
+            // Опрос
+            let pollHtml = '';
+            if (post.isPoll && post.pollOptions) {
+                const userVote = post.pollVotes?.[currentUser?.id];
+                const totalVotes = post.pollResults ? Object.values(post.pollResults).reduce((a,b)=>a+b,0) : 0;
+                pollHtml = `<div class="poll-options" style="padding: 12px; border-top: 1px solid var(--border-color);">`;
+                post.pollOptions.forEach((opt, idx) => {
+                    const votes = post.pollResults?.[idx] || 0;
+                    const percent = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(0) : 0;
+                    if (userVote !== undefined) {
+                        pollHtml += `
+                            <div class="poll-option" style="background: var(--bg-tertiary); margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span>${escapeHtml(opt)}</span>
+                                    <span>${votes} (${percent}%)</span>
+                                </div>
+                                <div class="poll-bar" style="width:${percent}%; height: 4px; background: var(--accent-color); border-radius: 2px;"></div>
+                            </div>
+                        `;
+                    } else {
+                        pollHtml += `<div class="poll-option" onclick="voteInPoll('${post.id}', ${idx})" style="cursor: pointer; padding: 8px; background: var(--bg-tertiary); margin-bottom: 4px;">${escapeHtml(opt)}</div>`;
+                    }
+                });
+                pollHtml += `</div>`;
+            }
+            
             div.innerHTML = `
                 <div class="post-header">
                     <div class="post-avatar" onclick="viewUserProfile('${post.authorId}')">${authorAvatar}</div>
@@ -1145,10 +1615,12 @@
                 </div>
                 ${post.imageUrl ? `<img class="post-image" src="${post.imageUrl}" onclick="window.open('${post.imageUrl}','_blank')">` : ''}
                 ${post.text ? `<div class="post-text">${hashtaggedText}</div>` : ''}
+                ${pollHtml}
                 <div class="post-actions">
                     <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">❤️ ${Object.keys(likes).length}</button>
                     <button class="action-btn" onclick="toggleComments('${post.id}')">💬 ${post.comments?.length || 0}</button>
                     <button class="action-btn" onclick="repostPost('${post.id}')">📎 Репост</button>
+                    <button class="action-btn" onclick="savePost('${post.id}')">🔖</button>
                 </div>
                 <div class="comments-section" id="comments-${post.id}">
                     <div id="comments-list-${post.id}"></div>
@@ -1165,6 +1637,21 @@
             if (likes[currentUser?.id]) delete likes[currentUser.id];
             else likes[currentUser.id] = true;
             await postRef.update({ likes });
+            loadFeed();
+        }
+
+        async function voteInPoll(postId, optionIndex) {
+            if (!currentUser) return;
+            const postRef = db.collection('posts').doc(postId);
+            const post = await postRef.get();
+            const votes = post.data()?.pollVotes || {};
+            if (votes[currentUser.id]) { showToast('Вы уже голосовали', true); return; }
+            
+            await postRef.update({
+                [`pollVotes.${currentUser.id}`]: optionIndex,
+                [`pollResults.${optionIndex}`]: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('✅ Голос учтён!');
             loadFeed();
         }
 
@@ -1349,6 +1836,7 @@
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
             if (page === 'feed') loadFeed();
+            if (page === 'saved') loadSavedPostsFeed();
             if (page === 'shop') renderShop();
             if (page === 'profile') renderProfilePage();
             if (page === 'groups') loadGroups();
@@ -1357,6 +1845,64 @@
         // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
         function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
         function formatTime(d) { if (!d) return ''; const date = new Date(d); const now = new Date(); const diff = now - date; if (diff < 60000) return 'только что'; if (diff < 3600000) return Math.floor(diff/60000)+' мин'; if (diff < 86400000) return Math.floor(diff/3600000)+' ч'; return date.toLocaleDateString(); }
+        
+        // ========== ЗАГРУЗКА СТАРЫХ СООБЩЕНИЙ ==========
+        let isLoadingMore = false;
+        let oldestMessageTime = null;
+        
+        function setupInfiniteScroll() {
+            const messagesArea = document.getElementById('messagesArea');
+            if (!messagesArea) return;
+            
+            messagesArea.addEventListener('scroll', async () => {
+                if (messagesArea.scrollTop < 50 && !isLoadingMore && messagesHistory[currentChat?.id]?.length > 0) {
+                    isLoadingMore = true;
+                    const firstMessage = messagesHistory[currentChat.id][0];
+                    if (firstMessage && (!oldestMessageTime || new Date(firstMessage.time) < oldestMessageTime)) {
+                        oldestMessageTime = new Date(firstMessage.time);
+                        await loadMoreMessages(currentChat.id);
+                    }
+                    isLoadingMore = false;
+                }
+            });
+        }
+        
+        async function loadMoreMessages(chatId) {
+            if (!oldestMessageTime) return;
+            
+            const showLoadIndicator = () => {
+                const indicator = document.createElement('div');
+                indicator.id = 'loadingMore';
+                indicator.className = 'loading';
+                indicator.innerHTML = '<div class="spinner"></div> Загрузка истории...';
+                const messagesArea = document.getElementById('messagesArea');
+                messagesArea.insertBefore(indicator, messagesArea.firstChild);
+            };
+            
+            showLoadIndicator();
+            
+            // Имитация загрузки старых сообщений (в реальном проекте — запрос к Firestore)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const oldMessages = [
+                { id: Date.now() - 100000, text: '📜 Старое сообщение 1', time: new Date(Date.now() - 7*24*60*60*1000).toISOString(), type: 'incoming' },
+                { id: Date.now() - 200000, text: '📜 Старое сообщение 2', time: new Date(Date.now() - 8*24*60*60*1000).toISOString(), type: 'outgoing' }
+            ];
+            
+            messagesHistory[chatId] = [...oldMessages, ...messagesHistory[chatId]];
+            saveChats();
+            showMessages();
+            
+            document.getElementById('loadingMore')?.remove();
+            
+            // Прокручиваем к месту, где были
+            const messagesArea = document.getElementById('messagesArea');
+            if (messagesArea.firstChild) {
+                messagesArea.scrollTop = 100;
+            }
+        }
+        
+        
         function scrollToBottom() { const a = document.getElementById('messagesArea'); setTimeout(() => { if (a) a.scrollTop = a.scrollHeight; }, 100); }
         function showToast(msg, err) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = (err ? '❌ ' : '✅ ') + msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
         function filterChats() { renderChatsList(); }
@@ -1368,6 +1914,7 @@
                 if (user) await loadUserData();
                 else { currentUser = { id: 'test', username: 'YzFi', handle: '@yzfi', bio: 'Добро пожаловать!', coins: 100, isPremium: false }; }
                 await loadChats();
+                await loadSavedPosts();  // <-- ДОБАВЬТЕ ЭТУ СТРОКУ
                 renderShop();
                 renderProfilePage();
                 if (settings.notifications && Notification.permission !== 'granted') {
@@ -1380,21 +1927,27 @@
         window.switchPage = switchPage;
         window.openChat = openChat; window.closeChat = closeChat; window.sendMessage = sendMessage;
         window.filterChats = filterChats; window.handleKeyPress = handleKeyPress;
-        window.toggleLike = toggleLike; window.toggleComments = toggleComments; window.addComment = addComment; window.repostPost = repostPost; window.searchByHashtag = searchByHashtag;
+        window.toggleLike = toggleLike; window.toggleComments = toggleComments; window.addComment = addComment; 
+        window.repostPost = repostPost; window.searchByHashtag = searchByHashtag; window.voteInPoll = voteInPoll;
         window.buyCoins = buyCoins; window.buyPremium = buyPremium; window.buyGift = buyGift;
-        window.openCreatePostModal = openCreatePostModal; window.closeCreatePostModal = closeCreatePostModal; window.submitPost = submitPost;
+        window.openCreatePostModal = openCreatePostModal; window.closeCreatePostModal = closeCreatePostModal; 
+        window.submitPost = submitPost;
         window.logout = logout; window.openProfilePage = openProfilePage; window.viewUserProfile = viewUserProfile;
-        window.changeTheme = changeTheme; window.changeRadius = changeRadius; window.toggleNotifications = toggleNotifications; window.toggleOnlineStatus = toggleOnlineStatus;
+        window.changeTheme = changeTheme; window.changeRadius = changeRadius; 
+        window.toggleNotifications = toggleNotifications; window.toggleOnlineStatus = toggleOnlineStatus;
         window.exportData = exportData; window.clearAllData = clearAllData;
         window.editMessage = editMessage; window.deleteMessage = deleteMessage; window.replyToMessage = replyToMessage;
-        window.clearChatHistory = clearChatHistory; window.deleteChat = deleteChat; window.openChatSettings = openChatSettings; window.closeChatSettingsModal = closeChatSettingsModal;
-        window.openEditProfileModal = openEditProfileModal; window.closeEditProfileModal = closeEditProfileModal; window.saveProfile = saveProfile;
+        window.forwardMessage = forwardMessage;  // <-- ДОБАВИТЬ
+        window.clearChatHistory = clearChatHistory; window.deleteChat = deleteChat; 
+        window.openChatSettings = openChatSettings; window.closeChatSettingsModal = closeChatSettingsModal;
+        window.openEditProfileModal = openEditProfileModal; window.closeEditProfileModal = closeEditProfileModal; 
+        window.saveProfile = saveProfile;
         window.openStickerPicker = openStickerPicker; window.pickImage = pickImage;
         window.searchUsers = searchUsers;
         window.openCreateGroupModal = openCreateGroupModal; window.closeCreateGroupModal = closeCreateGroupModal;
         window.openJoinGroupModal = openJoinGroupModal; window.closeJoinGroupModal = closeJoinGroupModal;
         window.submitCreateGroup = submitCreateGroup; window.submitJoinGroup = submitJoinGroup;
-
+        window.savePost = savePost;  // <-- ДОБАВИТЬ (для кнопки сохранения)
         init();
     </script>
 </body>
