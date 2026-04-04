@@ -1079,40 +1079,169 @@
         }
 
         // ========== ЧАТЫ ==========
+
+
+        // ========== ЗАГРУЗКА ЧАТОВ ИЗ FIREBASE ==========
+        let unsubscribeChats = null;
+        
+        
         async function loadChats() {
-            const saved = localStorage.getItem('yzfi_chats');
-            if (saved) { allChats = JSON.parse(saved); }
-            else {
-                allChats = [
-                    { id: 1, name: 'Анна', avatar: 'А', lastMessage: 'Привет!', lastMessageTime: new Date().toISOString(), online: true, unread: 2, userId: 'anna123', isGroup: false },
-                    { id: 2, name: 'Максим', avatar: 'М', lastMessage: 'Скинь фото!', lastMessageTime: new Date(Date.now() - 3600000).toISOString(), online: false, unread: 0, userId: 'maxim456', isGroup: false }
-                ];
+            if (!currentUser) return;
+            
+            const userId = currentUser.uid || currentUser.id;
+            
+            // Отписываемся от старого слушателя
+            if (unsubscribeChats) {
+                unsubscribeChats();
             }
-            const savedMsg = localStorage.getItem('yzfi_messages');
-            if (savedMsg) { messagesHistory = JSON.parse(savedMsg); }
-            else { messagesHistory = { 1: [], 2: [] }; }
-            renderChatsList();
+            
+            const container = document.getElementById('chatsList');
+            if (container) container.innerHTML = '<div class="loading">⏳ Загрузка чатов...</div>';
+            
+            // Слушаем изменения чатов в реальном времени
+            unsubscribeChats = db.collection('users').doc(userId).collection('chats')
+                .orderBy('lastMessageTime', 'desc')
+                .onSnapshot((snapshot) => {
+                    allChats = [];
+                    snapshot.forEach(doc => {
+                        const chatData = { id: doc.id, ...doc.data() };
+                        allChats.push(chatData);
+                    });
+                    renderChatsList();
+                    
+                    // Загружаем онлайн-статусы для пользователей
+                    const userIds = allChats.filter(c => c.type === 'dm' && c.userId).map(c => c.userId);
+                    if (userIds.length) loadUserStatuses(userIds);
+                }, (error) => {
+                    console.error('Ошибка загрузки чатов:', error);
+                    if (container) container.innerHTML = '<div class="empty-feed">❌ Ошибка загрузки чатов</div>';
+                });
+        }
+        
+        // Загрузка онлайн-статусов
+        async function loadUserStatuses(userIds) {
+            for (const uid of userIds) {
+                if (uid === (currentUser?.uid || currentUser?.id)) continue;
+                const unsub = db.collection('users').doc(uid).onSnapshot((doc) => {
+                    if (doc.exists) {
+                        userStatuses.set(uid, { 
+                            online: doc.data()?.online === true, 
+                            lastSeen: doc.data()?.lastSeen?.toDate() 
+                        });
+                        renderChatsList();
+                    }
+                });
+                // Сохраняем для отписки (опционально)
+            }
         }
 
-        function renderChatsList() {
+
+                function renderChatsList() {
             const container = document.getElementById('chatsList');
             if (!container) return;
+            
             const term = document.getElementById('searchChats')?.value.toLowerCase() || '';
-            let filtered = allChats.filter(c => c.name.toLowerCase().includes(term));
-            container.innerHTML = filtered.map(chat => `
-                <div class="chat-item" onclick="openChat(${chat.id})">
-                    <div class="chat-avatar">${chat.avatar}${chat.online ? '<div class="online-indicator"></div>' : ''}</div>
-                    <div class="chat-info">
-                        <div class="chat-name">${escapeHtml(chat.name)} ${chat.isPremium ? '👑' : ''}${chat.isGroup ? ' 👥' : ''}</div>
-                        <div class="chat-last-message">${escapeHtml(chat.lastMessage?.substring(0, 40) || 'Нет сообщений')}</div>
+            let filtered = allChats.filter(chat => {
+                const title = chat.type === 'group' ? chat.name : chat.username;
+                return title?.toLowerCase().includes(term);
+            });
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-feed">📭 Нет чатов</div>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(chat => {
+                const isGroup = chat.type === 'group';
+                const title = isGroup ? chat.name : chat.username;
+                const avatar = isGroup ? '👥' : (title?.charAt(0) || '?').toUpperCase();
+                const status = !isGroup && userStatuses.get(chat.userId);
+                const isOnline = status?.online;
+                const lastMessage = chat.lastMessage || 'Нет сообщений';
+                const time = chat.lastMessageTime?.toDate ? formatTime(chat.lastMessageTime.toDate()) : '';
+                const unread = chat.unreadCount || 0;
+                
+                return `
+                    <div class="chat-item" onclick="openChat('${chat.id}')">
+                        <div class="chat-avatar">
+                            ${avatar}
+                            ${isOnline ? '<div class="online-indicator"></div>' : ''}
+                        </div>
+                        <div class="chat-info">
+                            <div class="chat-name">${escapeHtml(title)} ${isGroup ? '👥' : ''}</div>
+                            <div class="chat-last-message">${escapeHtml(lastMessage.substring(0, 40))}</div>
+                        </div>
+                        <div class="chat-meta">
+                            <div class="chat-time">${time}</div>
+                            ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+                        </div>
                     </div>
-                    <div class="chat-meta">
-                        <div class="chat-time">${formatTime(chat.lastMessageTime)}</div>
-                        ${chat.unread > 0 ? `<div class="unread-badge">${chat.unread}</div>` : ''}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
+
+
+
+        // ========== ЗАГРУЗКА СООБЩЕНИЙ ==========
+        let unsubscribeMessages = null;
+        
+        function loadMessages(chatId, isGroup) {
+            // Отписываемся от старых сообщений
+            if (unsubscribeMessages) unsubscribeMessages();
+            
+            const messagesContainer = document.getElementById('messagesArea');
+            if (messagesContainer) messagesContainer.innerHTML = '<div class="loading">⏳ Загрузка сообщений...</div>';
+            
+            let collectionPath;
+            if (isGroup) {
+                collectionPath = db.collection('groups').doc(chatId).collection('messages');
+            } else {
+                const myId = currentUser.uid || currentUser.id;
+                const peerId = chatId; // В личных чатах id чата = peerId
+                const chatDocId = [myId, peerId].sort().join('_');
+                collectionPath = db.collection('chats').doc(chatDocId).collection('messages');
+            }
+            
+            unsubscribeMessages = collectionPath
+                .orderBy('timestamp', 'asc')
+                .limit(50)
+                .onSnapshot((snapshot) => {
+                    if (!messagesContainer) return;
+                    
+                    if (snapshot.empty) {
+                        messagesContainer.innerHTML = '<div style="text-align:center; padding:40px;">💬 Напишите первое сообщение</div>';
+                        return;
+                    }
+                    
+                    const messages = [];
+                    snapshot.forEach(doc => {
+                        messages.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    messagesContainer.innerHTML = messages.map(msg => {
+                        const isOwn = (msg.userId === (currentUser.uid || currentUser.id));
+                        const time = msg.timestamp?.toDate ? formatTime(msg.timestamp.toDate()) : '';
+                        return `
+                            <div class="message ${isOwn ? 'outgoing' : 'incoming'}">
+                                <div class="message-bubble">
+                                    ${!isOwn ? `<div><strong>${escapeHtml(msg.username || 'Пользователь')}</strong></div>` : ''}
+                                    <div class="message-text">${escapeHtml(msg.text || '')}</div>
+                                    ${msg.imageUrl ? `<img src="${msg.imageUrl}" style="max-width:100%; max-height:200px; margin-top:8px; border-radius:8px;">` : ''}
+                                    <div class="message-time">${time} ${isOwn ? (msg.readBy ? '✓✓' : '✓') : ''}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    scrollToBottom();
+                }, (error) => {
+                    console.error('Ошибка загрузки сообщений:', error);
+                    if (messagesContainer) messagesContainer.innerHTML = '<div class="empty-feed">❌ Ошибка загрузки сообщений</div>';
+                });
+        }
+
+
+
 
         function saveChats() { localStorage.setItem('yzfi_chats', JSON.stringify(allChats)); localStorage.setItem('yzfi_messages', JSON.stringify(messagesHistory)); }
 
@@ -1175,58 +1304,80 @@
             scrollToBottom();
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const text = document.getElementById('messageInput').value.trim();
             if ((!text && !lastUploadedImage) || !currentChat) return;
             
-            const msg = { 
-                id: Date.now(), 
-                text: text || (lastUploadedImage ? '📷 Фото' : ''), 
-                time: new Date().toISOString(), 
-                type: 'outgoing', 
-                status: 'sent', 
-                isPremium: isPremium,
-                imageUrl: lastUploadedImage,
-                readBy: [currentUser.uid || currentUser.id]
-            };
-            if (!messagesHistory[currentChat.id]) messagesHistory[currentChat.id] = [];
-            messagesHistory[currentChat.id].push(msg);
-            currentChat.lastMessage = text || '📷 Фото';
-            currentChat.lastMessageTime = new Date().toISOString();
-            saveChats();
-            showMessages();
-            renderChatsList();
-            const messageInput = document.getElementById('messageInput');
-            if (messageInput) messageInput.value = '';
-            lastUploadedImage = null;
-            scrollToBottom();
+            const userId = currentUser.uid || currentUser.id;
+            const username = currentUser.username;
             
-            setTimeout(() => {
-                const replies = ['👍', '😊', '🔥', 'Круто!', 'Отлично!'];
-                const reply = replies[Math.floor(Math.random() * replies.length)];
-                const replyMsg = { 
-                    id: Date.now(), 
-                    text: reply, 
-                    time: new Date().toISOString(), 
-                    type: 'incoming', 
-                    status: 'delivered',
-                    readBy: []
-                };
-                messagesHistory[currentChat.id].push(replyMsg);
-                currentChat.lastMessage = reply;
-                currentChat.lastMessageTime = new Date().toISOString();
-                saveChats();
-                showMessages();
-                renderChatsList();
-                
-                const lastOut = messagesHistory[currentChat.id].filter(m => m.type === 'outgoing').pop();
-                if (lastOut) { 
-                    lastOut.status = 'read'; 
-                    lastOut.readBy = [...(lastOut.readBy || []), currentChat.userId || 'peer'];
-                    saveChats(); 
-                    showMessages(); 
+            const messageData = {
+                userId: userId,
+                username: username,
+                text: text || (lastUploadedImage ? '📷 Фото' : ''),
+                imageUrl: lastUploadedImage,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                readBy: [userId]
+            };
+            
+            try {
+                if (currentChat.isGroup) {
+                    // Отправка в группу
+                    await db.collection('groups').doc(currentChat.id).collection('messages').add(messageData);
+                    
+                    // Обновляем последнее сообщение в чате
+                    await db.collection('users').doc(userId).collection('chats').doc(currentChat.id).update({
+                        lastMessage: text || '📷 Фото',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Отправка в личный чат
+                    const peerId = currentChat.id;
+                    const chatDocId = [userId, peerId].sort().join('_');
+                    
+                    await db.collection('chats').doc(chatDocId).collection('messages').add(messageData);
+                    
+                    // Обновляем чат для отправителя
+                    await db.collection('users').doc(userId).collection('chats').doc(peerId).set({
+                        type: 'dm',
+                        userId: peerId,
+                        username: currentChat.name,
+                        lastMessage: text || '📷 Фото',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        unreadCount: 0
+                    }, { merge: true });
+                    
+                    // Обновляем чат для получателя (увеличиваем unreadCount)
+                    const peerChatRef = db.collection('users').doc(peerId).collection('chats').doc(userId);
+                    const peerChatDoc = await peerChatRef.get();
+                    if (peerChatDoc.exists) {
+                        await peerChatRef.update({
+                            lastMessage: text || '📷 Фото',
+                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            unreadCount: firebase.firestore.FieldValue.increment(1)
+                        });
+                    } else {
+                        await peerChatRef.set({
+                            type: 'dm',
+                            userId: userId,
+                            username: username,
+                            lastMessage: text || '📷 Фото',
+                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            unreadCount: 1
+                        });
+                    }
                 }
-            }, 1500);
+                
+                // Очищаем поле ввода
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) messageInput.value = '';
+                lastUploadedImage = null;
+                scrollToBottom();
+                
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                showToast('❌ Ошибка отправки', true);
+            }
         }
 
         function editMessage(msgId) {
@@ -2029,11 +2180,11 @@
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     await loadUserData();
+                    await loadChats();  // Теперь загружает из Firebase
                 } else {
                     window.location.href = 'index.html';
                     return;
                 }
-                await loadChats();
                 await loadSavedPosts();
                 renderShop();
                 renderProfilePage();
