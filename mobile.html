@@ -899,7 +899,6 @@
             </div>
         </div>
 
-        <!-- Нижняя навигация (6 вкладок) -->
         <!-- Нижняя навигация -->
         <div class="bottom-nav">
             <div class="nav-item active" data-page="chats" onclick="switchPage('chats')"><span class="material-icons">chat_bubble</span><span>Чаты</span></div>
@@ -963,6 +962,17 @@
     </div>
 
     <script>
+        // ========== ОПРЕДЕЛЕНИЕ УСТРОЙСТВА ==========
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                || window.innerWidth <= 768;
+        }
+
+        // Если НЕ мобильное устройство — перенаправляем на десктопную версию
+        if (!isMobile()) {
+            window.location.href = 'chat.html';
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyC-xF1GL7G67XNJOiMUDchcLQRhXANsORk",
             authDomain: "hlypalka.firebaseapp.com",
@@ -1000,11 +1010,11 @@
             document.body.classList.add(`theme-${settings.theme}`);
             document.documentElement.style.setProperty('--yzfi-radius', `${settings.radius}px`);
             document.documentElement.style.setProperty('--yzfi-radius-sm', `${Math.max(4, settings.radius / 2)}px`);
-            document.getElementById('themeSelect').value = settings.theme;
-            document.getElementById('radiusSlider').value = settings.radius;
-            document.getElementById('radiusValue').textContent = `${settings.radius}px`;
-            document.getElementById('notifToggle').checked = settings.notifications;
-            document.getElementById('onlineToggle').checked = settings.onlineStatus;
+            if (document.getElementById('themeSelect')) document.getElementById('themeSelect').value = settings.theme;
+            if (document.getElementById('radiusSlider')) document.getElementById('radiusSlider').value = settings.radius;
+            if (document.getElementById('radiusValue')) document.getElementById('radiusValue').textContent = `${settings.radius}px`;
+            if (document.getElementById('notifToggle')) document.getElementById('notifToggle').checked = settings.notifications;
+            if (document.getElementById('onlineToggle')) document.getElementById('onlineToggle').checked = settings.onlineStatus;
         }
         applySettings();
 
@@ -1015,7 +1025,14 @@
 
         async function updateOnlineStatus() {
             if (!currentUser || !settings.onlineStatus) return;
-            await db.collection('users').doc(currentUser.id).update({ online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
+            const userId = currentUser.uid || currentUser.id;
+            if (!userId) return;
+            try {
+                await db.collection('users').doc(userId).update({ 
+                    online: true, 
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+            } catch(e) { console.warn('Online status error:', e); }
         }
 
         async function loadUserData() {
@@ -1025,6 +1042,7 @@
                 if (doc.exists) {
                     const data = doc.data();
                     currentUser = {
+                        uid: user.uid,
                         id: user.uid,
                         username: data.username || user.displayName || 'Пользователь',
                         handle: data.userHandle || '$' + (data.username || '').toLowerCase(),
@@ -1034,16 +1052,32 @@
                         avatar: data.avatar
                     };
                 } else {
-                    currentUser = { id: user.uid, username: user.displayName || 'Пользователь', handle: '@user', bio: '', coins: 0, isPremium: false };
+                    currentUser = { 
+                        uid: user.uid,
+                        id: user.uid,
+                        username: user.displayName || 'Пользователь', 
+                        handle: '@user', 
+                        bio: '', 
+                        coins: 0, 
+                        isPremium: false 
+                    };
                 }
             } else {
-                currentUser = { id: 'test', username: 'YzFi', handle: '@yzfi', bio: 'Добро пожаловать!', coins: 100, isPremium: false };
+                currentUser = { 
+                    uid: 'test', 
+                    id: 'test',
+                    username: 'YzFi', 
+                    handle: '@yzfi', 
+                    bio: 'Добро пожаловать!', 
+                    coins: 100, 
+                    isPremium: false 
+                };
             }
             userCoins = currentUser.coins;
             isPremium = currentUser.isPremium;
-            document.getElementById('profileName').innerHTML = currentUser.username;
-            document.getElementById('profileAvatar').innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
-            if (isPremium) document.getElementById('premiumBadge').classList.remove('hidden');
+            if (document.getElementById('profileName')) document.getElementById('profileName').innerHTML = currentUser.username;
+            if (document.getElementById('profileAvatar')) document.getElementById('profileAvatar').innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
+            if (isPremium && document.getElementById('premiumBadge')) document.getElementById('premiumBadge').classList.remove('hidden');
             updateOnlineStatus();
             setInterval(() => updateOnlineStatus(), 30000);
         }
@@ -1066,6 +1100,7 @@
 
         function renderChatsList() {
             const container = document.getElementById('chatsList');
+            if (!container) return;
             const term = document.getElementById('searchChats')?.value.toLowerCase() || '';
             let filtered = allChats.filter(c => c.name.toLowerCase().includes(term));
             container.innerHTML = filtered.map(chat => `
@@ -1087,25 +1122,38 @@
 
         function openChat(chatId) {
             currentChat = allChats.find(c => c.id === chatId);
+            if (!currentChat) return;
             if (currentChat.unread) { currentChat.unread = 0; saveChats(); }
             currentChatIsGroup = currentChat.isGroup || false;
             currentChatPeerId = currentChat.userId;
             currentChatGroupId = currentChat.groupId;
             
-            document.querySelector('.chats-container').style.display = 'none';
-            document.getElementById('chatView').style.display = 'flex';
-            document.getElementById('chatAvatar').textContent = currentChat.avatar;
-            document.getElementById('chatName').innerHTML = currentChat.name + (currentChat.isPremium ? ' 👑' : '') + (currentChat.isGroup ? ' 👥' : '');
-            document.getElementById('chatStatus').innerHTML = currentChat.isGroup ? '👥 Группа' : (currentChat.online ? '<span class="online-status">● онлайн</span>' : '<span class="offline-status">○ был(а) недавно</span>');
+            const chatsContainer = document.querySelector('.chats-container');
+            const chatView = document.getElementById('chatView');
+            if (chatsContainer) chatsContainer.style.display = 'none';
+            if (chatView) chatView.style.display = 'flex';
+            const chatAvatar = document.getElementById('chatAvatar');
+            const chatName = document.getElementById('chatName');
+            const chatStatus = document.getElementById('chatStatus');
+            if (chatAvatar) chatAvatar.textContent = currentChat.avatar;
+            if (chatName) chatName.innerHTML = currentChat.name + (currentChat.isPremium ? ' 👑' : '') + (currentChat.isGroup ? ' 👥' : '');
+            if (chatStatus) chatStatus.innerHTML = currentChat.isGroup ? '👥 Группа' : (currentChat.online ? '<span class="online-status">● онлайн</span>' : '<span class="offline-status">○ был(а) недавно</span>');
             showMessages();
             setupInfiniteScroll();
         }
 
-        function closeChat() { document.querySelector('.chats-container').style.display = 'flex'; document.getElementById('chatView').style.display = 'none'; currentChat = null; }
+        function closeChat() { 
+            const chatsContainer = document.querySelector('.chats-container');
+            const chatView = document.getElementById('chatView');
+            if (chatsContainer) chatsContainer.style.display = 'flex';
+            if (chatView) chatView.style.display = 'none';
+            currentChat = null; 
+        }
 
         function showMessages() {
-            const msgs = messagesHistory[currentChat?.id] || [];
             const container = document.getElementById('messagesArea');
+            if (!container) return;
+            const msgs = messagesHistory[currentChat?.id] || [];
             if (msgs.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">💬 Напишите первое сообщение</div>'; return; }
             container.innerHTML = msgs.map(msg => `
                 <div class="message ${msg.type}" data-msg-id="${msg.id}">
@@ -1143,7 +1191,7 @@
                 status: 'sent', 
                 isPremium: isPremium,
                 imageUrl: lastUploadedImage,
-                readBy: [currentUser.id]
+                readBy: [currentUser.uid || currentUser.id]
             };
             if (!messagesHistory[currentChat.id]) messagesHistory[currentChat.id] = [];
             messagesHistory[currentChat.id].push(msg);
@@ -1152,11 +1200,11 @@
             saveChats();
             showMessages();
             renderChatsList();
-            document.getElementById('messageInput').value = '';
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) messageInput.value = '';
             lastUploadedImage = null;
             scrollToBottom();
             
-            // Имитация получения ответа с обновлением статуса
             setTimeout(() => {
                 const replies = ['👍', '😊', '🔥', 'Круто!', 'Отлично!'];
                 const reply = replies[Math.floor(Math.random() * replies.length)];
@@ -1175,7 +1223,6 @@
                 showMessages();
                 renderChatsList();
                 
-                // Отмечаем отправленное сообщение как прочитанное
                 const lastOut = messagesHistory[currentChat.id].filter(m => m.type === 'outgoing').pop();
                 if (lastOut) { 
                     lastOut.status = 'read'; 
@@ -1211,7 +1258,10 @@
         
         function replyToMessage(msgId) {
             const msg = messagesHistory[currentChat.id].find(m => m.id == msgId);
-            if (msg) document.getElementById('messageInput').placeholder = `Ответ: ${msg.text.substring(0, 30)}...`;
+            if (msg) {
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) messageInput.placeholder = `Ответ: ${msg.text.substring(0, 30)}...`;
+            }
         }
         
         // ========== ПЕРЕСЫЛКА СООБЩЕНИЙ ==========
@@ -1295,9 +1345,6 @@
             forwardMessageData = null;
         }
 
-
-
-        
         function clearChatHistory() {
             if (confirm('Очистить историю чата?')) { messagesHistory[currentChat.id] = []; saveChats(); showMessages(); closeChatSettingsModal(); showToast('📭 История очищена'); }
         }
@@ -1314,35 +1361,49 @@
             }
         }
         
-        function openChatSettings() { document.getElementById('chatSettingsModal').style.display = 'flex'; }
-        function closeChatSettingsModal() { document.getElementById('chatSettingsModal').style.display = 'none'; }
+        function openChatSettings() { 
+            const modal = document.getElementById('chatSettingsModal');
+            if (modal) modal.style.display = 'flex'; 
+        }
+        function closeChatSettingsModal() { 
+            const modal = document.getElementById('chatSettingsModal');
+            if (modal) modal.style.display = 'none'; 
+        }
 
         // ========== ФОТО В ЧАТАХ ==========
-        function pickImage() { document.getElementById('imageInput').click(); }
+        function pickImage() { 
+            const imageInput = document.getElementById('imageInput');
+            if (imageInput) imageInput.click(); 
+        }
         
-        document.getElementById('imageInput').addEventListener('change', async function() {
-            const file = this.files[0];
-            if (!file) return;
-            if (file.size > 5 * 1024 * 1024) { showToast('Файл >5МБ', true); return; }
-            const fd = new FormData();
-            fd.append('image', file);
-            try {
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: fd });
-                const data = await res.json();
-                if (data.success) {
-                    lastUploadedImage = data.data.url;
-                    showToast('📷 Фото готово к отправке');
-                } else showToast('Ошибка загрузки', true);
-            } catch(e) { showToast('Ошибка', true); }
-            this.value = '';
-        });
+        const imageInputElement = document.getElementById('imageInput');
+        if (imageInputElement) {
+            imageInputElement.addEventListener('change', async function() {
+                const file = this.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { showToast('Файл >5МБ', true); return; }
+                const fd = new FormData();
+                fd.append('image', file);
+                try {
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (data.success) {
+                        lastUploadedImage = data.data.url;
+                        showToast('📷 Фото готово к отправке');
+                    } else showToast('Ошибка загрузки', true);
+                } catch(e) { showToast('Ошибка', true); }
+                this.value = '';
+            });
+        }
 
         // ========== ГРУППЫ ==========
         async function loadGroups() {
             const container = document.getElementById('groupsContainer');
+            if (!container) return;
             container.innerHTML = '<div class="loading">Загрузка...</div>';
             try {
-                const snapshot = await db.collection('groups').where('memberIds', 'array-contains', currentUser.id).get();
+                const userId = currentUser.uid || currentUser.id;
+                const snapshot = await db.collection('groups').where('memberIds', 'array-contains', userId).get();
                 if (snapshot.empty) {
                     container.innerHTML = '<div class="empty-feed"><strong>👥 Нет групп</strong><button class="buy-btn" onclick="openCreateGroupModal()">➕ Создать группу</button><button class="buy-btn" onclick="openJoinGroupModal()" style="margin-top:8px;">🔑 Войти по коду</button></div>';
                     return;
@@ -1365,13 +1426,28 @@
                 }
                 container.innerHTML += `<button class="buy-btn" onclick="openCreateGroupModal()" style="margin-top:12px;">➕ Создать группу</button>
                                         <button class="buy-btn" onclick="openJoinGroupModal()" style="margin-top:8px;">🔑 Войти по коду</button>`;
-            } catch(e) { container.innerHTML = '<div class="empty-feed">❌ Ошибка загрузки</div>'; }
+            } catch(e) { 
+                console.error('Groups error:', e);
+                container.innerHTML = '<div class="empty-feed">❌ Ошибка загрузки групп</div>'; 
+            }
         }
 
-        function openCreateGroupModal() { document.getElementById('createGroupModal').style.display = 'flex'; }
-        function closeCreateGroupModal() { document.getElementById('createGroupModal').style.display = 'none'; }
-        function openJoinGroupModal() { document.getElementById('joinGroupModal').style.display = 'flex'; }
-        function closeJoinGroupModal() { document.getElementById('joinGroupModal').style.display = 'none'; }
+        function openCreateGroupModal() { 
+            const modal = document.getElementById('createGroupModal');
+            if (modal) modal.style.display = 'flex'; 
+        }
+        function closeCreateGroupModal() { 
+            const modal = document.getElementById('createGroupModal');
+            if (modal) modal.style.display = 'none'; 
+        }
+        function openJoinGroupModal() { 
+            const modal = document.getElementById('joinGroupModal');
+            if (modal) modal.style.display = 'flex'; 
+        }
+        function closeJoinGroupModal() { 
+            const modal = document.getElementById('joinGroupModal');
+            if (modal) modal.style.display = 'none'; 
+        }
 
         async function submitCreateGroup() {
             const name = document.getElementById('groupName').value.trim();
@@ -1382,12 +1458,13 @@
             const existing = await db.collection('groups').where('inviteCodeNorm', '==', norm).limit(1).get();
             if (!existing.empty) { showToast('Код занят', true); return; }
             const gid = db.collection('groups').doc().id;
+            const userId = currentUser.uid || currentUser.id;
             await db.collection('groups').doc(gid).set({
                 name, inviteCode: code, inviteCodeNorm: norm,
-                ownerId: currentUser.id, memberIds: [currentUser.id],
+                ownerId: userId, memberIds: [userId],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            await db.collection('users').doc(currentUser.id).collection('chats').doc(gid).set({
+            await db.collection('users').doc(userId).collection('chats').doc(gid).set({
                 type: 'group', groupId: gid, name, inviteCode: code,
                 lastMessage: '', lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), unreadCount: 0
             });
@@ -1405,10 +1482,11 @@
             const gdoc = snap.docs[0];
             const gid = gdoc.id;
             const data = gdoc.data();
-            if (!data.memberIds?.includes(currentUser.id)) {
-                await db.collection('groups').doc(gid).update({ memberIds: firebase.firestore.FieldValue.arrayUnion(currentUser.id) });
+            const userId = currentUser.uid || currentUser.id;
+            if (!data.memberIds?.includes(userId)) {
+                await db.collection('groups').doc(gid).update({ memberIds: firebase.firestore.FieldValue.arrayUnion(userId) });
             }
-            await db.collection('users').doc(currentUser.id).collection('chats').doc(gid).set({
+            await db.collection('users').doc(userId).collection('chats').doc(gid).set({
                 type: 'group', groupId: gid, name: data.name, inviteCode: data.inviteCode,
                 lastMessage: '', lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), unreadCount: 0
             }, { merge: true });
@@ -1429,25 +1507,32 @@
             };
             currentChatIsGroup = true;
             currentChatGroupId = groupId;
-            document.querySelector('.chats-container').style.display = 'none';
-            document.getElementById('chatView').style.display = 'flex';
-            document.getElementById('chatAvatar').textContent = '👥';
-            document.getElementById('chatName').innerHTML = escapeHtml(groupData.name) + ' 👥';
-            document.getElementById('chatStatus').innerHTML = `${groupData.memberIds?.length || 0} участников`;
+            const chatsContainer = document.querySelector('.chats-container');
+            const chatView = document.getElementById('chatView');
+            if (chatsContainer) chatsContainer.style.display = 'none';
+            if (chatView) chatView.style.display = 'flex';
+            const chatAvatar = document.getElementById('chatAvatar');
+            const chatName = document.getElementById('chatName');
+            const chatStatus = document.getElementById('chatStatus');
+            if (chatAvatar) chatAvatar.textContent = '👥';
+            if (chatName) chatName.innerHTML = escapeHtml(groupData.name) + ' 👥';
+            if (chatStatus) chatStatus.innerHTML = `${groupData.memberIds?.length || 0} участников`;
             
             const msgs = messagesHistory[groupId] || [];
             const container = document.getElementById('messagesArea');
-            if (msgs.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">💬 Напишите первое сообщение</div>'; }
-            else {
-                container.innerHTML = msgs.map(msg => `
-                    <div class="message ${msg.type}">
-                        <div class="message-bubble">
-                            <div><strong>${escapeHtml(msg.username || 'Пользователь')}</strong></div>
-                            <div class="message-text">${escapeHtml(msg.text)}</div>
-                            <div class="message-time">${formatTime(msg.time)}</div>
+            if (container) {
+                if (msgs.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">💬 Напишите первое сообщение</div>'; }
+                else {
+                    container.innerHTML = msgs.map(msg => `
+                        <div class="message ${msg.type}">
+                            <div class="message-bubble">
+                                <div><strong>${escapeHtml(msg.username || 'Пользователь')}</strong></div>
+                                <div class="message-text">${escapeHtml(msg.text)}</div>
+                                <div class="message-time">${formatTime(msg.time)}</div>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             }
         }
 
@@ -1456,6 +1541,7 @@
             const query = document.getElementById('searchUsersInput').value.trim();
             if (!query) return;
             const resultsDiv = document.getElementById('searchUsersResults');
+            if (!resultsDiv) return;
             resultsDiv.innerHTML = '<div class="loading">Поиск...</div>';
             try {
                 let snap;
@@ -1473,7 +1559,7 @@
                 if (snap.empty) { resultsDiv.innerHTML = '<div class="empty-feed">❌ Никого не найдено</div>'; return; }
                 resultsDiv.innerHTML = '';
                 for (const doc of snap.docs) {
-                    if (doc.id === currentUser.id) continue;
+                    if (doc.id === (currentUser.uid || currentUser.id)) continue;
                     const user = doc.data();
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'user-result';
@@ -1492,7 +1578,8 @@
 
         async function startDMWith(userId, userData) {
             const ts = firebase.firestore.FieldValue.serverTimestamp();
-            await db.collection('users').doc(currentUser.id).collection('chats').doc(userId).set({
+            const myUserId = currentUser.uid || currentUser.id;
+            await db.collection('users').doc(myUserId).collection('chats').doc(userId).set({
                 type: 'dm', userId: userId, username: userData.username,
                 peerAvatar: userData.avatar || '', userHandle: userData.userHandle,
                 lastMessage: '', lastMessageTime: ts, unreadCount: 0, createdAt: ts, updatedAt: ts
@@ -1507,11 +1594,10 @@
             showToast(`💬 Чат с ${userData.username} создан`);
         }
 
-
-
         // ========== ЛЕНТА ==========
         async function loadFeed() {
             const container = document.getElementById('feedContainer');
+            if (!container) return;
             container.innerHTML = '<div class="loading">Загрузка...</div>';
             const posts = await db.collection('posts').orderBy('timestamp', 'desc').limit(30).get();
             if (posts.empty) { container.innerHTML = '<div class="empty-feed">📭 Нет постов</div>'; return; }
@@ -1548,12 +1634,13 @@
         }
         
         async function loadSavedPostsFeed() {
+            const container = document.getElementById('feedContainer');
+            if (!container) return;
             if (savedPosts.size === 0) {
-                document.getElementById('feedContainer').innerHTML = '<div class="empty-feed"><strong>🔖 Нет сохранённых постов</strong></div>';
+                container.innerHTML = '<div class="empty-feed"><strong>🔖 Нет сохранённых постов</strong></div>';
                 return;
             }
-            document.getElementById('feedContainer').innerHTML = '<div class="loading">Загрузка...</div>';
-            const container = document.getElementById('feedContainer');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
             container.innerHTML = '';
             for (const postId of savedPosts) {
                 const postDoc = await db.collection('posts').doc(postId).get();
@@ -1566,22 +1653,20 @@
             }
         }
 
-
-
-
         async function renderPost(post) {
+            const container = document.getElementById('feedContainer');
+            if (!container) return;
             const div = document.createElement('div'); div.className = 'post-card';
             let authorName = post.authorName || 'Пользователь';
             let authorHandle = post.authorHandle || '';
             let authorAvatar = authorName.charAt(0).toUpperCase();
             const likes = post.likes || {};
-            const isLiked = likes[currentUser?.id] === true;
+            const isLiked = likes[currentUser?.uid || currentUser?.id] === true;
             const hashtaggedText = post.text ? post.text.replace(/#(\w+)/g, '<span class="hashtag" onclick="searchByHashtag(\'$1\')">#$1</span>') : '';
             
-            // Опрос
             let pollHtml = '';
             if (post.isPoll && post.pollOptions) {
-                const userVote = post.pollVotes?.[currentUser?.id];
+                const userVote = post.pollVotes?.[currentUser?.uid || currentUser?.id];
                 const totalVotes = post.pollResults ? Object.values(post.pollResults).reduce((a,b)=>a+b,0) : 0;
                 pollHtml = `<div class="poll-options" style="padding: 12px; border-top: 1px solid var(--border-color);">`;
                 post.pollOptions.forEach((opt, idx) => {
@@ -1627,15 +1712,16 @@
                     <div class="add-comment"><input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..."><button class="buy-btn" onclick="addComment('${post.id}')">→</button></div>
                 </div>
             `;
-            document.getElementById('feedContainer').appendChild(div);
+            container.appendChild(div);
         }
 
         async function toggleLike(postId) {
             const postRef = db.collection('posts').doc(postId);
             const post = await postRef.get();
             const likes = post.data()?.likes || {};
-            if (likes[currentUser?.id]) delete likes[currentUser.id];
-            else likes[currentUser.id] = true;
+            const userId = currentUser?.uid || currentUser?.id;
+            if (likes[userId]) delete likes[userId];
+            else likes[userId] = true;
             await postRef.update({ likes });
             loadFeed();
         }
@@ -1645,10 +1731,11 @@
             const postRef = db.collection('posts').doc(postId);
             const post = await postRef.get();
             const votes = post.data()?.pollVotes || {};
-            if (votes[currentUser.id]) { showToast('Вы уже голосовали', true); return; }
+            const userId = currentUser.uid || currentUser.id;
+            if (votes[userId]) { showToast('Вы уже голосовали', true); return; }
             
             await postRef.update({
-                [`pollVotes.${currentUser.id}`]: optionIndex,
+                [`pollVotes.${userId}`]: optionIndex,
                 [`pollResults.${optionIndex}`]: firebase.firestore.FieldValue.increment(1)
             });
             showToast('✅ Голос учтён!');
@@ -1657,36 +1744,39 @@
 
         function toggleComments(postId) {
             const sec = document.getElementById(`comments-${postId}`);
-            sec.classList.toggle('show');
-            if (sec.classList.contains('show')) loadComments(postId);
+            if (sec) sec.classList.toggle('show');
+            if (sec && sec.classList.contains('show')) loadComments(postId);
         }
 
         async function loadComments(postId) {
             const post = await db.collection('posts').doc(postId).get();
             const comments = post.data()?.comments || [];
             const container = document.getElementById(`comments-list-${postId}`);
+            if (!container) return;
             if (comments.length === 0) { container.innerHTML = '<div style="color:var(--text-secondary);">Нет комментариев</div>'; return; }
             container.innerHTML = comments.map(c => `<div class="comment"><span class="comment-name">${escapeHtml(c.authorName)}</span><span>${escapeHtml(c.text)}</span></div>`).join('');
         }
 
         async function addComment(postId) {
             const input = document.getElementById(`comment-input-${postId}`);
-            const text = input.value.trim();
+            const text = input?.value.trim();
             if (!text) return;
             const postRef = db.collection('posts').doc(postId);
             const post = await postRef.get();
             const comments = post.data()?.comments || [];
-            comments.push({ authorId: currentUser.id, authorName: currentUser.username, text: text, time: new Date().toISOString() });
+            const userId = currentUser.uid || currentUser.id;
+            comments.push({ authorId: userId, authorName: currentUser.username, text: text, time: new Date().toISOString() });
             await postRef.update({ comments });
-            input.value = '';
+            if (input) input.value = '';
             loadComments(postId);
         }
 
         async function repostPost(postId) {
             const original = await db.collection('posts').doc(postId).get();
             const data = original.data();
+            const userId = currentUser.uid || currentUser.id;
             await db.collection('posts').add({
-                authorId: currentUser.id, authorName: currentUser.username, authorHandle: currentUser.handle,
+                authorId: userId, authorName: currentUser.username, authorHandle: currentUser.handle,
                 text: `📎 Репост: ${data.text || ''}`, imageUrl: data.imageUrl, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 likes: {}, comments: [], isRepost: true, originalPostId: postId, originalAuthor: data.authorName
             });
@@ -1701,7 +1791,9 @@
 
         // ========== МАГАЗИН ==========
         function renderShop() {
-            document.getElementById('shopContainer').innerHTML = `
+            const container = document.getElementById('shopContainer');
+            if (!container) return;
+            container.innerHTML = `
                 <div class="product-card"><div class="product-icon">🪙</div><div class="product-info"><div class="product-title">100 YzFiCoin</div><div class="product-price">50 ₽</div></div><button class="buy-btn" onclick="buyCoins(100,50)">Купить</button></div>
                 <div class="product-card"><div class="product-icon">🪙</div><div class="product-info"><div class="product-title">500 YzFiCoin</div><div class="product-price">200 ₽</div></div><button class="buy-btn" onclick="buyCoins(500,200)">Купить</button></div>
                 <div class="product-card premium-card"><div class="product-icon">👑</div><div class="product-info"><div class="product-title">Премиум 1 мес</div><div class="product-price">180 YFC</div></div><button class="buy-btn" onclick="buyPremium(1,180)">Активировать</button></div>
@@ -1727,7 +1819,7 @@
                         premiumUntil: new Date(Date.now() + months*30*24*60*60*1000)
                     });
                 }
-                document.getElementById('premiumBadge').classList.remove('hidden');
+                if (document.getElementById('premiumBadge')) document.getElementById('premiumBadge').classList.remove('hidden');
                 renderProfilePage();
             }
         }
@@ -1743,7 +1835,9 @@
 
         // ========== ПРОФИЛЬ ==========
         function renderProfilePage() {
-            document.getElementById('profileContainer').innerHTML = `
+            const container = document.getElementById('profileContainer');
+            if (!container) return;
+            container.innerHTML = `
                 <div class="profile-card">
                     <div class="profile-avatar-large" onclick="openEditProfileModal()">${(currentUser.username?.charAt(0) || 'Я').toUpperCase()}</div>
                     <h2>${escapeHtml(currentUser.username)} ${isPremium ? '👑' : ''}</h2>
@@ -1759,12 +1853,19 @@
         }
 
         function openEditProfileModal() {
-            document.getElementById('editUsername').value = currentUser.username;
-            document.getElementById('editHandle').value = currentUser.handle;
-            document.getElementById('editBio').value = currentUser.bio || '';
-            document.getElementById('editProfileModal').style.display = 'flex';
+            const editUsername = document.getElementById('editUsername');
+            const editHandle = document.getElementById('editHandle');
+            const editBio = document.getElementById('editBio');
+            if (editUsername) editUsername.value = currentUser.username;
+            if (editHandle) editHandle.value = currentUser.handle;
+            if (editBio) editBio.value = currentUser.bio || '';
+            const modal = document.getElementById('editProfileModal');
+            if (modal) modal.style.display = 'flex';
         }
-        function closeEditProfileModal() { document.getElementById('editProfileModal').style.display = 'none'; }
+        function closeEditProfileModal() { 
+            const modal = document.getElementById('editProfileModal');
+            if (modal) modal.style.display = 'none'; 
+        }
         async function saveProfile() {
             currentUser.username = document.getElementById('editUsername').value;
             currentUser.handle = document.getElementById('editHandle').value;
@@ -1774,8 +1875,8 @@
                     username: currentUser.username, userHandle: currentUser.handle, bio: currentUser.bio
                 });
             }
-            document.getElementById('profileName').innerHTML = currentUser.username;
-            document.getElementById('profileAvatar').innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
+            if (document.getElementById('profileName')) document.getElementById('profileName').innerHTML = currentUser.username;
+            if (document.getElementById('profileAvatar')) document.getElementById('profileAvatar').innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
             renderProfilePage();
             closeEditProfileModal();
             showToast('✅ Профиль обновлён');
@@ -1785,8 +1886,14 @@
         function viewUserProfile(id) { showToast('👤 Профиль пользователя'); }
 
         // ========== ПОСТЫ ==========
-        function openCreatePostModal() { document.getElementById('createPostModal').style.display = 'flex'; }
-        function closeCreatePostModal() { document.getElementById('createPostModal').style.display = 'none'; }
+        function openCreatePostModal() { 
+            const modal = document.getElementById('createPostModal');
+            if (modal) modal.style.display = 'flex'; 
+        }
+        function closeCreatePostModal() { 
+            const modal = document.getElementById('createPostModal');
+            if (modal) modal.style.display = 'none'; 
+        }
 
         async function submitPost() {
             const text = document.getElementById('postText').value.trim();
@@ -1799,14 +1906,15 @@
                 const data = await res.json();
                 if (data.success) imageUrl = data.data.url;
             }
+            const userId = currentUser.uid || currentUser.id;
             await db.collection('posts').add({
-                authorId: currentUser.id, authorName: currentUser.username, authorHandle: currentUser.handle,
+                authorId: userId, authorName: currentUser.username, authorHandle: currentUser.handle,
                 text: text, imageUrl: imageUrl, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 likes: {}, comments: [], isPremium: isPremium
             });
             closeCreatePostModal();
             showToast('✅ Пост опубликован!');
-            if (document.getElementById('feedPage').classList.contains('active')) loadFeed();
+            if (document.getElementById('feedPage')?.classList.contains('active')) loadFeed();
         }
 
         // ========== ЭКСПОРТ ==========
@@ -1826,15 +1934,18 @@
         function openStickerPicker() {
             const stickers = ['😊', '🔥', '❤️', '👍', '🎉', '✨', '🌟', '💯', '✅', '🎨', '📸', '💎'];
             const randomSticker = stickers[Math.floor(Math.random() * stickers.length)];
-            document.getElementById('messageInput').value += randomSticker;
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) messageInput.value += randomSticker;
         }
 
         // ========== ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ ==========
         function switchPage(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(`${page}Page`).classList.add('active');
+            const targetPage = document.getElementById(`${page}Page`);
+            if (targetPage) targetPage.classList.add('active');
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            const targetNav = document.querySelector(`.nav-item[data-page="${page}"]`);
+            if (targetNav) targetNav.classList.add('active');
             if (page === 'feed') loadFeed();
             if (page === 'saved') loadSavedPostsFeed();
             if (page === 'shop') renderShop();
@@ -1881,7 +1992,6 @@
             
             showLoadIndicator();
             
-            // Имитация загрузки старых сообщений (в реальном проекте — запрос к Firestore)
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             const oldMessages = [
@@ -1893,28 +2003,42 @@
             saveChats();
             showMessages();
             
-            document.getElementById('loadingMore')?.remove();
+            const loadingMore = document.getElementById('loadingMore');
+            if (loadingMore) loadingMore.remove();
             
-            // Прокручиваем к месту, где были
             const messagesArea = document.getElementById('messagesArea');
-            if (messagesArea.firstChild) {
+            if (messagesArea && messagesArea.firstChild) {
                 messagesArea.scrollTop = 100;
             }
         }
         
+        function scrollToBottom() { 
+            const a = document.getElementById('messagesArea'); 
+            setTimeout(() => { if (a) a.scrollTop = a.scrollHeight; }, 100); 
+        }
         
-        function scrollToBottom() { const a = document.getElementById('messagesArea'); setTimeout(() => { if (a) a.scrollTop = a.scrollHeight; }, 100); }
-        function showToast(msg, err) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = (err ? '❌ ' : '✅ ') + msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(msg, err) { 
+            const t = document.createElement('div'); 
+            t.className = 'toast'; 
+            t.textContent = (err ? '❌ ' : '✅ ') + msg; 
+            document.body.appendChild(t); 
+            setTimeout(() => t.remove(), 2500); 
+        }
+        
         function filterChats() { renderChatsList(); }
         function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
         // ========== ЗАПУСК ==========
         async function init() {
             auth.onAuthStateChanged(async (user) => {
-                if (user) await loadUserData();
-                else { currentUser = { id: 'test', username: 'YzFi', handle: '@yzfi', bio: 'Добро пожаловать!', coins: 100, isPremium: false }; }
+                if (user) {
+                    await loadUserData();
+                } else {
+                    window.location.href = 'index.html';
+                    return;
+                }
                 await loadChats();
-                await loadSavedPosts();  // <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+                await loadSavedPosts();
                 renderShop();
                 renderProfilePage();
                 if (settings.notifications && Notification.permission !== 'granted') {
@@ -1937,7 +2061,7 @@
         window.toggleNotifications = toggleNotifications; window.toggleOnlineStatus = toggleOnlineStatus;
         window.exportData = exportData; window.clearAllData = clearAllData;
         window.editMessage = editMessage; window.deleteMessage = deleteMessage; window.replyToMessage = replyToMessage;
-        window.forwardMessage = forwardMessage;  // <-- ДОБАВИТЬ
+        window.forwardMessage = forwardMessage;
         window.clearChatHistory = clearChatHistory; window.deleteChat = deleteChat; 
         window.openChatSettings = openChatSettings; window.closeChatSettingsModal = closeChatSettingsModal;
         window.openEditProfileModal = openEditProfileModal; window.closeEditProfileModal = closeEditProfileModal; 
@@ -1947,7 +2071,8 @@
         window.openCreateGroupModal = openCreateGroupModal; window.closeCreateGroupModal = closeCreateGroupModal;
         window.openJoinGroupModal = openJoinGroupModal; window.closeJoinGroupModal = closeJoinGroupModal;
         window.submitCreateGroup = submitCreateGroup; window.submitJoinGroup = submitJoinGroup;
-        window.savePost = savePost;  // <-- ДОБАВИТЬ (для кнопки сохранения)
+        window.savePost = savePost;
+        
         init();
     </script>
 </body>
