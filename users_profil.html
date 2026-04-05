@@ -523,10 +523,10 @@
         }
         
         function renderProfile(userData, postsCount, followersCount, followingCount, isFollowing) {
-            const avatarUrl = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || 'User')}&background=5c3d8c&color=f5e6ff&size=150&bold=true`;
-            const username = userData.username || 'Пользователь';
-            const userHandle = userData.userHandle || ('$' + (userData.usernameLower || username.toLowerCase()));
-            const bio = userData.bio || '✨ Пользователь YzFi';
+            const avatarUrl = escapeHtml(userData.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || 'User')}&background=5c3d8c&color=f5e6ff&size=150&bold=true`;
+            const username = escapeHtml(userData.username || 'Пользователь');
+            const userHandle = escapeHtml(userData.userHandle || ('$' + (userData.usernameLower || username.toLowerCase())));
+            const bio = escapeHtml(userData.bio || '✨ Пользователь YzFi');
             const joinDate = userData.createdAt ? formatDate(userData.createdAt) : 'Недавно';
             
             const profileHTML = `
@@ -622,12 +622,16 @@
             
             let content = '';
             if (post.text) {
+                // ✅ Экранируем текст поста
                 const previewText = post.text.length > 100 ? post.text.substring(0, 100) + '...' : post.text;
                 content += `<div class="post-preview-text">${escapeHtml(previewText)}</div>`;
             }
             
             if (post.imageUrl) {
-                content += `<img class="post-preview-image" src="${escapeHtml(post.imageUrl)}" alt="пост" loading="lazy">`;
+                // ✅ Проверяем URL перед вставкой
+                if(isValidImageUrl(post.imageUrl)){
+                    content += `<img class="post-preview-image" src="${escapeHtml(post.imageUrl)}" alt="пост" loading="lazy">`;
+                }
             }
             
             content += `
@@ -635,7 +639,7 @@
                     <span>❤️ ${formatNumber(likesCount)}</span>
                     <span>💬 ${post.commentCount || 0}</span>
                     <span>👁️ ${formatNumber(viewsCount)}</span>
-                    <span>📅 ${timeStr}</span>
+                    <span>📅 ${escapeHtml(timeStr)}</span>
                 </div>
             `;
             

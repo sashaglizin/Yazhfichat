@@ -1161,27 +1161,104 @@
 
         async function updateUsername() {
             const newUsername = usernameInput.value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
             
+            // Очищаем предыдущие сообщения
+            if (errorDiv) errorDiv.classList.add('hidden');
+            if (successDiv) successDiv.classList.add('hidden');
+            
+            // ========== ВАЛИДАЦИЯ 1: Пустое поле ==========
             if (!newUsername) {
                 showError('Введите новое имя пользователя');
+                usernameInput.focus();
                 return;
             }
             
+            // ========== ВАЛИДАЦИЯ 2: Длина ==========
+            if (newUsername.length < 2) {
+                showError('Имя должно быть не менее 2 символов');
+                usernameInput.focus();
+                return;
+            }
+            
+            if (newUsername.length > 30) {
+                showError('Имя не может быть длиннее 30 символов');
+                usernameInput.focus();
+                return;
+            }
+            
+            // ========== ВАЛИДАЦИЯ 3: Защита от XSS ==========
+            const dangerousChars = /[<>{}[\]\\]/;
+            if (dangerousChars.test(newUsername)) {
+                showError('Имя содержит недопустимые символы: < > { } [ ] \\');
+                usernameInput.focus();
+                return;
+            }
+            
+            // ========== ВАЛИДАЦИЯ 4: Разрешенные символы ==========
+            // Разрешены: латиница, кириллица, цифры, пробел, дефис, точка, подчеркивание
+            const allowedPattern = /^[A-Za-zА-Яа-яЁё0-9\s\-._]+$/;
+            if (!allowedPattern.test(newUsername)) {
+                showError('Имя может содержать только буквы, цифры, пробел, -, . и _');
+                usernameInput.focus();
+                return;
+            }
+            
+            // ========== ВАЛИДАЦИЯ 5: Не совпадает с текущим ==========
             if (newUsername === userProfile.username) {
                 showError('Это ваше текущее имя');
+                usernameInput.focus();
                 return;
             }
             
-            if (newUsername.length < 2 || newUsername.length > 30) {
-                showError('Имя должно быть от 2 до 30 символов');
+            // ========== ВАЛИДАЦИЯ 6: Запрещенные слова ==========
+            const forbiddenWords = ['admin', 'administrator', 'moderator', 'support', 'system', 'root', 'y zfi', 'yzfi'];
+            const lowerNew = newUsername.toLowerCase();
+            for (const word of forbiddenWords) {
+                if (lowerNew === word || lowerNew.includes(word)) {
+                    showError(`Имя не может содержать "${word}"`);
+                    usernameInput.focus();
+                    return;
+                }
+            }
+            
+            // ========== ВАЛИДАЦИЯ 7: Не начинается/заканчивается пробелом ==========
+            if (newUsername.startsWith(' ') || newUsername.endsWith(' ')) {
+                showError('Имя не может начинаться или заканчиваться пробелом');
+                usernameInput.focus();
                 return;
             }
             
-            setButtonLoading('updateNameBtn', true, '🔄 Изменить имя');
+            // ========== ВАЛИДАЦИЯ 8: Несколько пробелов подряд ==========
+            if (newUsername.includes('  ')) {
+                showError('Имя не может содержать несколько пробелов подряд');
+                usernameInput.focus();
+                return;
+            }
+            
+            // Блокируем кнопку на время операции
+            const updateBtn = document.getElementById('updateNameBtn');
+            const originalText = updateBtn.textContent;
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<span class="spinner"></span> Проверка...';
             
             try {
                 const newLower = newUsername.toLowerCase();
                 
+                // ========== ПРОВЕРКА 9: Уникальность имени ==========
+                updateBtn.innerHTML = '<span class="spinner"></span> Проверка уникальности...';
+                
+                // Проверяем через коллекцию usernames
+                const usernameLock = await db.collection('usernames').doc(newLower).get();
+                if (usernameLock.exists && usernameLock.data().uid !== currentUser.uid) {
+                    showError('Это имя пользователя уже занято');
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = originalText;
+                    return;
+                }
+                
+                // Дополнительная проверка через коллекцию users
                 const existingUser = await db.collection('users')
                     .where('usernameLower', '==', newLower)
                     .limit(1)
@@ -1189,40 +1266,124 @@
                 
                 if (!existingUser.empty && existingUser.docs[0].id !== currentUser.uid) {
                     showError('Это имя пользователя уже занято');
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = originalText;
                     return;
                 }
                 
-                const userRef = db.collection('users').doc(currentUser.uid);
+                // ========== СОХРАНЕНИЕ ==========
+                updateBtn.innerHTML = '<span class="spinner"></span> Сохранение...';
                 
+                const userRef = db.collection('users').doc(currentUser.uid);
+                const oldLower = (userProfile.username || '').toLowerCase();
+                
+                // Обновляем документ пользователя
                 await userRef.update({
                     username: newUsername,
                     usernameLower: newLower,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                const oldLower = (userProfile.username || '').toLowerCase();
+                // Обновляем коллекцию usernames
                 if (oldLower && oldLower !== newLower) {
-                    const oldRef = db.collection('usernames').doc(oldLower);
-                    const oldDoc = await oldRef.get();
+                    const oldUsernameRef = db.collection('usernames').doc(oldLower);
+                    const oldDoc = await oldUsernameRef.get();
                     if (oldDoc.exists && oldDoc.data().uid === currentUser.uid) {
-                        await oldRef.delete();
+                        await oldUsernameRef.delete();
                     }
                 }
-                await db.collection('usernames').doc(newLower).set({ uid: currentUser.uid });
                 
+                // Создаем новую запись в usernames
+                await db.collection('usernames').doc(newLower).set({ 
+                    uid: currentUser.uid,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Обновляем профиль в Firebase Auth
                 await currentUser.updateProfile({ displayName: newUsername });
                 
+                // Обновляем локальные данные
                 userProfile.username = newUsername;
                 userProfile.usernameLower = newLower;
-                userName.textContent = newUsername;
                 
-                showSuccess('Имя успешно обновлено! ✨');
+                // Обновляем отображение
+                const userNameSpan = document.getElementById('userName');
+                if (userNameSpan) userNameSpan.textContent = newUsername;
+                
+                // Обновляем handle, если он еще не установлен или основан на старом имени
+                if (!userProfile.userHandle || userProfile.userHandle === ('$' + oldLower)) {
+                    const newHandle = '$' + newLower;
+                    await userRef.update({
+                        userHandle: newHandle,
+                        userHandleNorm: newLower
+                    });
+                    
+                    // Обновляем handles коллекцию
+                    if (oldLower && oldLower !== newLower) {
+                        const oldHandleRef = db.collection('handles').doc(oldLower);
+                        const oldHandleDoc = await oldHandleRef.get();
+                        if (oldHandleDoc.exists && oldHandleDoc.data().uid === currentUser.uid) {
+                            await oldHandleRef.delete();
+                        }
+                    }
+                    await db.collection('handles').doc(newLower).set({ uid: currentUser.uid });
+                    
+                    userProfile.userHandle = newHandle;
+                    userProfile.userHandleNorm = newLower;
+                    
+                    const userHandleSpan = document.getElementById('userHandle');
+                    if (userHandleSpan) userHandleSpan.textContent = newHandle;
+                    
+                    const handleInput = document.getElementById('handleInput');
+                    if (handleInput) handleInput.value = newHandle;
+                }
+                
+                // Обновляем имя в поле ввода
+                usernameInput.value = newUsername;
+                
+                showSuccess(`Имя успешно изменено на "${newUsername}"! ✨`);
+                
+                // Дополнительно: обновляем имя автора во всех постах пользователя (фоновая задача)
+                updateAuthorNameInPosts(currentUser.uid, newUsername).catch(console.warn);
                 
             } catch (error) {
                 console.error('Ошибка обновления имени:', error);
-                showError('Ошибка обновления имени: ' + error.message);
+                
+                let errorMessage = 'Ошибка обновления имени';
+                if (error.code === 'permission-denied') {
+                    errorMessage = 'Нет прав для изменения имени. Обратитесь к администратору.';
+                } else if (error.code === 'unavailable') {
+                    errorMessage = 'Сервер недоступен. Попробуйте позже.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showError(errorMessage);
             } finally {
-                setButtonLoading('updateNameBtn', false, '🔄 Изменить имя');
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = originalText;
+                usernameInput.focus();
+            }
+        }
+
+        // ========== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ ПОСТОВ ==========
+        async function updateAuthorNameInPosts(userId, newUsername) {
+            try {
+                const postsSnapshot = await db.collection('posts')
+                    .where('authorId', '==', userId)
+                    .limit(50)
+                    .get();
+                
+                const batch = db.batch();
+                postsSnapshot.forEach(doc => {
+                    batch.update(doc.ref, { authorName: newUsername });
+                });
+                
+                if (postsSnapshot.size > 0) {
+                    await batch.commit();
+                }
+            } catch(e) {
+                console.warn('Не удалось обновить имена в постах:', e);
             }
         }
 

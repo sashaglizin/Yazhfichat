@@ -912,12 +912,15 @@
 
         function показатьТовары() {
             document.getElementById('coinsProducts').innerHTML = товарыМонеты.map(т => `
-                <div class="product-card">
-                    <div class="product-icon">🪙</div>
-                    <div class="product-info"><div class="product-title">${т.название} ${т.популярный ? '🔥' : ''}</div><div class="product-desc">${т.описание}</div></div>
-                    <div class="product-price">${т.цена} ₽</div>
-                    <button class="buy-btn" onclick="купитьМонеты(${JSON.stringify(т).replace(/"/g, '&quot;')})">Купить</button>
+            <div class="product-card">
+                <div class="product-icon">🪙</div>
+                <div class="product-info">
+                    <div class="product-title">${escapeHtml(т.название)} ${т.популярный ? '🔥' : ''}</div>
+                    <div class="product-desc">${escapeHtml(т.описание)}</div>
                 </div>
+                <div class="product-price">${escapeHtml(String(т.цена))} ₽</div>
+                <button class="buy-btn" onclick="купитьМонеты(${JSON.stringify(т).replace(/"/g, '&quot;')})">Купить</button>
+            </div>
             `).join('');
             
             document.getElementById('giftsProducts').innerHTML = товарыПодарки.map(п => `

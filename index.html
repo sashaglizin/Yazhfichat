@@ -1030,6 +1030,26 @@
                 showError('Заполните поля');
                 return;
             }
+            
+            // ✅ ПРОВЕРКА НИКНЕЙМА
+            if (username.length < 2 || username.length > 30) {
+                showError('Ник должен быть от 2 до 30 символов');
+                return;
+            }
+            
+            // ✅ ЗАЩИТА ОТ XSS
+            const dangerousChars = /[<>{}[\]\\]/;
+            if(dangerousChars.test(username)){
+                showError('Ник содержит недопустимые символы');
+                return;
+            }
+            
+            // ✅ ТОЛЬКО ЛАТИНИЦА, ЦИФРЫ, ПОДЧЕРКИВАНИЕ
+            if(!/^[A-Za-z0-9_]+$/.test(username)){
+                showError('Ник может содержать только латиницу, цифры и _');
+                return;
+            }
+            
             if (password.length < 6) {
                 showError('Пароль от 6 символов');
                 return;

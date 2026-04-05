@@ -1420,6 +1420,22 @@
             else if (currentTab === 'following') loadFollowingFeed();
         }
 
+        function isValidImageUrl(url) {
+            if(!url) return false;
+            const allowedDomains = [
+                'imgbb.com',
+                'ibb.co',
+                'firebasestorage.googleapis.com',
+                'ui-avatars.com'
+            ];
+            try {
+                const urlObj = new URL(url);
+                return allowedDomains.some(domain => urlObj.hostname.includes(domain));
+            } catch(e) {
+                return false;
+            }
+        }
+
         // ========== РЕНДЕР ПОСТА ==========
         async function renderPost(post, isRecommendation = false) {
             const div = document.createElement('div');
