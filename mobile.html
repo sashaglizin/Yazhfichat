@@ -130,12 +130,14 @@
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .app-container { display: flex; flex-direction: column; height: 100vh; }
+        
+        
         .bottom-nav {
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
-            padding: 8px 12px;
+            padding: 4px 8px;
             z-index: 100;
             backdrop-filter: blur(10px);
         }
@@ -143,15 +145,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            padding: 8px 16px;
+            gap: 2px;
+            padding: 4px 8px;
             cursor: pointer;
             transition: all 0.2s;
             color: var(--text-secondary);
         }
         .nav-item.active { color: var(--accent-color); background: var(--bg-tertiary); }
-        .nav-item span:first-child { font-size: 24px; }
-        .nav-item span:last-child { font-size: 11px; font-weight: 500; }
+        .nav-item span:first-child { font-size: 20px; }
+        .nav-item span:last-child { font-size: 9px; font-weight: 500; }
 
         .main-content { flex: 1; overflow: hidden; position: relative; }
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; display: none; }
@@ -770,6 +772,44 @@
             transform: translate(1px, 1px);
         }
     
+                /* ===== АВАТАРКИ И СКРУГЛЕНИЕ ===== */
+        .chat-avatar, .avatar-large, .post-avatar, .user-result-avatar,
+        .profile-avatar-large, .chat-header-avatar {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+        
+        .chat-avatar img, .avatar-large img, .post-avatar img,
+        .user-result-avatar img, .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Применяем скругление ко всем аватарам */
+        .chat-avatar, .avatar-large, .post-avatar, .user-result-avatar,
+        .profile-avatar-large, .chat-header-avatar, .avatar {
+            border-radius: var(--yzfi-radius) !important;
+        }
+        
+        /* Для круговых аватаров (если нужно) */
+        .avatar-circle {
+            border-radius: 50% !important;
+        }
+
+        .online-status {
+            color: #2ecc71;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .offline-status {
+            color: #8a739e;
+            font-size: 12px;
+        }
     
     </style>
 </head>
@@ -1041,6 +1081,7 @@
                         uid: user.uid,
                         id: user.uid,
                         username: data.username || user.displayName || 'Пользователь',
+                        displayName: data.username || user.displayName || 'Пользователь',
                         handle: data.userHandle || '$' + (data.username || '').toLowerCase(),
                         bio: data.bio || '',
                         coins: data.yjCoins || 0,
@@ -1051,7 +1092,8 @@
                     currentUser = { 
                         uid: user.uid,
                         id: user.uid,
-                        username: user.displayName || 'Пользователь', 
+                        username: user.displayName || 'Пользователь',
+                        displayName: user.displayName || 'Пользователь',
                         handle: '@user', 
                         bio: '', 
                         coins: 0, 
@@ -1063,6 +1105,7 @@
                     uid: 'test', 
                     id: 'test',
                     username: 'YzFi', 
+                    displayName: 'YzFi',
                     handle: '@yzfi', 
                     bio: 'Добро пожаловать!', 
                     coins: 100, 
@@ -1071,9 +1114,13 @@
             }
             userCoins = currentUser.coins;
             isPremium = currentUser.isPremium;
-            if (document.getElementById('profileName')) document.getElementById('profileName').innerHTML = currentUser.username;
-            if (document.getElementById('profileAvatar')) document.getElementById('profileAvatar').innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
-            if (isPremium && document.getElementById('premiumBadge')) document.getElementById('premiumBadge').classList.remove('hidden');
+            const profileName = document.getElementById('profileName');
+            const profileAvatar = document.getElementById('profileAvatar');
+            if (profileName) profileName.innerHTML = currentUser.username;
+            if (profileAvatar) profileAvatar.innerText = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
+            if (isPremium && document.getElementById('premiumBadge')) {
+                document.getElementById('premiumBadge').classList.remove('hidden');
+            }
             updateOnlineStatus();
             setInterval(() => updateOnlineStatus(), 30000);
         }
@@ -1136,7 +1183,54 @@
         }
 
 
-                function renderChatsList() {
+        // Подписка на статус конкретного пользователя в реальном времени
+        let currentStatusUnsubscribe = null;
+        
+        function subscribeToUserStatus(userId, statusElement) {
+            // Отписываемся от предыдущего слушателя
+            if (currentStatusUnsubscribe) {
+                currentStatusUnsubscribe();
+                currentStatusUnsubscribe = null;
+            }
+            
+            if (!userId || !statusElement) return;
+            
+            // Слушаем изменения документа пользователя
+            currentStatusUnsubscribe = db.collection('users').doc(userId).onSnapshot((doc) => {
+                if (!doc.exists) return;
+                
+                const data = doc.data();
+                const online = data?.online === true;
+                const lastSeen = data?.lastSeen?.toDate();
+                
+                if (online) {
+                    statusElement.innerHTML = '<span class="online-status">🟢 онлайн</span>';
+                } else if (lastSeen) {
+                    const now = new Date();
+                    const diff = now - lastSeen;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+                    
+                    let lastSeenText = '';
+                    if (minutes < 1) lastSeenText = 'только что';
+                    else if (minutes < 60) lastSeenText = `${minutes} мин назад`;
+                    else if (hours < 24) lastSeenText = `${hours} ч назад`;
+                    else lastSeenText = `${days} дн назад`;
+                    
+                    statusElement.innerHTML = `<span class="offline-status">○ был(а) ${lastSeenText}</span>`;
+                } else {
+                    statusElement.innerHTML = '<span class="offline-status">○ был(а) недавно</span>';
+                }
+            }, (error) => {
+                console.error('Ошибка подписки на статус:', error);
+                if (statusElement) statusElement.innerHTML = '<span class="offline-status">○ офлайн</span>';
+            });
+        }
+
+
+
+        function renderChatsList() {
             const container = document.getElementById('chatsList');
             if (!container) return;
             
@@ -1154,17 +1248,25 @@
             container.innerHTML = filtered.map(chat => {
                 const isGroup = chat.type === 'group';
                 const title = isGroup ? chat.name : chat.username;
-                const avatar = isGroup ? '👥' : (title?.charAt(0) || '?').toUpperCase();
+                const avatarUrl = isGroup ? null : (chat.peerAvatar || null);
                 const status = !isGroup && userStatuses.get(chat.userId);
                 const isOnline = status?.online;
                 const lastMessage = chat.lastMessage || 'Нет сообщений';
                 const time = chat.lastMessageTime?.toDate ? formatTime(chat.lastMessageTime.toDate()) : '';
                 const unread = chat.unreadCount || 0;
                 
+                // Генерируем HTML для аватарки
+                let avatarHtml = '';
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${escapeHtml(avatarUrl)}" style="width:100%; height:100%; object-fit:cover;">`;
+                } else {
+                    avatarHtml = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${title?.charAt(0) || '?'}</div>`;
+                }
+                
                 return `
                     <div class="chat-item" onclick="openChat('${chat.id}')">
-                        <div class="chat-avatar">
-                            ${avatar}
+                        <div class="chat-avatar" style="background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));">
+                            ${avatarHtml}
                             ${isOnline ? '<div class="online-indicator"></div>' : ''}
                         </div>
                         <div class="chat-info">
@@ -1180,8 +1282,7 @@
             }).join('');
         }
 
-
-
+        
         // ========== ЗАГРУЗКА СООБЩЕНИЙ ==========
         let unsubscribeMessages = null;
         
@@ -1197,7 +1298,7 @@
                 collectionPath = db.collection('groups').doc(chatId).collection('messages');
             } else {
                 const myId = currentUser.uid || currentUser.id;
-                const peerId = chatId; // В личных чатах id чата = peerId
+                const peerId = chatId;
                 const chatDocId = [myId, peerId].sort().join('_');
                 collectionPath = db.collection('chats').doc(chatDocId).collection('messages');
             }
@@ -1213,26 +1314,29 @@
                         return;
                     }
                     
-                    const messages = [];
+                    let messagesHTML = '';
                     snapshot.forEach(doc => {
-                        messages.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    messagesContainer.innerHTML = messages.map(msg => {
+                        const msg = doc.data();
                         const isOwn = (msg.userId === (currentUser.uid || currentUser.id));
                         const time = msg.timestamp?.toDate ? formatTime(msg.timestamp.toDate()) : '';
-                        return `
+                        const hasRead = msg.readBy && msg.readBy.length > 1;
+                        
+                        messagesHTML += `
                             <div class="message ${isOwn ? 'outgoing' : 'incoming'}">
                                 <div class="message-bubble">
                                     ${!isOwn ? `<div><strong>${escapeHtml(msg.username || 'Пользователь')}</strong></div>` : ''}
                                     <div class="message-text">${escapeHtml(msg.text || '')}</div>
                                     ${msg.imageUrl ? `<img src="${msg.imageUrl}" style="max-width:100%; max-height:200px; margin-top:8px; border-radius:8px;">` : ''}
-                                    <div class="message-time">${time} ${isOwn ? (msg.readBy ? '✓✓' : '✓') : ''}</div>
+                                    <div class="message-time">
+                                        ${time} 
+                                        ${isOwn ? (hasRead ? '✓✓' : '✓') : ''}
+                                    </div>
                                 </div>
                             </div>
                         `;
-                    }).join('');
+                    });
                     
+                    messagesContainer.innerHTML = messagesHTML;
                     scrollToBottom();
                 }, (error) => {
                     console.error('Ошибка загрузки сообщений:', error);
@@ -1246,79 +1350,106 @@
         function saveChats() { localStorage.setItem('yzfi_chats', JSON.stringify(allChats)); localStorage.setItem('yzfi_messages', JSON.stringify(messagesHistory)); }
 
         function openChat(chatId) {
-            currentChat = allChats.find(c => c.id === chatId);
-            if (!currentChat) return;
-            if (currentChat.unread) { currentChat.unread = 0; saveChats(); }
-            currentChatIsGroup = currentChat.isGroup || false;
-            currentChatPeerId = currentChat.userId;
-            currentChatGroupId = currentChat.groupId;
+            const chat = allChats.find(c => c.id === chatId);
+            if (!chat) {
+                console.error('Чат не найден:', chatId);
+                return;
+            }
             
+            const isGroup = chat.type === 'group';
+            const avatarUrl = isGroup ? null : (chat.peerAvatar || null);
+            
+            currentChat = {
+                id: chatId,
+                name: isGroup ? chat.name : chat.username,
+                avatar: isGroup ? '👥' : (chat.username?.charAt(0) || '?').toUpperCase(),
+                avatarUrl: avatarUrl,
+                isGroup: isGroup,
+                userId: chat.userId,
+                groupId: chat.groupId,
+                type: chat.type
+            };
+            
+            // Отмечаем чат как прочитанный
+            const userId = currentUser.uid || currentUser.id;
+            db.collection('users').doc(userId).collection('chats').doc(chatId).update({ unreadCount: 0 }).catch(e => console.warn(e));
+            
+            // Показываем окно чата
             const chatsContainer = document.querySelector('.chats-container');
             const chatView = document.getElementById('chatView');
             if (chatsContainer) chatsContainer.style.display = 'none';
             if (chatView) chatView.style.display = 'flex';
+            
             const chatAvatar = document.getElementById('chatAvatar');
             const chatName = document.getElementById('chatName');
             const chatStatus = document.getElementById('chatStatus');
-            if (chatAvatar) chatAvatar.textContent = currentChat.avatar;
-            if (chatName) chatName.innerHTML = currentChat.name + (currentChat.isPremium ? ' 👑' : '') + (currentChat.isGroup ? ' 👥' : '');
-            if (chatStatus) chatStatus.innerHTML = currentChat.isGroup ? '👥 Группа' : (currentChat.online ? '<span class="online-status">● онлайн</span>' : '<span class="offline-status">○ был(а) недавно</span>');
-            showMessages();
-            setupInfiniteScroll();
+            
+            // Устанавливаем аватарку в шапке чата
+            if (chatAvatar) {
+                if (avatarUrl) {
+                    chatAvatar.style.background = 'none';
+                    chatAvatar.style.padding = '0';
+                    chatAvatar.innerHTML = `<img src="${escapeHtml(avatarUrl)}" style="width:100%; height:100%; object-fit:cover; border-radius: inherit;">`;
+                } else {
+                    chatAvatar.style.background = 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))';
+                    chatAvatar.innerHTML = currentChat.avatar;
+                }
+            }
+            if (chatName) chatName.innerHTML = currentChat.name + (currentChat.isGroup ? ' 👥' : '');
+            
+            // Для личных чатов — подписываемся на статус собеседника
+            if (!isGroup && chat.userId) {
+                subscribeToUserStatus(chat.userId, chatStatus);
+                // Временно показываем "загрузка..."
+                if (chatStatus) chatStatus.innerHTML = '🟡 загрузка...';
+            } else if (isGroup && chatStatus) {
+                chatStatus.innerHTML = `👥 ${chat.memberCount || '0'} участников`;
+            }
+            
+            // Загружаем сообщения
+            loadMessages(chatId, chat.type === 'group');
         }
 
         function closeChat() { 
+            // Отписываемся от статуса
+            if (currentStatusUnsubscribe) {
+                currentStatusUnsubscribe();
+                currentStatusUnsubscribe = null;
+            }
+            
             const chatsContainer = document.querySelector('.chats-container');
             const chatView = document.getElementById('chatView');
             if (chatsContainer) chatsContainer.style.display = 'flex';
             if (chatView) chatView.style.display = 'none';
             currentChat = null; 
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+                unsubscribeMessages = null;
+            }
         }
 
-        function showMessages() {
-            const container = document.getElementById('messagesArea');
-            if (!container) return;
-            const msgs = messagesHistory[currentChat?.id] || [];
-            if (msgs.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px;">💬 Напишите первое сообщение</div>'; return; }
-            container.innerHTML = msgs.map(msg => `
-                <div class="message ${msg.type}" data-msg-id="${msg.id}">
-                    <div class="message-bubble ${msg.isPremium ? 'premium-sticker' : ''}">
-                        <div class="message-text">${escapeHtml(msg.text)}</div>
-                        ${msg.imageUrl ? `<img src="${msg.imageUrl}" style="max-width:100%; max-height:200px; margin-top:8px; border-radius:8px;">` : ''}
-                        <div class="message-time">
-                            ${formatTime(msg.time)} 
-                            ${msg.type === 'outgoing' ? 
-                                (msg.status === 'read' ? '✓✓' : (msg.status === 'delivered' ? '✓✓' : '✓')) : 
-                                ''} 
-                            ${msg.edited ? '✎' : ''}
-                        </div>
-                        <div class="message-actions">
-                            <button class="msg-action" onclick="editMessage('${msg.id}')">✏️</button>
-                            <button class="msg-action" onclick="deleteMessage('${msg.id}')">🗑️</button>
-                            <button class="msg-action" onclick="replyToMessage('${msg.id}')">💬</button>
-                            <button class="msg-action" onclick="forwardMessage('${msg.id}')">📤</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            scrollToBottom();
-        }
 
         async function sendMessage() {
             const text = document.getElementById('messageInput').value.trim();
             if ((!text && !lastUploadedImage) || !currentChat) return;
             
             const userId = currentUser.uid || currentUser.id;
-            const username = currentUser.username;
+            const username = currentUser.displayName || currentUser.username;
             
             const messageData = {
                 userId: userId,
                 username: username,
                 text: text || (lastUploadedImage ? '📷 Фото' : ''),
-                imageUrl: lastUploadedImage,
+                imageUrl: lastUploadedImage || null,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 readBy: [userId]
             };
+            
+            // Очищаем поле ввода сразу
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) messageInput.value = '';
+            const tempImage = lastUploadedImage;
+            lastUploadedImage = null;
             
             try {
                 if (currentChat.isGroup) {
@@ -1368,15 +1499,15 @@
                     }
                 }
                 
-                // Очищаем поле ввода
-                const messageInput = document.getElementById('messageInput');
-                if (messageInput) messageInput.value = '';
-                lastUploadedImage = null;
+                showToast('✅ Сообщение отправлено');
                 scrollToBottom();
                 
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
-                showToast('❌ Ошибка отправки', true);
+                showToast('❌ Не удалось отправить сообщение: ' + error.message, true);
+                // Возвращаем текст в поле ввода при ошибке
+                if (messageInput && text) messageInput.value = text;
+                lastUploadedImage = tempImage;
             }
         }
 
@@ -1726,15 +1857,50 @@
         async function startDMWith(userId, userData) {
             const ts = firebase.firestore.FieldValue.serverTimestamp();
             const myUserId = currentUser.uid || currentUser.id;
+            const myAvatar = currentUser.avatar || '';
+            const peerAvatar = userData.avatar || '';
+            
+            // Создаём чат для текущего пользователя
             await db.collection('users').doc(myUserId).collection('chats').doc(userId).set({
-                type: 'dm', userId: userId, username: userData.username,
-                peerAvatar: userData.avatar || '', userHandle: userData.userHandle,
-                lastMessage: '', lastMessageTime: ts, unreadCount: 0, createdAt: ts, updatedAt: ts
+                type: 'dm',
+                userId: userId,
+                username: userData.username,
+                peerAvatar: peerAvatar,
+                userHandle: userData.userHandle,
+                lastMessage: '',
+                lastMessageTime: ts,
+                unreadCount: 0,
+                createdAt: ts,
+                updatedAt: ts
             }, { merge: true });
+            
+            // Создаём чат для собеседника
+            await db.collection('users').doc(userId).collection('chats').doc(myUserId).set({
+                type: 'dm',
+                userId: myUserId,
+                username: currentUser.username,
+                peerAvatar: myAvatar,
+                userHandle: currentUser.handle,
+                lastMessage: '',
+                lastMessageTime: ts,
+                unreadCount: 0,
+                createdAt: ts,
+                updatedAt: ts
+            }, { merge: true });
+            
+            // Обновляем локальный список
             allChats.unshift({
-                id: Date.now(), name: userData.username, avatar: (userData.username?.charAt(0) || 'U').toUpperCase(),
-                lastMessage: '', lastMessageTime: new Date().toISOString(), userId: userId, isGroup: false
+                id: userId,
+                name: userData.username,
+                username: userData.username,
+                peerAvatar: peerAvatar,
+                lastMessage: '',
+                lastMessageTime: new Date().toISOString(),
+                userId: userId,
+                type: 'dm',
+                isGroup: false
             });
+            
             saveChats();
             renderChatsList();
             switchPage('chats');
@@ -1984,9 +2150,20 @@
         function renderProfilePage() {
             const container = document.getElementById('profileContainer');
             if (!container) return;
+            
+            const avatarUrl = currentUser.avatar;
+            let avatarHtml = '';
+            if (avatarUrl) {
+                avatarHtml = `<img src="${escapeHtml(avatarUrl)}" style="width:100%; height:100%; object-fit:cover; border-radius: inherit;">`;
+            } else {
+                avatarHtml = (currentUser.username?.charAt(0) || 'Я').toUpperCase();
+            }
+            
             container.innerHTML = `
                 <div class="profile-card">
-                    <div class="profile-avatar-large" onclick="openEditProfileModal()">${(currentUser.username?.charAt(0) || 'Я').toUpperCase()}</div>
+                    <div class="profile-avatar-large" onclick="openEditProfileModal()" style="background: ${avatarUrl ? 'none' : 'linear-gradient(135deg, var(--accent-color), var(--accent-hover))'}; padding: ${avatarUrl ? '0' : '0'};">
+                        ${avatarHtml}
+                    </div>
                     <h2>${escapeHtml(currentUser.username)} ${isPremium ? '👑' : ''}</h2>
                     <div style="color: var(--text-secondary);">${escapeHtml(currentUser.handle)}</div>
                     <div style="margin: 12px 0; padding: 12px; background: var(--bg-tertiary); border-radius: var(--yzfi-radius);">${escapeHtml(currentUser.bio || 'Нет описания')}</div>
@@ -2207,9 +2384,6 @@
         window.changeTheme = changeTheme; window.changeRadius = changeRadius; 
         window.toggleNotifications = toggleNotifications; window.toggleOnlineStatus = toggleOnlineStatus;
         window.exportData = exportData; window.clearAllData = clearAllData;
-        window.editMessage = editMessage; window.deleteMessage = deleteMessage; window.replyToMessage = replyToMessage;
-        window.forwardMessage = forwardMessage;
-        window.clearChatHistory = clearChatHistory; window.deleteChat = deleteChat; 
         window.openChatSettings = openChatSettings; window.closeChatSettingsModal = closeChatSettingsModal;
         window.openEditProfileModal = openEditProfileModal; window.closeEditProfileModal = closeEditProfileModal; 
         window.saveProfile = saveProfile;

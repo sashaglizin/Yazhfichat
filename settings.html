@@ -311,23 +311,108 @@
             --cream: #f5e6ff;
         }
         
-        /* Светлая тема */
+        /* ===== ДОРАБОТКА СВЕТЛОЙ ТЕМЫ ===== */
         body.theme-light {
-            --bg: #f0eaf8;
+            --bg: #f5f0ff;
             --panel: #ffffff;
-            --panel2: #f5f0ff;
-            --text: #1a0f2e;
-            --border: #cbb8e8;
+            --panel2: #f0eaff;
+            --text: #2d1b4e;
+            --border: #d4c4e8;
             --accent: #8b5cf6;
-            --cream: #2d1b4e;
-        }
-        
-        body.theme-light .header {
-            background: linear-gradient(180deg, #e9defa, #ffffff);
+            --cream: #faf5ff;
         }
         
         body.theme-light .settings-card {
             background: #ffffff;
+            border-color: #e0d5f0;
+            box-shadow: 3px 3px 0 #e0d5f0;
+        }
+        
+        body.theme-light .header {
+            background: linear-gradient(180deg, #e0d5f0, #ffffff);
+            border-color: #d4c4e8;
+        }
+        
+        body.theme-light button,
+        body.theme-light .btn,
+        body.theme-light .btn-secondary {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light button:active,
+        body.theme-light .btn:active {
+            background: #ddd0f0;
+        }
+        
+        body.theme-light .btn-save {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light input,
+        body.theme-light textarea,
+        body.theme-light select {
+            background: #ffffff;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .preview-section {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .preview-avatar,
+        body.theme-light .preview-message,
+        body.theme-light .preview-button {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .slider-label {
+            color: #6a5a8e;
+        }
+        
+        body.theme-light input[type="range"] {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+        }
+        
+        body.theme-light .style-value {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .settings-title {
+            color: #8b5cf6;
+            border-left-color: #8b5cf6;
+        }
+        
+        body.theme-light .setting-name {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .setting-desc {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .toast {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .toast.error {
+            background: #ffe0e0;
+            color: #c44;
+        }
+        
+        body.theme-light hr {
+            border-color: #e0d5f0;
         }
         
         
@@ -548,6 +633,37 @@
         }
 
 
+        /* ===== ЕДИНЫЙ СТИЛЬ КНОПОК ДЛЯ ВСЕХ ТЕМ ===== */
+        button, .btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover, .btn:hover {
+            opacity: 0.85;
+        }
+        
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+        }
+        
+        .btn-danger {
+            background: #c44 !important;
+            color: #fff !important;
+        }
+        
+        body.theme-light .btn-danger {
+            background: #d55 !important;
+            color: #fff !important;
+        }
+        
+        .btn-secondary {
+            background: var(--panel2);
+            color: var(--text);
+        }
+
+        
     </style>
 </head>
 <body>
@@ -771,10 +887,24 @@
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
+                            <div class="setting-name">📦 Экспорт данных</div>
+                            <div class="setting-desc">Сохранить все чаты и сообщения</div>
+                        </div>
+                        <button class="btn-secondary" onclick="exportAllData()" style="width: 100px; min-width: 100px;">Экспорт</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name danger">🗑️ Очистить все данные</div>
+                            <div class="setting-desc">Удалить все чаты, сообщения и настройки</div>
+                        </div>
+                        <button class="btn-danger" onclick="clearAllAppData()" style="width: 100px; min-width: 100px;">Очистить</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
                             <div class="setting-name">Выйти из аккаунта</div>
                             <div class="setting-desc">Завершить текущую сессию</div>
                         </div>
-                        <button class="btn-secondary" onclick="выйтиИзАккаунта()">🚪 Выйти</button>
+                        <button class="btn-secondary" onclick="выйтиИзАккаунта()" style="width: 100px; min-width: 100px;">🚪 Выйти</button>
                     </div>
                 </div>
             `;
@@ -901,6 +1031,35 @@
                 loadRadius();
             }
         });
+
+
+        // Добавить функции
+        function exportAllData() {
+            const data = {
+                chats: localStorage.getItem('yzfi_chats'),
+                messages: localStorage.getItem('yzfi_messages'),
+                settings: localStorage.getItem('yzfi_settings'),
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `yzfi-backup-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            показатьУведомление('📦 Данные экспортированы');
+        }
+
+        function clearAllAppData() {
+            if (confirm('⚠️ Удалить все данные? Отменить нельзя!')) {
+                localStorage.clear();
+                показатьУведомление('✅ Все данные очищены');
+                setTimeout(() => location.reload(), 1500);
+            }
+        }
+
+
 
     </script>
 </body>

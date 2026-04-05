@@ -315,6 +315,292 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+    
+    
+        /* ===== ДОРАБОТКА СВЕТЛОЙ ТЕМЫ ===== */
+        body.theme-light {
+            --bg: #f5f0ff;
+            --panel: #ffffff;
+            --panel2: #f0eaff;
+            --text: #2d1b4e;
+            --border: #d4c4e8;
+            --accent: #8b5cf6;
+            --cream: #faf5ff;
+        }
+        
+        body.theme-light .header,
+        body.theme-light .profile-header,
+        body.theme-light .settings-card,
+        body.theme-light .post-card,
+        body.theme-light .chat-item,
+        body.theme-light .panel,
+        body.theme-light .modal-content,
+        body.theme-light .product-card,
+        body.theme-light .premium-card {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .header {
+            background: linear-gradient(180deg, #e0d5f0, #ffffff);
+        }
+        
+        body.theme-light button,
+        body.theme-light .btn,
+        body.theme-light .btn-secondary,
+        body.theme-light .action-btn,
+        body.theme-light .tab-btn,
+        body.theme-light .buy-btn,
+        body.theme-light .profile-btn,
+        body.theme-light .send-btn {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light button:active,
+        body.theme-light .btn:active {
+            background: #ddd0f0;
+            transform: translate(1px, 1px);
+        }
+        
+        body.theme-light .btn-save,
+        body.theme-light .btn-primary,
+        body.theme-light .primary {
+            background: #8b5cf6;
+            color: #ffffff;
+            border-color: #7a4ce0;
+        }
+        
+        body.theme-light .btn-danger {
+            background: #d55 !important;
+            color: #fff !important;
+            border-color: #c44 !important;
+        }
+        
+        body.theme-light input,
+        body.theme-light textarea,
+        body.theme-light select,
+        body.theme-light .search-box input,
+        body.theme-light .input-wrapper input {
+            background: #ffffff;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .messages,
+        body.theme-light .chats-list,
+        body.theme-light .user-search-list,
+        body.theme-light .comments-section {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .msg {
+            background: #ffffff;
+        }
+        
+        body.theme-light .msg:hover {
+            background: #f0eaff;
+        }
+        
+        body.theme-light .msg-user {
+            color: #8b5cf6;
+        }
+        
+        body.theme-light .message-bubble {
+            background: #e8e0f8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .outgoing .message-bubble {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .post-avatar,
+        body.theme-light .chat-avatar,
+        body.theme-light .avatar-large {
+            background: linear-gradient(135deg, #8b5cf6, #a070ff);
+            color: #ffffff;
+        }
+        
+        body.theme-light .post-name {
+            color: #5a3d8c;
+        }
+        
+        body.theme-light .post-handle,
+        body.theme-light .chat-handle {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .post-time,
+        body.theme-light .chat-time {
+            color: #9a8abe;
+        }
+        
+        body.theme-light .post-stats {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .action-btn {
+            color: #6a5a8e;
+        }
+        
+        body.theme-light .action-btn.liked {
+            color: #e55;
+        }
+        
+        body.theme-light .comment-name {
+            color: #8b5cf6;
+        }
+        
+        body.theme-light .comment-text {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .preview-section {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .preview-avatar,
+        body.theme-light .preview-message,
+        body.theme-light .preview-button {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .slider-label {
+            color: #6a5a8e;
+        }
+        
+        body.theme-light input[type="range"] {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+        }
+        
+        body.theme-light .style-value {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .settings-title {
+            color: #8b5cf6;
+            border-left-color: #8b5cf6;
+        }
+        
+        body.theme-light .setting-name {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .setting-desc {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .toast,
+        body.theme-light .error-toast,
+        body.theme-light .success-toast {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .toast.error,
+        body.theme-light .error-toast {
+            background: #ffe0e0;
+            color: #c44;
+        }
+        
+        body.theme-light .toast.success,
+        body.theme-light .success-toast {
+            background: #e0ffe0;
+            color: #2a6a2a;
+        }
+        
+        body.theme-light hr {
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .tab-btn {
+            background: #e8e0f8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .tab-btn.active {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .search-box {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .trending-panel {
+            background: #faf5ff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .trending-tag {
+            background: #e8e0f8;
+            border-color: #d4c4e8;
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .trending-tag:hover {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+        
+        body.theme-light .modal {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .modal h3 {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .close-modal {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .product-card {
+            background: #ffffff;
+            border-color: #e0d5f0;
+        }
+        
+        body.theme-light .product-title {
+            color: #2d1b4e;
+        }
+        
+        body.theme-light .product-desc {
+            color: #8a7aae;
+        }
+        
+        body.theme-light .product-price {
+            color: #8b5cf6;
+        }
+        
+        /* ===== ЕДИНЫЙ СТИЛЬ КНОПОК ДЛЯ ВСЕХ ТЕМ ===== */
+        button, .btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover, .btn:hover {
+            opacity: 0.85;
+        }
+        
+        button:active, .btn:active {
+            transform: translate(1px, 1px);
+        }
+    
+    
     </style>
 </head>
 <body>
