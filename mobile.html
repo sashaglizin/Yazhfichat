@@ -810,6 +810,8 @@
             color: #8a739e;
             font-size: 12px;
         }
+
+
     
     </style>
 </head>
@@ -1041,6 +1043,7 @@
             theme: 'dark', radius: 12, notifications: true, onlineStatus: true
         }));
 
+
         function applySettings() {
             document.body.classList.remove('theme-dark', 'theme-light', 'theme-stars', 'theme-hedgehogs');
             document.body.classList.add(`theme-${settings.theme}`);
@@ -1057,19 +1060,9 @@
         function changeTheme() { settings.theme = document.getElementById('themeSelect').value; localStorage.setItem('yzfi_settings', JSON.stringify(settings)); applySettings(); showToast('Тема изменена'); }
         function changeRadius() { settings.radius = parseInt(document.getElementById('radiusSlider').value); document.getElementById('radiusValue').textContent = `${settings.radius}px`; localStorage.setItem('yzfi_settings', JSON.stringify(settings)); applySettings(); }
         function toggleNotifications() { settings.notifications = document.getElementById('notifToggle').checked; localStorage.setItem('yzfi_settings', JSON.stringify(settings)); showToast(settings.notifications ? '🔔 Уведомления включены' : '🔕 Уведомления выключены'); }
-        function toggleOnlineStatus() { settings.onlineStatus = document.getElementById('onlineToggle').checked; localStorage.setItem('yzfi_settings', JSON.stringify(settings)); updateOnlineStatus(); showToast(settings.onlineStatus ? '🟢 Онлайн-статус виден' : '⚫ Онлайн-статус скрыт'); }
+        function toggleOnlineStatus() { settings.onlineStatus = document.getElementById('onlineToggle').checked; localStorage.setItem('yzfi_settings', JSON.stringify(settings)); showToast(settings.onlineStatus ? '🟢 Онлайн-статус виден' : '⚫ Онлайн-статус скрыт'); }
 
-        async function updateOnlineStatus() {
-            if (!currentUser || !settings.onlineStatus) return;
-            const userId = currentUser.uid || currentUser.id;
-            if (!userId) return;
-            try {
-                await db.collection('users').doc(userId).update({ 
-                    online: true, 
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-            } catch(e) { console.warn('Online status error:', e); }
-        }
+
 
         async function loadUserData() {
             const user = auth.currentUser;
@@ -1121,8 +1114,6 @@
             if (isPremium && document.getElementById('premiumBadge')) {
                 document.getElementById('premiumBadge').classList.remove('hidden');
             }
-            updateOnlineStatus();
-            setInterval(() => updateOnlineStatus(), 30000);
         }
 
         // ========== ЧАТЫ ==========
@@ -1183,6 +1174,7 @@
         }
 
 
+        
         // Подписка на статус конкретного пользователя в реальном времени
         let currentStatusUnsubscribe = null;
         
@@ -1203,10 +1195,19 @@
                 const online = data?.online === true;
                 const lastSeen = data?.lastSeen?.toDate();
                 
-                if (online) {
+                // Проверяем, был ли пользователь онлайн в последние 2 минуты
+                const now = new Date();
+                const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+                const isRecentlyOnline = lastSeen && lastSeen > twoMinutesAgo;
+                
+                // Пользователь считается онлайн если:
+                // 1. Поле online === true ИЛИ
+                // 2. lastSeen был меньше 2 минут назад
+                const isOnline = online || isRecentlyOnline;
+                
+                if (isOnline) {
                     statusElement.innerHTML = '<span class="online-status">🟢 онлайн</span>';
                 } else if (lastSeen) {
-                    const now = new Date();
                     const diff = now - lastSeen;
                     const minutes = Math.floor(diff / 60000);
                     const hours = Math.floor(diff / 3600000);
@@ -2352,12 +2353,76 @@
         function filterChats() { renderChatsList(); }
         function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
+        // ========== УПРАВЛЕНИЕ ОНЛАЙН-СТАТУСОМ ==========
+        let heartbeatInterval = null;
+        let isPageActive = true;
+        
+        async function setOnlineStatus(status) {
+            if (!currentUser) return;
+            const userId = currentUser.uid || currentUser.id;
+            if (!userId) return;
+            try {
+                await db.collection('users').doc(userId).update({
+                    online: status,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(status ? '🟢 Статус: онлайн' : '⚫ Статус: офлайн');
+            } catch(e) { console.warn('Status error:', e); }
+        }
+        
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(() => {
+                if (isPageActive && currentUser && settings.onlineStatus) {
+                    setOnlineStatus(true);
+                }
+            }, 30000);
+        }
+        
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+        }
+        
+        // При скрытии вкладки — сбрасываем онлайн
+        document.addEventListener('visibilitychange', () => {
+            isPageActive = !document.hidden;
+            if (document.hidden) {
+                setOnlineStatus(false);
+                stopHeartbeat();
+            } else {
+                setOnlineStatus(true);
+                startHeartbeat();
+            }
+        });
+        
+        // При закрытии страницы — сбрасываем онлайн
+        window.addEventListener('beforeunload', () => setOnlineStatus(false));
+        window.addEventListener('pagehide', () => setOnlineStatus(false));
+        
+
+
         // ========== ЗАПУСК ==========
         async function init() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     await loadUserData();
-                    await loadChats();  // Теперь загружает из Firebase
+                    await loadChats();
+                    
+                    // Сначала сбрасываем статус (на случай аварийного закрытия)
+                    const userId = currentUser.uid || currentUser.id;
+                    if (userId) {
+                        await setOnlineStatus(false);
+                    }
+                    
+                    // Затем запускаем онлайн-статус
+                    setTimeout(() => {
+                        setOnlineStatus(true);
+                        startHeartbeat();
+                        isPageActive = true;
+                    }, 1000);
                 } else {
                     window.location.href = 'index.html';
                     return;
