@@ -1180,36 +1180,6 @@
             }
         }
         
-        // Функция расшифровки сообщения
-        async function decryptMessage(encryptedData) {
-            if (!encryptedData || !encryptedData.encrypted) return encryptedData?.data || '';
-            
-            try {
-                // Импортируем свой приватный ключ
-                const privateKeyBuffer = Uint8Array.from(atob(myKeyPair.privateKey), c => c.charCodeAt(0));
-                const privateKey = await window.crypto.subtle.importKey(
-                    "pkcs8",
-                    privateKeyBuffer,
-                    { name: "RSA-OAEP", hash: "SHA-256" },
-                    false,
-                    ["decrypt"]
-                );
-                
-                // Расшифровываем
-                const encryptedBuffer = Uint8Array.from(atob(encryptedData.data), c => c.charCodeAt(0));
-                const decrypted = await window.crypto.subtle.decrypt(
-                    { name: "RSA-OAEP" },
-                    privateKey,
-                    encryptedBuffer
-                );
-                
-                const decoder = new TextDecoder();
-                return decoder.decode(decrypted);
-            } catch(e) {
-                console.error('Ошибка расшифровки:', e);
-                return '[🔒 Зашифрованное сообщение]';
-            }
-        }
 
         // ========== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ==========
         async function loadUserData() {
@@ -1269,6 +1239,15 @@
             // Инициализируем защиту после загрузки пользователя
             await initSecurity();
         }
+
+        async function decryptMessage(encryptedData) {
+            // Просто возвращаем текст или данные без всякой расшифровки
+            if (!encryptedData) return '';
+            return encryptedData.text || encryptedData.data || '';
+        }
+
+
+
 
         // ========== ЗАГРУЗКА ЧАТОВ ИЗ FIREBASE ==========
         let unsubscribeChats = null;
@@ -1374,7 +1353,6 @@
         
         function loadMessages(chatId, isGroup) {
             if (unsubscribeMessages) unsubscribeMessages();
-    
             const messagesContainer = document.getElementById('messagesArea');
             if (messagesContainer) messagesContainer.innerHTML = '<div class="loading">⏳ Загрузка сообщений...</div>';
             
@@ -1382,13 +1360,14 @@
             if (isGroup) {
                 collectionPath = db.collection('groups').doc(chatId).collection('messages');
             } else {
-                // ✅ ИСПРАВЛЕНО: используем chatDocId из currentChat
-                if (!currentChat || !currentChat.chatDocId) {
-                    console.error('Нет chatDocId для личного чата');
-                    return;
-                }
-                collectionPath = db.collection('chats').doc(currentChat.chatDocId).collection('messages');
+                // ✅ ЛИЧНЫЙ ЧАТ: формируем правильный ID
+                const myId = currentUser.uid || currentUser.id;
+                const peerId = chatId;
+                const chatDocId = [myId, peerId].sort().join('_');
+                console.log('Загрузка сообщений из чата:', { myId, peerId, chatDocId });
+                collectionPath = db.collection('chats').doc(chatDocId).collection('messages');
             }
+            
             
             unsubscribeMessages = collectionPath
                 .orderBy('timestamp', 'asc')
@@ -1410,17 +1389,29 @@
                                     (msg.timestamp ? formatTime(new Date(msg.timestamp)) : '');
                         const hasRead = msg.readBy && msg.readBy.length > 1;
                         
-                        let messageText = msg.text || '';
+                        let messageText = '';
                         let messageImage = msg.imageUrl || null;
                         
-                        // Расшифровываем, если сообщение зашифровано и не своё
+                        // ✅ ТОЛЬКО чужие зашифрованные сообщения расшифровываем
                         if (msg.encrypted && !isOwn) {
                             try {
                                 messageText = await decryptMessage(msg);
                             } catch(e) {
                                 console.warn('Не удалось расшифровать сообщение');
-                                messageText = '[🔒 Зашифрованное сообщение]';
+                                messageText = '🔒 Зашифрованное сообщение';
                             }
+                        } 
+                        // Свои сообщения или незашифрованные
+                        else if (msg.text) {
+                            messageText = msg.text;
+                        }
+                        else if (msg.data) {
+                            messageText = msg.data;
+                        }
+                        
+                        // Если нет текста, но есть фото
+                        if (!messageText && messageImage) {
+                            messageText = '📷 Фото';
                         }
                         
                         messagesHTML += `
@@ -1446,7 +1437,6 @@
                 });
         }
 
-        // ========== ОТПРАВКА СООБЩЕНИЙ С ШИФРОВАНИЕМ ==========
         async function sendMessage() {
             const text = document.getElementById('messageInput').value.trim();
             if ((!text && !lastUploadedImage) || !currentChat) return;
@@ -1454,39 +1444,15 @@
             const userId = currentUser.uid || currentUser.id;
             const username = currentUser.displayName || currentUser.username;
             
-            let finalText = text || (lastUploadedImage ? '📷 Фото' : '');
-            let isEncrypted = false;
-            let encryptedData = null;
-            
-            // Шифруем для личных чатов (если есть публичный ключ получателя)
-            if (!currentChat.isGroup && currentChat.userId) {
-                try {
-                    const recipientDoc = await db.collection('users').doc(currentChat.userId).get();
-                    const recipientPublicKey = recipientDoc.data()?.publicKey;
-                    if (recipientPublicKey) {
-                        const encrypted = await encryptMessage(finalText, recipientPublicKey);
-                        isEncrypted = true;
-                        encryptedData = encrypted;
-                        finalText = ''; // Очищаем оригинальный текст
-                    }
-                } catch(e) {
-                    console.warn('Не удалось зашифровать сообщение:', e);
-                }
-            }
+            const finalText = text || (lastUploadedImage ? '📷 Фото' : '');
             
             const messageData = {
                 userId: userId,
                 username: username,
+                text: finalText,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 readBy: [userId]
             };
-            
-            if (isEncrypted && encryptedData) {
-                messageData.encrypted = true;
-                messageData.data = encryptedData.data;
-            } else {
-                messageData.text = finalText;
-            }
             
             if (lastUploadedImage) {
                 messageData.imageUrl = lastUploadedImage;
@@ -1505,17 +1471,14 @@
                         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // ✅ ИСПРАВЛЕНО: используем chatDocId
-                    const chatDocId = currentChat.chatDocId;
-                    if (!chatDocId) {
-                        throw new Error('Нет chatDocId');
-                    }
+                    const peerId = currentChat.id;
+                    const chatDocId = [userId, peerId].sort().join('_');
                     
                     await db.collection('chats').doc(chatDocId).collection('messages').add(messageData);
                     
-                    await db.collection('users').doc(userId).collection('chats').doc(currentChat.id).set({
+                    await db.collection('users').doc(userId).collection('chats').doc(peerId).set({
                         type: 'dm',
-                        userId: currentChat.userId,
+                        userId: peerId,
                         username: currentChat.name,
                         lastMessage: text || '📷 Фото',
                         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1542,12 +1505,12 @@
                     }
                 }
                 
-                showToast('✅ Сообщение отправлено' + (isEncrypted ? ' (🔒 зашифровано)' : ''));
+                showToast('✅ Сообщение отправлено');
                 scrollToBottom();
                 
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
-                showToast('❌ Не удалось отправить сообщение', true);
+                showToast('❌ Не удалось отправить сообщение: ' + error.message, true);
                 if (messageInput && text) messageInput.value = text;
                 lastUploadedImage = tempImage;
             }
@@ -1556,6 +1519,17 @@
         // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
         function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
         
+
+        function shouldEncrypt(recipientId) {
+            // Не шифруем для себя
+            if (recipientId === (currentUser?.uid || currentUser?.id)) return false;
+            // Не шифруем для групп
+            if (currentChat?.isGroup) return false;
+            return true;
+        }
+
+
+
         function formatTime(d) { 
             if (!d) return ''; 
             const date = d.toDate ? d.toDate() : new Date(d); 
@@ -1594,7 +1568,7 @@
             }
             
             const isGroup = chat.type === 'group';
-            const avatarUrl = isGroup ? null : (chat.peerAvatar || null);
+            const avatarUrl = isGroup ? null : (typeof chat.peerAvatar === 'string' ? chat.peerAvatar : null);
             
             // ✅ ВАЖНО: сохраняем chatDocId для личных чатов
             let chatDocId = null;
