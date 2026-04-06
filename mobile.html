@@ -1374,7 +1374,7 @@
         
         function loadMessages(chatId, isGroup) {
             if (unsubscribeMessages) unsubscribeMessages();
-            
+    
             const messagesContainer = document.getElementById('messagesArea');
             if (messagesContainer) messagesContainer.innerHTML = '<div class="loading">⏳ Загрузка сообщений...</div>';
             
@@ -1382,10 +1382,12 @@
             if (isGroup) {
                 collectionPath = db.collection('groups').doc(chatId).collection('messages');
             } else {
-                const myId = currentUser.uid || currentUser.id;
-                const peerId = chatId;
-                const chatDocId = [myId, peerId].sort().join('_');
-                collectionPath = db.collection('chats').doc(chatDocId).collection('messages');
+                // ✅ ИСПРАВЛЕНО: используем chatDocId из currentChat
+                if (!currentChat || !currentChat.chatDocId) {
+                    console.error('Нет chatDocId для личного чата');
+                    return;
+                }
+                collectionPath = db.collection('chats').doc(currentChat.chatDocId).collection('messages');
             }
             
             unsubscribeMessages = collectionPath
@@ -1503,14 +1505,17 @@
                         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    const peerId = currentChat.id;
-                    const chatDocId = [userId, peerId].sort().join('_');
+                    // ✅ ИСПРАВЛЕНО: используем chatDocId
+                    const chatDocId = currentChat.chatDocId;
+                    if (!chatDocId) {
+                        throw new Error('Нет chatDocId');
+                    }
                     
                     await db.collection('chats').doc(chatDocId).collection('messages').add(messageData);
                     
-                    await db.collection('users').doc(userId).collection('chats').doc(peerId).set({
+                    await db.collection('users').doc(userId).collection('chats').doc(currentChat.id).set({
                         type: 'dm',
-                        userId: peerId,
+                        userId: currentChat.userId,
                         username: currentChat.name,
                         lastMessage: text || '📷 Фото',
                         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1591,8 +1596,16 @@
             const isGroup = chat.type === 'group';
             const avatarUrl = isGroup ? null : (chat.peerAvatar || null);
             
+            // ✅ ВАЖНО: сохраняем chatDocId для личных чатов
+            let chatDocId = null;
+            if (!isGroup) {
+                const myId = currentUser.uid || currentUser.id;
+                chatDocId = [myId, chat.userId].sort().join('_');
+            }
+            
             currentChat = {
                 id: chatId,
+                chatDocId: chatDocId, // ✅ сохраняем ID документа в коллекции 'chats'
                 name: isGroup ? chat.name : chat.username,
                 avatar: isGroup ? '👥' : (chat.username?.charAt(0) || '?').toUpperCase(),
                 avatarUrl: avatarUrl,
